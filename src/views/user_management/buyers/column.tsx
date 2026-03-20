@@ -127,9 +127,10 @@ export const columns: ColumnDef<Buyer>[] = [
                 Actions
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zinc-100" />
-              <DropdownMenuItem className="text-xs cursor-pointer">
-              <Link href={`/admin/buyers/${row.original.id}`}>
-                <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" /> View Profile
+              <DropdownMenuItem className="text-xs cursor-pointer ">
+              <Link className="flex gap-1" href={`/admin/buyers/${row.original.id}`}>
+                <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" />
+                <p> View Profile</p>
               </Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="text-xs cursor-pointer">

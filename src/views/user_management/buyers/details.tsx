@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-import { Phone, MapPin, Calendar, Wallet, ArrowLeft } from "lucide-react";
+import { Phone, MapPin, Calendar, Wallet, ArrowLeft, ShoppingCart, TrendingUp, LucideIcon } from "lucide-react";
 import { BUYER_ORDERS, BUYERS } from "@/src/lib/dummy_data";
 import {
   CreditWalletModal,
@@ -30,7 +30,6 @@ export default function BuyerDetailsView() {
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
-      
       {/* ─── STICKY HEADER ─── */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -55,11 +54,9 @@ export default function BuyerDetailsView() {
       </header>
 
       {/* ─── MAIN CONTENT ─── */}
-      <main className="p-6 max-w-[1600px] mx-auto space-y-8">
-        
+      <main className="p-6 max-w-400 mx-auto space-y-8">
         {/* ─── TOP SECTION: CARDS ROW ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          
           {/* 1. Identity Card (Cols 1-4) */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-lg p-6 shadow-sm flex flex-col justify-between h-full">
             <div className="flex items-center gap-5">
@@ -93,9 +90,11 @@ export default function BuyerDetailsView() {
                   Wallet Balance
                 </span>
               </div>
-              <p className="text-4xl font-bold font-mono tracking-tight">₦24,500.00</p>
+              <p className="text-4xl font-bold font-mono tracking-tight">
+                ₦24,500.00
+              </p>
             </div>
-            
+
             <div className="mt-6 flex gap-3">
               <CreditWalletModal />
               <Button
@@ -109,17 +108,15 @@ export default function BuyerDetailsView() {
 
           {/* 3. Metrics Stack (Cols 9-12) */}
           <div className="lg:col-span-4 flex flex-col gap-3 h-full">
-             <MetricCard label="Total Spent" value={buyer.totalSpent} />
-             <MetricCard label="Total Orders" value={String(buyer.orders)} />
-             <MetricCard label="Avg. Order Value" value="₦45,000" />
+            <MetricCard icon={Wallet} label="Total Spent" value={buyer.totalSpent} />
+            <MetricCard icon={ShoppingCart} label="Total Orders" value={String(buyer.orders)} />
+            <MetricCard icon={TrendingUp} label="Avg. Order Value" value="₦45,000" />
           </div>
-
         </div>
 
         {/* ─── BOTTOM SECTION: TABS & TABLE ─── */}
         <div className="space-y-6">
           <Tabs defaultValue="orders" className="w-full flex flex-col">
-            
             <div className="border-b border-zinc-200 mb-6">
               <TabsList className="bg-transparent p-0 h-12 justify-start w-full">
                 <TabItem value="orders" label="Order History" />
@@ -135,7 +132,11 @@ export default function BuyerDetailsView() {
                   <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
                     Transaction History
                   </h3>
-                  <Button variant="outline" size="sm" className="h-7 text-[10px]">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[10px]"
+                  >
                     Export CSV
                   </Button>
                 </div>
@@ -147,7 +148,7 @@ export default function BuyerDetailsView() {
 
             {/* ACTIVITY TAB */}
             <TabsContent value="activity" className="m-0">
-              <div className="bg-white border border-zinc-200 rounded-lg p-12 text-center shadow-sm min-h-[300px] flex items-center justify-center">
+              <div className="bg-white border border-zinc-200 rounded-lg p-12 text-center shadow-sm min-h-75 flex items-center justify-center">
                 <p className="text-zinc-400 font-mono text-sm">
                   Activity logs will go here.
                 </p>
@@ -156,13 +157,12 @@ export default function BuyerDetailsView() {
 
             {/* SETTINGS TAB */}
             <TabsContent value="settings" className="m-0">
-              <div className="bg-white border border-zinc-200 rounded-lg p-12 text-center shadow-sm min-h-[300px] flex items-center justify-center">
+              <div className="bg-white border border-zinc-200 rounded-lg p-12 text-center shadow-sm min-h-75 flex items-center justify-center">
                 <p className="text-zinc-400 font-mono text-sm">
                   User settings form will go here.
                 </p>
               </div>
             </TabsContent>
-
           </Tabs>
         </div>
       </main>
@@ -170,15 +170,24 @@ export default function BuyerDetailsView() {
   );
 }
 
-// ─── LOCAL COMPONENT: METRIC CARD ───
-// A cleaner, smaller card used for the stack on the right
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+}) {
   return (
-    <div className="flex-1 bg-white border border-zinc-200 rounded-lg px-5 flex items-center justify-between shadow-sm min-h-[70px]">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-        {label}
-      </p>
-      <p className="text-xl font-bold font-mono text-zinc-900">{value}</p>
+    <div className="flex-1 bg-white border border-zinc-200 rounded-lg px-5 flex items-center justify-between shadow-sm min-h-17.5">
+      <div className="flex flex-col">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+          {label}
+        </p>
+        <p className="text-xl font-bold font-mono text-zinc-900">{value}</p>
+      </div>
+      <Icon className="h-6 w-6 rounded-lg bg-yellow-50 border border-yellow-100 flex items-center justify-center text-sax-gold-dim"/>
     </div>
   );
 }
