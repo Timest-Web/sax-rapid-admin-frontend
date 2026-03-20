@@ -1,26 +1,59 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
+  --font-display: var(--font-outfit);
   --font-mono: var(--font-geist-mono);
+
+  --color-sax-gold: #EAB308;      
+  --color-sax-gold-dim: #CA8A04;  
+  --color-sax-gold-light: #FEFCE8; 
+  --color-sax-black: #09090B;      
+  --color-sax-zinc: #27272A;  
+  --color-sax-body: #FAFAFA;      
+  --color-sax-surface: #FFFFFF;
+  --color-sax-border: #E4E4E7;    
+  --color-status-success: #10B981;
+  --color-status-danger: #F43F5E;  
+  --color-status-warning: #F59E0B; 
+  --color-status-info: #3B82F6;   
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
+
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --font-geist-sans: ui-sans-serif, system-ui, sans-serif;
+    --font-outfit: ui-sans-serif, system-ui, sans-serif;
+    --font-geist-mono: ui-monospace, monospace;
+  }
+
+  body {
+    @apply bg-sax-body text-sax-black font-sans antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight text-sax-black;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .card-panel {
+    @apply bg-sax-surface border border-sax-border shadow-sm rounded-lg;
+  }
+  .tech-label {
+    @apply text-[10px] font-bold uppercase tracking-widest text-zinc-400 font-mono;
+  }
+  .tech-value {
+    @apply font-mono font-bold tracking-tight text-sax-black;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
 }
