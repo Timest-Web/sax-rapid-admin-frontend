@@ -108,7 +108,7 @@ function MetricBox({ label, value, icon: Icon, color = "text-zinc-900" }: any) {
         <p className={`text-2xl font-bold font-mono mt-1 ${color}`}>{value}</p>
       </div>
       <div className="h-10 w-10 rounded bg-zinc-50 flex items-center justify-center text-zinc-400">
-        <Icon size={20} />
+        <Icon size={20} className={color} />
       </div>
     </div>
   );
