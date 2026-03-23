@@ -50,11 +50,11 @@ const ORDER_DATA = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#09090B] p-3 rounded-lg shadow-xl border border-zinc-800">
+      <div className="bg-sax-black p-3 rounded-lg shadow-xl border border-zinc-800">
         <p className="text-zinc-500 text-[10px] font-mono mb-1 uppercase tracking-wider">
           {label}
         </p>
-        <p className="text-[#EAB308] text-sm font-bold font-mono">
+        <p className="text-sax-gold text-sm font-bold font-mono">
           {payload[0].value.toLocaleString()}
         </p>
       </div>
@@ -65,12 +65,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-zinc-900">
+    <div className="min-h-screen bg-sax-body text-zinc-900">
       {/* ─── HEADER ─── */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-100 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
-          <div className="h-6 w-[1px] bg-zinc-100" />
+          <div className="h-6 w-px bg-zinc-100" />
           <h1 className="text-sm uppercase tracking-wider text-zinc-900 font-semibold">
           Dashboard Overview
           </h1>
@@ -85,15 +85,15 @@ export default function DashboardPage() {
             />
           </div>
           <button className="h-9 w-9 flex items-center justify-center border border-zinc-100 bg-white rounded-md hover:bg-zinc-50 transition">
-            <Bell size={16} className="text-[#EAB308]" />
+            <Bell size={16} className="text-sax-gold" />
           </button>
-          <div className="h-9 w-9 bg-[#EAB308] text-black flex items-center justify-center font-bold text-xs rounded-md shadow-sm">
+          <div className="h-9 w-9 bg-sax-gold text-black flex items-center justify-center font-bold text-xs rounded-md shadow-sm">
             SA
           </div>
         </div>
       </header>
 
-      <main className="p-6 space-y-8 max-w-[1600px] mx-auto">
+      <main className="p-6 space-y-8 max-w-400 mx-auto">
         {/* ─── 1. KEY METRICS ─── */}
         <section>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -128,7 +128,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="h-[300px] w-full">
+            <div className="h-75 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={REVENUE_DATA}>
                   <defs>
@@ -199,7 +199,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="h-[300px] w-full">
+            <div className="h-75 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={ORDER_DATA}>
                   <CartesianGrid
@@ -241,7 +241,7 @@ export default function DashboardPage() {
             <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-900">
               Recent Transactions
             </h3>
-            <button className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-[#EAB308] transition-colors">
+            <button className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 hover:text-sax-gold transition-colors">
               View All
             </button>
           </div>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
                     key={i}
                     className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-50 last:border-0 cursor-pointer group"
                   >
-                    <td className="py-4 pl-0 font-mono text-zinc-900 group-hover:text-[#EAB308] transition-colors">
+                    <td className="py-4 pl-0 font-mono text-zinc-900 group-hover:text-sax-gold transition-colors">
                       #ORD-202{i}
                     </td>
                     <td className="py-4">John Doe</td>

@@ -1,41 +1,55 @@
+/* globals.css */
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-display: var(--font-outfit);
-  --font-mono: var(--font-geist-mono);
+  /* ── FONTS ── */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-sora);
+  --font-mono: var(--font-jetbrains);
 
-  --color-sax-gold: #EAB308;      
-  --color-sax-gold-dim: #CA8A04;  
-  --color-sax-gold-light: #FEFCE8; 
-  --color-sax-black: #09090B;      
-  --color-sax-zinc: #27272A;  
-  --color-sax-body: #FAFAFA;      
+  /* ── COLORS ── */
+  --color-sax-gold: #EAB308;
+  --color-sax-gold-dim: #CA8A04;
+  --color-sax-gold-light: #FEFCE8;
+  --color-sax-black: #09090B;
+  --color-sax-zinc: #27272A;
+  --color-sax-body: #FAFAFA;
   --color-sax-surface: #FFFFFF;
-  --color-sax-border: #E4E4E7;    
+  --color-sax-border: #E4E4E7;
   --color-status-success: #10B981;
-  --color-status-danger: #F43F5E;  
-  --color-status-warning: #F59E0B; 
-  --color-status-info: #3B82F6;   
+  --color-status-danger: #F43F5E;
+  --color-status-warning: #F59E0B;
+  --color-status-info: #3B82F6;
+
+  /* ── RADIUS ── */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
 }
 
-
 @layer base {
-  :root {
-    --font-geist-sans: ui-sans-serif, system-ui, sans-serif;
-    --font-outfit: ui-sans-serif, system-ui, sans-serif;
-    --font-geist-mono: ui-monospace, monospace;
-  }
-
   body {
     @apply bg-sax-body text-sax-black font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-display font-bold tracking-tight text-sax-black;
+    font-feature-settings: "ss01";
+  }
+
+  /* ── Tabular numbers for data-heavy UI ── */
+  table, .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Smooth text selection ── */
+  ::selection {
+    @apply bg-sax-gold/20 text-sax-black;
   }
 }
 
@@ -43,17 +57,64 @@
   .card-panel {
     @apply bg-sax-surface border border-sax-border shadow-sm rounded-lg;
   }
+
   .tech-label {
-    @apply text-[10px] font-bold uppercase tracking-widest text-zinc-400 font-mono;
+    @apply text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 font-mono;
   }
+
   .tech-value {
     @apply font-mono font-bold tracking-tight text-sax-black;
+    font-variant-numeric: tabular-nums;
   }
+
+  /* ── Premium text styles ── */
+  .heading-xl {
+    @apply font-display text-3xl font-bold tracking-[-0.025em] text-sax-black;
+  }
+
+  .heading-lg {
+    @apply font-display text-xl font-semibold tracking-[-0.02em] text-sax-black;
+  }
+
+  .heading-md {
+    @apply font-display text-base font-semibold tracking-[-0.01em] text-sax-black;
+  }
+
+  .body-default {
+    @apply font-sans text-sm font-normal leading-relaxed text-zinc-600;
+  }
+
+  .body-small {
+    @apply font-sans text-xs font-medium text-zinc-500;
+  }
+
+  .mono-data {
+    @apply font-mono text-sm font-semibold tracking-tight text-sax-black;
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+
+  .stat-number {
+    @apply font-display text-2xl font-bold tracking-[-0.03em] text-sax-black;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Scrollbar Hiding ── */
   .scrollbar-none {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   .scrollbar-none::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
+  }
+}
+
+@layer components {
+  .tab-trigger {
+    @apply relative h-12 px-8 text-xs font-bold uppercase tracking-[0.12em] text-zinc-400
+           font-sans border-b-2 border-transparent transition-all hover:text-zinc-600;
+  }
+
+  .tab-trigger[data-state="active"] {
+    @apply text-zinc-900 border-sax-gold bg-transparent;
   }
 }

@@ -1,7 +1,7 @@
 import { TabsTrigger } from "@/components/ui/tabs";
 import { LucideIcon } from "lucide-react";
 
-export function InfoRow({ icon: Icon, label, value }: { icon: LucideIcon, label: string, value: string }) {
+export function InfoRow({ icon: Icon, label, value }: { icon: LucideIcon, label: string, value: string | undefined }) {
   return (
     <div className="flex items-center justify-between group">
       <div className="flex items-center gap-3 text-zinc-500">

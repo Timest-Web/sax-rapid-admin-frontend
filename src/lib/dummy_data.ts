@@ -10,7 +10,7 @@ export const BUYERS = [
     totalSpent: "₦450,000",
     status: "Active",
     lastActive: "2 mins ago",
-    avatar: "AO"
+    avatar: "AO",
   },
   {
     id: "CUS-8822",
@@ -23,7 +23,7 @@ export const BUYERS = [
     totalSpent: "₦12,500",
     status: "Active",
     lastActive: "1 day ago",
-    avatar: "DM"
+    avatar: "DM",
   },
   {
     id: "CUS-8823",
@@ -36,7 +36,7 @@ export const BUYERS = [
     totalSpent: "₦0.00",
     status: "Inactive",
     lastActive: "1 month ago",
-    avatar: "SJ"
+    avatar: "SJ",
   },
   {
     id: "CUS-8824",
@@ -49,7 +49,7 @@ export const BUYERS = [
     totalSpent: "₦2,100,000",
     status: "Suspended",
     lastActive: "3 days ago",
-    avatar: "CI"
+    avatar: "CI",
   },
   {
     id: "CUS-8825",
@@ -62,9 +62,9 @@ export const BUYERS = [
     totalSpent: "₦85,000",
     status: "Active",
     lastActive: "5 hours ago",
-    avatar: "ZA"
+    avatar: "ZA",
   },
-    {
+  {
     id: "CUS-8826",
     name: "Ibrahim Musa",
     email: "ibrahim.musa@gmail.com",
@@ -326,12 +326,635 @@ export const BUYERS = [
   },
 ];
 
-
-
 export const BUYER_ORDERS = [
-  { id: "ORD-7782", date: "Oct 24, 2023", items: 3, total: "₦145,000", status: "Delivered" },
-  { id: "ORD-7783", date: "Sep 12, 2023", items: 1, total: "₦25,000", status: "Cancelled" },
-  { id: "ORD-7784", date: "Aug 05, 2023", items: 5, total: "₦550,000", status: "Delivered" },
-  { id: "ORD-7785", date: "Jul 22, 2023", items: 2, total: "₦80,000", status: "Processing" },
-  { id: "ORD-7786", date: "Jun 10, 2023", items: 1, total: "₦12,000", status: "Delivered" },
+  {
+    id: "ORD-7782",
+    date: "Oct 24, 2023",
+    items: 3,
+    total: "₦145,000",
+    status: "Delivered",
+  },
+  {
+    id: "ORD-7783",
+    date: "Sep 12, 2023",
+    items: 1,
+    total: "₦25,000",
+    status: "Cancelled",
+  },
+  {
+    id: "ORD-7784",
+    date: "Aug 05, 2023",
+    items: 5,
+    total: "₦550,000",
+    status: "Delivered",
+  },
+  {
+    id: "ORD-7785",
+    date: "Jul 22, 2023",
+    items: 2,
+    total: "₦80,000",
+    status: "Processing",
+  },
+  {
+    id: "ORD-7786",
+    date: "Jun 10, 2023",
+    items: 1,
+    total: "₦12,000",
+    status: "Delivered",
+  },
+];
+
+export const VENDORS = [
+  {
+    id: "VND-2091",
+    storeName: "Tech Haven Ltd",
+    ownerName: "Emmanuel Kalu",
+    email: "biz@techhaven.ng",
+    phone: "+234 809 111 2222",
+    location: "Ikeja, Lagos",
+    status: "Active",
+    rating: 4.8,
+    totalSales: "₦12,500,000",
+    products: 142,
+    joinedDate: "Aug 15, 2023",
+    logo: "TH",
+  },
+  {
+    id: "VND-2092",
+    storeName: "Bella Fashion",
+    ownerName: "Isabella Nnaji",
+    email: "bella@fashion.com",
+    phone: "+234 701 222 3333",
+    location: "Wuse 2, Abuja",
+    status: "Pending",
+    rating: 0.0,
+    totalSales: "₦0.00",
+    products: 5,
+    joinedDate: "Oct 24, 2023",
+    logo: "BF",
+  },
+  {
+    id: "VND-2093",
+    storeName: "Gadget World",
+    ownerName: "Samuel Ojo",
+    email: "sam@gadgetworld.com",
+    phone: "+234 812 333 4444",
+    location: "Alaba, Lagos",
+    status: "Suspended",
+    rating: 3.2,
+    totalSales: "₦450,000",
+    products: 23,
+    joinedDate: "Jan 10, 2023",
+    logo: "GW",
+  },
+  {
+    id: "VND-2092",
+    storeName: "Bella Fashion",
+    ownerName: "Isabella Nnaji",
+    email: "bella@fashion.com",
+    status: "Pending",
+    rating: 3.2,
+    totalSales: "₦450,000",
+    products: 23,
+    joinedDate: "Jan 10, 2023",
+    logo: "BF",
+    documents: [
+      {
+        id: 1,
+        name: "Business Registration (CAC)",
+        type: "PDF",
+        status: "Verified",
+        date: "Oct 20, 2023",
+      },
+      {
+        id: 2,
+        name: "Director ID Card",
+        type: "JPG",
+        status: "Pending",
+        date: "Oct 20, 2023",
+      },
+      {
+        id: 3,
+        name: "Proof of Address",
+        type: "PDF",
+        status: "Pending",
+        date: "Oct 20, 2023",
+      },
+    ],
+  },
+];
+
+export const VENDOR_PRODUCTS = [
+  {
+    id: "PRD-001",
+    name: "iPhone 15 Pro Max",
+    price: "₦1,200,000",
+    stock: 12,
+    sales: 45,
+    status: "Active",
+  },
+  {
+    id: "PRD-002",
+    name: "MacBook Pro M3",
+    price: "₦2,500,000",
+    stock: 5,
+    sales: 10,
+    status: "Active",
+  },
+  {
+    id: "PRD-003",
+    name: "AirPods Pro",
+    price: "₦350,000",
+    stock: 0,
+    sales: 120,
+    status: "Out of Stock",
+  },
+];
+
+export const COUNTRIES = [
+  {
+    id: "LOC-NG",
+    name: "Nigeria",
+    code: "NG",
+    currency: "NGN",
+    gateway: "Paystack",
+    regions: 36,
+    status: "Active",
+  },
+  {
+    id: "LOC-ZA",
+    name: "South Africa",
+    code: "ZA",
+    currency: "ZAR",
+    gateway: "PayFast",
+    regions: 9,
+    status: "Active",
+  },
+  {
+    id: "LOC-GH",
+    name: "Ghana",
+    code: "GH",
+    currency: "GHS",
+    gateway: "Paystack",
+    regions: 16,
+    status: "Inactive",
+  },
+  {
+    id: "LOC-KE",
+    name: "Kenya",
+    code: "KE",
+    currency: "KES",
+    gateway: "Flutterwave",
+    regions: 47,
+    status: "Active",
+  },
+  {
+    id: "LOC-UK",
+    name: "United Kingdom",
+    code: "GB",
+    currency: "GBP",
+    gateway: "Stripe",
+    regions: 4,
+    status: "Active",
+  },
+];
+
+export const GEO_RULES = [
+  { id: 1, rule: "Same City Match", priority: "Highest", impact: "+50% Score" },
+  { id: 2, rule: "Same State Match", priority: "High", impact: "+30% Score" },
+  { id: 3, rule: "National Match", priority: "Medium", impact: "+10% Score" },
+  { id: 4, rule: "International", priority: "Low", impact: "Base Score" },
+];
+
+export const PRODUCTS = [
+  {
+    id: "PRD-9920",
+    name: "Sony WH-1000XM5 Headphones",
+    vendor: "Gadget World",
+    category: "Electronics",
+    price: "₦450,000",
+    stock: 15,
+    status: "Active",
+    date: "Oct 24, 2023",
+    image: "/placeholder.jpg", // We'll simulate this
+  },
+  {
+    id: "PRD-9921",
+    name: "Men's Luxury Oxford Shoes",
+    vendor: "Bella Fashion",
+    category: "Fashion",
+    price: "₦85,000",
+    stock: 4,
+    status: "Pending", // Needs Approval
+    date: "Oct 25, 2023",
+    image: "/placeholder.jpg",
+  },
+  {
+    id: "PRD-9922",
+    name: "Herbal Slimming Tea (Unverified)",
+    vendor: "Nature's Gift",
+    category: "Health",
+    price: "₦12,000",
+    stock: 100,
+    status: "Rejected",
+    date: "Oct 20, 2023",
+    image: "/placeholder.jpg",
+  },
+  {
+    id: "PRD-9923",
+    name: "iPhone 15 Pro Max - 1TB",
+    vendor: "Tech Haven",
+    category: "Electronics",
+    price: "₦1,800,000",
+    stock: 2,
+    status: "Active",
+    date: "Oct 10, 2023",
+    image: "/placeholder.jpg",
+  },
+];
+
+export const CATEGORIES = [
+  {
+    id: "CAT-001",
+    name: "Electronics",
+    icon: "Smartphone",
+    status: "Active",
+    subcategories: [
+      { id: "SUB-101", name: "Smartphones", products: 1200 },
+      { id: "SUB-102", name: "Laptops", products: 850 },
+      { id: "SUB-103", name: "TVs", products: 400 },
+    ],
+    attributes: [
+      { name: "Brand", type: "Select", options: ["Apple", "Samsung", "Sony"] },
+      { name: "Storage", type: "Radio", options: ["64GB", "128GB", "256GB"] },
+      { name: "Screen Size", type: "Number", unit: "Inches" },
+    ],
+  },
+  {
+    id: "CAT-002",
+    name: "Fashion",
+    icon: "Shirt",
+    status: "Active",
+    subcategories: [
+      { id: "SUB-201", name: "Men's Clothing", products: 5000 },
+      { id: "SUB-202", name: "Women's Clothing", products: 8000 },
+      { id: "SUB-203", name: "Shoes", products: 2300 },
+    ],
+    attributes: [
+      { name: "Size", type: "Select", options: ["S", "M", "L", "XL"] },
+      { name: "Material", type: "Text", placeholder: "e.g. Cotton" },
+      { name: "Color", type: "ColorPicker" },
+    ],
+  },
+];
+
+export const ORDERS = [
+  {
+    id: "ORD-5521",
+    customer: "Amara Okeke",
+    vendor: "Tech Haven",
+    date: "Oct 24, 2023",
+    total: "₦1,200,000",
+    status: "Processing",
+    payment: "Paid",
+    items: 2,
+  },
+  {
+    id: "ORD-5522",
+    customer: "David Miller",
+    vendor: "Gadget World",
+    date: "Oct 23, 2023",
+    total: "₦450,000",
+    status: "Shipped",
+    payment: "Paid",
+    items: 1,
+  },
+  {
+    id: "ORD-5523",
+    customer: "Sarah Johnson",
+    vendor: "Bella Fashion",
+    date: "Oct 22, 2023",
+    total: "₦85,000",
+    status: "Delivered",
+    payment: "Paid",
+    items: 3,
+  },
+  {
+    id: "ORD-5524",
+    customer: "Chinedu Ibe",
+    vendor: "Tech Haven",
+    date: "Oct 20, 2023",
+    total: "₦2,500,000",
+    status: "Dispute",
+    payment: "Paid",
+    items: 1,
+  },
+  {
+    id: "ORD-5525",
+    customer: "Zainab Ali",
+    vendor: "Nature's Gift",
+    date: "Oct 18, 2023",
+    total: "₦12,000",
+    status: "Cancelled",
+    payment: "Refunded",
+    items: 5,
+  },
+];
+
+export const ORDER_ITEMS = [
+  {
+    id: 1,
+    name: "iPhone 15 Pro Max",
+    price: "₦1,200,000",
+    qty: 1,
+    image: "/placeholder.jpg",
+  },
+  {
+    id: 2,
+    name: "Screen Protector",
+    price: "₦5,000",
+    qty: 2,
+    image: "/placeholder.jpg",
+  },
+];
+
+export const ORDER_TIMELINE = [
+  { status: "Order Placed", date: "Oct 24, 10:30 AM", completed: true },
+  { status: "Payment Confirmed", date: "Oct 24, 10:32 AM", completed: true },
+  { status: "Processing", date: "Oct 24, 11:00 AM", completed: true },
+  { status: "Shipped", date: "Pending", completed: false },
+  { status: "Delivered", date: "Pending", completed: false },
+];
+
+export const FINANCE_STATS = {
+  totalRevenue: "₦148,250,000",
+  platformCommission: "₦14,825,000", // 10%
+  pendingPayouts: "₦3,800,000",
+  activeSubscriptions: 850,
+};
+
+export const VENDOR_WALLETS = [
+  {
+    id: "WAL-001",
+    vendor: "Tech Haven",
+    balance: "₦2,450,000",
+    pending: "₦120,000",
+    lastPayout: "Oct 20, 2023",
+    status: "Active",
+  },
+  {
+    id: "WAL-002",
+    vendor: "Bella Fashion",
+    balance: "₦850,000",
+    pending: "₦45,000",
+    lastPayout: "Oct 22, 2023",
+    status: "Active",
+  },
+  {
+    id: "WAL-003",
+    vendor: "Gadget World",
+    balance: "₦12,500",
+    pending: "₦0.00",
+    lastPayout: "Sep 15, 2023",
+    status: "Frozen",
+  },
+];
+
+export const GLOBAL_TRANSACTIONS = [
+  {
+    id: "TRX-9981",
+    type: "Order Payment",
+    amount: "+₦145,000",
+    from: "Amara Okeke",
+    to: "Tech Haven",
+    date: "Oct 24, 10:30 AM",
+    status: "Success",
+  },
+  {
+    id: "TRX-9982",
+    type: "Subscription",
+    amount: "+₦15,000",
+    from: "Bella Fashion",
+    to: "Platform",
+    date: "Oct 24, 09:15 AM",
+    status: "Success",
+  },
+  {
+    id: "TRX-9983",
+    type: "Vendor Payout",
+    amount: "-₦500,000",
+    from: "Platform",
+    to: "Gadget World",
+    date: "Oct 23, 04:00 PM",
+    status: "Completed",
+  },
+  {
+    id: "TRX-9984",
+    type: "Refund",
+    amount: "-₦25,000",
+    from: "Tech Haven",
+    to: "David Miller",
+    date: "Oct 22, 11:00 AM",
+    status: "Processing",
+  },
+];
+
+export const CURRENCIES = [
+  {
+    code: "USD",
+    name: "US Dollar",
+    symbol: "$",
+    rate: 1.0,
+    isDefault: true,
+    status: "Active",
+  },
+  {
+    code: "NGN",
+    name: "Nigerian Naira",
+    symbol: "₦",
+    rate: 1200.5,
+    isDefault: false,
+    status: "Active",
+  },
+  {
+    code: "ZAR",
+    name: "South African Rand",
+    symbol: "R",
+    rate: 18.25,
+    isDefault: false,
+    status: "Active",
+  },
+  {
+    code: "GBP",
+    name: "British Pound",
+    symbol: "£",
+    rate: 0.79,
+    isDefault: false,
+    status: "Inactive",
+  },
+  {
+    code: "EUR",
+    name: "Euro",
+    symbol: "€",
+    rate: 0.92,
+    isDefault: false,
+    status: "Active",
+  },
+];
+
+export const GEO_CURRENCY_MAPPING = [
+  { country: "Nigeria", code: "NG", currency: "NGN" },
+  { country: "South Africa", code: "ZA", currency: "ZAR" },
+  { country: "United States", code: "US", currency: "USD" },
+  { country: "Global (Default)", code: "WORLD", currency: "USD" },
+];
+
+export const PAYOUT_REQUESTS = [
+  {
+    id: "PAY-8821",
+    vendor: "Tech Haven",
+    amount: "₦120,000",
+    date: "Oct 24, 10:00 AM",
+    bank: "GTBank - 012****891",
+    status: "Pending",
+  },
+  {
+    id: "PAY-8822",
+    vendor: "Bella Fashion",
+    amount: "₦45,000",
+    date: "Oct 23, 02:30 PM",
+    bank: "Zenith - 221****992",
+    status: "Pending",
+  },
+  {
+    id: "PAY-8823",
+    vendor: "Gadget World",
+    amount: "₦500,000",
+    date: "Oct 22, 09:15 AM",
+    bank: "Access - 003****112",
+    status: "Approved",
+  },
+  {
+    id: "PAY-8824",
+    vendor: "Nature's Gift",
+    amount: "₦12,500",
+    date: "Oct 20, 11:45 AM",
+    bank: "UBA - 202****331",
+    status: "Rejected",
+    note: "Invalid Account Name",
+  },
+];
+
+export const SUBSCRIPTION_PLANS = [
+  {
+    id: "PLN-FREE",
+    name: "Free Tier",
+    price: "₦0",
+    interval: "Forever",
+    features: ["5 Products", "Basic Support", "Standard Fees"],
+    subscribers: 850,
+    status: "Active",
+    color: "bg-zinc-100 border-zinc-200",
+  },
+  {
+    id: "PLN-STD",
+    name: "Standard",
+    price: "₦5,000",
+    interval: "Month",
+    features: ["50 Products", "Priority Support", "Reduced Fees", "Analytics"],
+    subscribers: 320,
+    status: "Active",
+    color: "bg-blue-50 border-blue-200",
+  },
+  {
+    id: "PLN-PRO",
+    name: "Premium",
+    price: "₦15,000",
+    interval: "Month",
+    features: [
+      "Unlimited Products",
+      "24/7 Support",
+      "Zero Fees",
+      "Advanced Analytics",
+      "Featured Listings",
+    ],
+    subscribers: 114,
+    status: "Active",
+    color: "bg-[#FEFCE8] border-[#FEF08A]", // Gold tint
+  },
+];
+
+export const SUBSCRIBERS = [
+  {
+    vendor: "Tech Haven",
+    plan: "Premium",
+    status: "Active",
+    nextBilling: "Nov 24, 2023",
+  },
+  {
+    vendor: "Bella Fashion",
+    plan: "Standard",
+    status: "Active",
+    nextBilling: "Nov 15, 2023",
+  },
+  {
+    vendor: "Gadget World",
+    plan: "Free Tier",
+    status: "Active",
+    nextBilling: "N/A",
+  },
+];
+
+export const PROMOTION_PACKAGES = [
+  {
+    id: "PKG-HOME",
+    name: "Homepage Featured",
+    price: "₦15,000",
+    duration: "7 Days",
+    status: "Active",
+  },
+  {
+    id: "PKG-CAT",
+    name: "Category Spotlight",
+    price: "₦5,000",
+    duration: "3 Days",
+    status: "Active",
+  },
+  {
+    id: "PKG-SEARCH",
+    name: "Search Boost (Top 3)",
+    price: "₦25,000",
+    duration: "14 Days",
+    status: "Active",
+  },
+];
+
+export const ACTIVE_PROMOTIONS = [
+  {
+    id: "AD-001",
+    vendor: "Tech Haven",
+    product: "iPhone 15 Pro",
+    package: "Homepage Featured",
+    start: "Oct 20",
+    end: "Oct 27",
+    status: "Active",
+  },
+  {
+    id: "AD-002",
+    vendor: "Bella Fashion",
+    product: "Luxury Heels",
+    package: "Category Spotlight",
+    start: "Oct 24",
+    end: "Oct 27",
+    status: "Active",
+  },
+  {
+    id: "AD-003",
+    vendor: "Gadget World",
+    product: "PS5 Console",
+    package: "Search Boost",
+    start: "Oct 10",
+    end: "Oct 24",
+    status: "Expired",
+  },
 ];

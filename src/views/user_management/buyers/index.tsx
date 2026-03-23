@@ -9,7 +9,7 @@ import { Users } from "lucide-react";
 
 export default function BuyersView() {
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-zinc-900 font-sans">
+    <div className="min-h-screen bg-sax-body text-zinc-900 font-sans">
       {/* 1. Reusable Header */}
       <PageHeader
         title="User Management / Buyers"
@@ -46,21 +46,21 @@ export default function BuyersView() {
   );
 }
 
-function MetricBox({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) {
-  return (
-    <div className="bg-white p-4 border border-zinc-200 rounded-lg shadow-sm">
-      <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
-        {label}
-      </p>
-      <p className={`text-2xl font-bold font-mono mt-1 ${color}`}>{value}</p>
-    </div>
-  );
-}
+// function MetricBox({
+//   label,
+//   value,
+//   color,
+// }: {
+//   label: string;
+//   value: string;
+//   color: string;
+// }) {
+//   return (
+//     <div className="bg-white p-4 border border-zinc-200 rounded-lg shadow-sm">
+//       <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
+//         {label}
+//       </p>
+//       <p className={`text-2xl font-bold font-mono mt-1 ${color}`}>{value}</p>
+//     </div>
+//   );
+// }
