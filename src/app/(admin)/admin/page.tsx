@@ -96,15 +96,16 @@ export default function DashboardPage() {
       <main className="p-6 space-y-8 max-w-400 mx-auto">
         {/* ─── 1. KEY METRICS ─── */}
         <section>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Users" value="12,450" icon={Users} />
-            <StatCard label="Total Vendors" value="1,284" icon={Store} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+            <StatCard label="Total Users" value="12,450" icon={Users} variant="gold" />
+            <StatCard label="Total Vendors" value="1,284" icon={Store} variant="cyan" />
             <StatCard
               label="Total Products"
               value="45,200"
               icon={ShoppingBag}
+              variant="indigo"
             />
-            <StatCard label="Total Orders" value="9,731" icon={ShoppingCart} />
+            <StatCard label="Total Orders" value="9,731" icon={ShoppingCart} variant="emerald" />
           </div>
         </section>
 
