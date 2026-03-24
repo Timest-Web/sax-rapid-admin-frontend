@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/cards/status-badge";
 import { CheckCircle, XCircle, Trash2, Save, Store} from "lucide-react";
 
 interface ProductSheetProps {
@@ -36,7 +36,7 @@ export function ProductSheet({ product, open, onOpenChange }: ProductSheetProps)
            <div className="text-zinc-400 font-mono text-xs uppercase tracking-widest">
               [ Product Image ]
            </div>
-           <div className="absolute top-4 right-4">
+           <div className="absolute top-4 left-4">
               <StatusBadge status={product.status} />
            </div>
         </div>

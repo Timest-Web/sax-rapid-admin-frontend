@@ -9,7 +9,7 @@ import { SUBSCRIPTION_PLANS, SUBSCRIBERS } from "@/src/lib/dummy_data";
 import { PlanEditorSheet } from "@/components/plan-editor";
 import { Plus, Check, Edit2 } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/cards/status-badge";
 
 // Subscriber Columns
 const subscriberColumns: ColumnDef<any>[] = [

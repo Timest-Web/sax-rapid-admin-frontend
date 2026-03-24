@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/cards/status-badge";
 import { Eye, MoreHorizontal, Ban } from "lucide-react";
 import Link from "next/link";
 import {

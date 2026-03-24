@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { columns } from "./column";
 import { BUYERS } from "@/src/lib/dummy_data";
-import { StatCard } from "@/components/stat-card";
+import { StatCard } from "@/components/cards/stat-card";
 import { Users } from "lucide-react";
 
 export default function BuyersView() {
@@ -22,19 +22,19 @@ export default function BuyersView() {
           <StatCard
             label="Total Buyers"
             value="12,450"
-            color="text-zinc-900"
+            variant="gold"
             icon={Users}
           />
           <StatCard
             label="New This Month"
             value="+145"
-            color="text-emerald-600"
+            variant="emerald"
             icon={Users}
           />
           <StatCard
             label="Active Now"
             value="842"
-            color="text-[#EAB308]"
+            variant="cyan"
             icon={Users}
           />
         </div>

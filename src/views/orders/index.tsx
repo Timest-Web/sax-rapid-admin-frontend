@@ -32,24 +32,41 @@ export default function OrdersView() {
       <main className="p-6 max-w-400 mx-auto space-y-6">
         {/* METRICS */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <MetricBox label="All Orders" value="9,731" icon={Package} />
+          <MetricBox
+            label="All Orders"
+            value="9,731"
+            icon={Package}
+            gradient="from-slate-50 via-blue-50 to-indigo-100"
+            iconBg="bg-indigo-100"
+            color="text-indigo-700"
+            borderColor="border-indigo-200/60"
+          />
           <MetricBox
             label="Processing"
             value="45"
             icon={Truck}
-            color="text-amber-600"
+            gradient="from-orange-50 via-amber-50 to-yellow-100"
+            iconBg="bg-amber-100"
+            color="text-amber-700"
+            borderColor="border-amber-200/60"
           />
           <MetricBox
             label="Completed"
             value="9,500"
             icon={CheckCircle2}
-            color="text-emerald-600"
+            gradient="from-green-50 via-emerald-50 to-teal-100"
+            iconBg="bg-emerald-100"
+            color="text-emerald-700"
+            borderColor="border-emerald-200/60"
           />
           <MetricBox
             label="Disputes"
             value="12"
             icon={AlertTriangle}
-            color="text-rose-600"
+            gradient="from-red-50 via-rose-50 to-pink-100"
+            iconBg="bg-rose-100"
+            color="text-rose-700"
+            borderColor="border-rose-200/60"
           />
         </div>
 
@@ -98,16 +115,28 @@ export default function OrdersView() {
   );
 }
 
-function MetricBox({ label, value, icon: Icon, color = "text-zinc-900" }: any) {
+function MetricBox({
+  label,
+  value,
+  icon: Icon,
+  gradient = "from-white to-zinc-50",
+  iconBg = "bg-zinc-100",
+  color = "text-zinc-900",
+  borderColor = "border-zinc-200",
+}: any) {
   return (
-    <div className="bg-white p-4 border border-zinc-200 rounded-lg shadow-sm flex items-center justify-between">
+    <div
+      className={`bg-gradient-to-br ${gradient} p-4 border ${borderColor} rounded-lg shadow-sm flex items-center justify-between transition-shadow hover:shadow-md`}
+    >
       <div>
-        <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
+        <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
           {label}
         </p>
         <p className={`text-2xl font-bold font-mono mt-1 ${color}`}>{value}</p>
       </div>
-      <div className="h-10 w-10 rounded bg-zinc-50 flex items-center justify-center text-zinc-400">
+      <div
+        className={`h-10 w-10 rounded-lg ${iconBg} flex items-center justify-center`}
+      >
         <Icon size={20} className={color} />
       </div>
     </div>

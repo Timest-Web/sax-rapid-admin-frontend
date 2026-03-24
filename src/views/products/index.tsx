@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { productColumns } from "./column";
 import { Package, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { PRODUCTS } from "@/src/lib/dummy_data";
+import { StatCard } from "@/components/cards/stat-card";
 
 export default function ProductsView() {
   const pendingProducts = PRODUCTS.filter((p) => p.status === "Pending");
@@ -29,23 +29,23 @@ export default function ProductsView() {
       <main className="p-6 max-w-400 mx-auto space-y-6">
         {/* STATS OVERVIEW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ProductMetric
+          <StatCard
             label="Total Inventory"
             value="45,200"
             icon={Package}
-            color="text-zinc-900"
+            variant="gold"
           />
-          <ProductMetric
+          <StatCard
             label="Moderation Queue"
             value="12"
             icon={AlertTriangle}
-            color="text-[#EAB308]"
+            variant="rose"
           />
-          <ProductMetric
+          <StatCard
             label="Live Products"
             value="44,800"
             icon={CheckCircle2}
-            color="text-emerald-600"
+            variant="emerald"
           />
         </div>
 
@@ -100,21 +100,4 @@ export default function ProductsView() {
   );
 }
 
-function ProductMetric({ label, value, icon: Icon, color }: any) {
-  return (
-    <div className="bg-white p-4 border border-zinc-200 rounded-lg shadow-sm flex items-center justify-between">
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
-          {label}
-        </p>
-        <p className={`text-2xl font-bold font-mono mt-1 ${color}`}>
-          {value}
-        </p>
-      </div>
 
-      <div className="h-10 w-10 rounded bg-zinc-50 flex items-center justify-center">
-        <Icon size={20} className={color} />
-      </div>
-    </div>
-  );
-}

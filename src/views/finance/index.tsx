@@ -19,7 +19,7 @@ import {
   Activity,
 } from "lucide-react";
 import { GatewayConfigModal } from "./actions";
-import { StatCard } from "@/components/stat-card"; 
+import { StatCard } from "@/components/cards/stat-card"; 
 
 export default function FinancePage() {
   return (

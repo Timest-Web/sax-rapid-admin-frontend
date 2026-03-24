@@ -4,11 +4,19 @@
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/cards/status-badge";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Mail, Phone, ArrowLeft, Star } from "lucide-react";
+import {
+  MapPin,
+  Mail,
+  Phone,
+  ArrowLeft,
+  Star,
+  Wallet,
+  ShoppingCart,
+  Calendar
+} from "lucide-react";
 import { VENDORS, VENDOR_PRODUCTS } from "@/src/lib/dummy_data";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -19,6 +27,7 @@ import {
 import { KycViewer } from "./kyc_viewer";
 import { InfoRow } from "@/components/buyers/buyers-helper";
 import { TabItem } from "@/components/tab-item";
+import MetricCard from "@/components/cards/metric-card";
 
 const productColumns: ColumnDef<any>[] = [
   {
@@ -101,7 +110,7 @@ export default function VendorDetailsView() {
         </div>
       </header>
 
-      <main className="p-6 max-w-[1600px] mx-auto space-y-8">
+      <main className="p-6 max-w-400 mx-auto space-y-8">
         {/* ─── TOP SECTION: PROFILE ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* 1. Store Identity */}
@@ -167,12 +176,24 @@ export default function VendorDetailsView() {
 
           {/* 3. Metrics Stack */}
           <div className="lg:col-span-4 flex flex-col gap-3 h-full">
-            <MetricCard label="Total Revenue" value={vendor.totalSales} />
+            <MetricCard
+              label="Total Revenue"
+              value={vendor.totalSales}
+              icon={Wallet}
+              variant="gold"
+            />
             <MetricCard
               label="Active Products"
               value={String(vendor.products)}
+              icon={ShoppingCart}
+              variant="emerald"
             />
-            <MetricCard label="Joined Date" value={vendor.joinedDate} />
+            <MetricCard
+              label="Joined Date"
+              value={vendor.joinedDate}
+              icon={Calendar}
+              variant="indigo"
+            />
           </div>
         </div>
 
@@ -183,16 +204,14 @@ export default function VendorDetailsView() {
             defaultValue={isPending ? "kyc" : "products"}
             className="w-full flex flex-col"
           >
-           <div className="border-b border-zinc-200 mb-6">
+            <div className="border-b border-zinc-200 mb-6">
               <TabsList className="bg-transparent p-0 h-12 justify-start w-full">
-                
                 <TabItem value="products" label="Products" />
 
-               
-               <TabsTrigger
-      value="kyc"
-      className="rounded-none border-b-2 border-transparent px-6 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 data-[state=active]:border-sax-gold data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent transition-all hover:text-zinc-600 flex items-center gap-2"
-    >
+                <TabsTrigger
+                  value="kyc"
+                  className="rounded-none border-b-2 border-transparent px-6 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 data-[state=active]:border-sax-gold data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent transition-all hover:text-zinc-600 flex items-center gap-2"
+                >
                   KYC Documents
                   {isPending && (
                     <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
@@ -200,7 +219,6 @@ export default function VendorDetailsView() {
                 </TabsTrigger>
 
                 <TabItem value="payouts" label="Payout History" />
-                
               </TabsList>
             </div>
 
@@ -242,17 +260,6 @@ export default function VendorDetailsView() {
           </Tabs>
         </div>
       </main>
-    </div>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex-1 bg-white border border-zinc-200 rounded-lg px-5 flex items-center justify-between shadow-sm min-h-[70px]">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-        {label}
-      </p>
-      <p className="text-xl font-bold font-mono text-zinc-900">{value}</p>
     </div>
   );
 }

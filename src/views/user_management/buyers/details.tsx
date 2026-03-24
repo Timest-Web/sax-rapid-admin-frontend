@@ -3,11 +3,11 @@
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/cards/status-badge";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
-import { Phone, MapPin, Calendar, Wallet, ArrowLeft, ShoppingCart, TrendingUp, LucideIcon } from "lucide-react";
+import { Phone, MapPin, Calendar, Wallet, ArrowLeft, ShoppingCart, TrendingUp} from "lucide-react";
 import { BUYER_ORDERS, BUYERS } from "@/src/lib/dummy_data";
 import {
   CreditWalletModal,
@@ -16,6 +16,7 @@ import {
 } from "@/components/buyers/buyers-action";
 import { InfoRow, TabItem } from "@/components/buyers/buyers-helper";
 import { orderColumns } from "./details_column";
+import MetricCard from "@/components/cards/metric-card";
 
 export default function BuyerDetailsView() {
   const params = useParams();
@@ -108,9 +109,9 @@ export default function BuyerDetailsView() {
 
           {/* 3. Metrics Stack (Cols 9-12) */}
           <div className="lg:col-span-4 flex flex-col gap-3 h-full">
-            <MetricCard icon={Wallet} label="Total Spent" value={buyer.totalSpent} />
-            <MetricCard icon={ShoppingCart} label="Total Orders" value={String(buyer.orders)} />
-            <MetricCard icon={TrendingUp} label="Avg. Order Value" value="₦45,000" />
+            <MetricCard icon={Wallet} label="Total Spent" value={buyer.totalSpent} variant="gold" />
+            <MetricCard icon={ShoppingCart} label="Total Orders" value={String(buyer.orders)} variant="indigo" />
+            <MetricCard icon={TrendingUp} label="Avg. Order Value" value="₦45,000" variant="emerald" />
           </div>
         </div>
 
@@ -166,28 +167,6 @@ export default function BuyerDetailsView() {
           </Tabs>
         </div>
       </main>
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: string;
-  icon: LucideIcon;
-}) {
-  return (
-    <div className="flex-1 bg-white border border-zinc-200 rounded-lg px-5 flex items-center justify-between shadow-sm min-h-17.5">
-      <div className="flex flex-col">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-          {label}
-        </p>
-        <p className="text-xl font-bold font-mono text-zinc-900">{value}</p>
-      </div>
-      <Icon className="h-6 w-6 rounded-lg bg-yellow-50 border border-yellow-100 flex items-center justify-center text-sax-gold-dim"/>
     </div>
   );
 }

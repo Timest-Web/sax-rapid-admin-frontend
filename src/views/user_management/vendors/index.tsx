@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -8,6 +7,7 @@ import { Store, UserCheck, FileText } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VENDORS } from "@/src/lib/dummy_data";
 import { vendorColumns } from "./column";
+import { StatCard } from "@/components/cards/stat-card";
 
 export default function VendorsView() {
   // Filter Data
@@ -35,23 +35,23 @@ export default function VendorsView() {
       <main className="p-6 space-y-6 max-w-400 mx-auto">
         {/* METRICS ROW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <VendorMetricBox
+          <StatCard
             label="Total Stores"
             value={String(VENDORS.length)}
             icon={Store}
-            color="text-zinc-900"
+            variant="gold"
           />
-          <VendorMetricBox
+          <StatCard
             label="Active Vendors"
             value={String(activeVendors.length)}
             icon={UserCheck}
-            color="text-emerald-600"
+            variant="emerald"
           />
-          <VendorMetricBox
+          <StatCard
             label="Applications"
             value={String(pendingVendors.length)}
             icon={FileText}
-            color="text-[#EAB308]"
+            variant="cyan"
           />
         </div>
 
@@ -105,18 +105,3 @@ export default function VendorsView() {
   );
 }
 
-function VendorMetricBox({ label, value, icon: Icon, color }: any) {
-  return (
-    <div className="bg-white p-4 border border-zinc-200 rounded-lg shadow-sm flex items-center justify-between">
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
-          {label}
-        </p>
-        <p className={`text-2xl font-bold font-mono mt-1 ${color}`}>{value}</p>
-      </div>
-      <div className="h-10 w-10 rounded bg-zinc-50 flex items-center justify-center text-zinc-400">
-        <Icon size={20} className={color} />
-      </div>
-    </div>
-  );
-}

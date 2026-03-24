@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/cards/status-badge";
 import { ProductSheet } from "./product_sheet";
 import { MoreHorizontal, Eye, Trash2 } from "lucide-react";
 import {

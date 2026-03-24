@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { StatCard } from "@/components/stat-card";
+import { StatCard } from "@/components/cards/stat-card";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Search,
