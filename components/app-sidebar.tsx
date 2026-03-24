@@ -103,16 +103,16 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-zinc-200 bg-[#09090B] text-gray-400"
+      className="border-r border-zinc-200 bg-sax-black text-gray-400"
     >
       {/* HEADER */}
       <SidebarHeader className="h-16 flex items-center justify-center border-b border-white/10">
         <div className="group-data-[collapsible=icon]:hidden text-center">
           <h1 className="text-white font-bold tracking-[0.2em] text-sm">
-            SAX<span className="text-[#EAB308]">.ADMIN</span>
+            SAX<span className="text-sax-gold">.ADMIN</span>
           </h1>
         </div>
-        <div className="hidden group-data-[collapsible=icon]:block text-[#EAB308] font-bold text-xl">
+        <div className="hidden group-data-[collapsible=icon]:block text-sax-gold font-bold text-xl">
           S
         </div>
       </SidebarHeader>
@@ -143,7 +143,7 @@ export function AppSidebar() {
                           h-10 px-6 rounded-none border-l-2 transition-all duration-200 w-full justify-start
                           ${
                             isActive
-                              ? "bg-white/10 border-[#EAB308] text-white" /* White/10 for contrast against black sidebar */
+                              ? "bg-white/10 border-sax-gold text-white" /* White/10 for contrast against black sidebar */
                               : "border-transparent text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
                           }
                         `}
@@ -154,7 +154,7 @@ export function AppSidebar() {
                         >
                           <item.icon
                             size={15}
-                            className={`${isActive ? "text-[#EAB308]" : "text-zinc-500 group-hover:text-zinc-300"}`}
+                            className={`${isActive ? "text-sax-gold" : "text-zinc-500 group-hover:text-zinc-300"}`}
                           />
                           <span className="text-[13px] font-medium tracking-wide">
                             {item.title}
@@ -171,9 +171,9 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* FOOTER */}
-      <SidebarFooter className="border-t border-white/10 p-4 bg-[#09090B]">
+      <SidebarFooter className="border-t border-white/10 p-4 bg-sax-black">
         <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="h-8 w-8 bg-zinc-800 flex items-center justify-center text-xs font-bold text-[#EAB308]">
+          <div className="h-8 w-8 bg-zinc-800 flex items-center justify-center text-xs font-bold text-sax-gold">
             SA
           </div>
           <div className="text-left group-data-[collapsible=icon]:hidden">

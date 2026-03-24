@@ -42,21 +42,24 @@ export default function FinancePage() {
         {/* TOP METRICS (PLATFORM WALLET) */}
         <section className="space-y-3">
           <h3 className="tech-label">Platform Overview</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StatCard
               label="Total Revenue"
               value={FINANCE_STATS.totalRevenue}
               icon={TrendingUp}
+              variant="emerald"
             />
             <StatCard
               label="Commission Earned"
               value={FINANCE_STATS.platformCommission}
               icon={Wallet}
+              variant="cyan"
             />
             <StatCard
               label="Pending Payouts"
               value={FINANCE_STATS.pendingPayouts}
               icon={Activity}
+              variant="gold"
             />
             <div className="bg-sax-black text-white p-6 rounded-xl flex flex-col justify-center gap-2">
               <p className="text-[10px] font-bold uppercase tracking-widest text-sax-gold">

@@ -123,7 +123,7 @@ export const columns: ColumnDef<Buyer>[] = [
               align="end"
               className="w-48 bg-white text-black border-zinc-200"
             >
-              <DropdownMenuLabel className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+              <DropdownMenuLabel className="text-xs text-zinc-400 uppercase tracking-wider">
                 Actions
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zinc-100" />

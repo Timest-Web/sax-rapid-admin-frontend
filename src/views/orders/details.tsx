@@ -12,6 +12,7 @@ import {
   UpdateStatusModal,
 } from "./actions";
 import { ORDER_ITEMS, ORDER_TIMELINE, ORDERS } from "@/src/lib/dummy_data";
+import Image from "next/image";
 
 export default function OrderDetailsView() {
   const params = useParams();
@@ -75,7 +76,14 @@ export default function OrderDetailsView() {
                   >
                     <div className="flex items-center gap-4">
                       {/* Image Placeholder */}
-                      <div className="h-12 w-12 bg-zinc-100 rounded border border-zinc-200"></div>
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={48}
+                        height={48}
+                        className="object-cover rounded border border-zinc-200"
+                      />
+
                       <div>
                         <p className="text-sm font-bold text-zinc-900">
                           {item.name}

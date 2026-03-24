@@ -3,11 +3,12 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 // import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { productColumns } from "./column";
 import { Package, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { PRODUCTS } from "@/src/lib/dummy_data";
 import { StatCard } from "@/components/cards/stat-card";
+import { FilterTabs } from "@/components/tabs/filter-tab";
 
 export default function ProductsView() {
   const pendingProducts = PRODUCTS.filter((p) => p.status === "Pending");
@@ -53,29 +54,28 @@ export default function ProductsView() {
         <div className="space-y-4">
           <Tabs defaultValue="all" className="w-full flex flex-col">
             <div className="flex items-center justify-between">
-              <TabsList className="bg-white border border-zinc-200 h-10 p-1">
-                <TabsTrigger
-                  value="all"
-                  className="text-xs uppercase tracking-wide"
-                >
-                  All Inventory
-                </TabsTrigger>
-                <TabsTrigger
-                  value="pending"
-                  className="text-xs uppercase tracking-wide data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700"
-                >
-                  Needs Approval{" "}
-                  <span className="ml-2 bg-amber-200 text-amber-800 px-1.5 rounded-full text-[9px]">
-                    {pendingProducts.length}
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="rejected"
-                  className="text-xs uppercase tracking-wide"
-                >
-                  Rejected
-                </TabsTrigger>
-              </TabsList>
+              <FilterTabs
+                tabs={[
+                  {
+                    value: "all",
+                    label: "All Inventory",
+                    count: 45,
+                    variant: "emerald",
+                  },
+                  {
+                    value: "pending",
+                    label: "Pending",
+                    count: pendingProducts.length,
+                    variant: "amber",
+                  },
+                  {
+                    value: "rejected",
+                    label: "Rejected",
+                    count: 9,
+                    variant: "rose",
+                  },
+                ]}
+              />
             </div>
 
             <div className="mt-4 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
@@ -99,5 +99,3 @@ export default function ProductsView() {
     </div>
   );
 }
-
-

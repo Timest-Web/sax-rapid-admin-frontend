@@ -7,11 +7,18 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { SUBSCRIPTION_PLANS, SUBSCRIBERS } from "@/src/lib/dummy_data";
 import { PlanEditorSheet } from "@/components/plan-editor";
-import { Plus, Check, Edit2 } from "lucide-react";
+import { PlanCard, type PlanCardProps } from "@/components/cards/plan-card";
+import { Plus } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/cards/status-badge";
 
-// Subscriber Columns
+
+const planVariantMap: Record<string, PlanCardProps["variant"]> = {
+  Basi: "default",
+  Standard: "indigo",
+  Premium: "gold",
+};
+
 const subscriberColumns: ColumnDef<any>[] = [
   {
     accessorKey: "vendor",
@@ -59,7 +66,6 @@ export default function SubscriptionsView() {
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
-      {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
@@ -73,57 +79,22 @@ export default function SubscriptionsView() {
         </Button>
       </header>
 
-      <main className="p-6 max-w-[1600px] mx-auto space-y-8">
-        {/* ─── PLANS PREVIEW ─── */}
+      <main className="p-6 max-w-400 mx-auto space-y-8">
+        {/* ─── PLANS ─── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {SUBSCRIPTION_PLANS.map((plan) => (
-            <div
+            <PlanCard
               key={plan.id}
-              className={`p-6 rounded-xl border relative flex flex-col justify-between h-full ${plan.color}`}
-            >
-              <div className="absolute top-4 right-4">
-                <button
-                  onClick={() => handleEdit(plan)}
-                  className="text-zinc-400 hover:text-zinc-900"
-                >
-                  <Edit2 size={16} />
-                </button>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-bold font-display">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mt-2 mb-6">
-                  <span className="text-3xl font-bold font-mono">
-                    {plan.price}
-                  </span>
-                  <span className="text-xs text-zinc-500 font-medium">
-                    / {plan.interval}
-                  </span>
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feat, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center gap-2 text-xs font-medium text-zinc-700"
-                    >
-                      <Check size={14} className="text-emerald-600" /> {feat}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="pt-4 border-t border-black/5 flex justify-between items-center">
-                <span className="text-xs font-mono text-zinc-500">
-                  {plan.subscribers} Vendors
-                </span>
-                <span
-                  className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-white/50 border border-black/5`}
-                >
-                  {plan.status}
-                </span>
-              </div>
-            </div>
+              name={plan.name}
+              price={plan.price}
+              interval={plan.interval}
+              features={plan.features}
+              subscribers={plan.subscribers}
+              status={plan.status}
+              variant={planVariantMap[plan.name] ?? "default"}
+              featured={plan.name === "Professional"}
+              onEdit={() => handleEdit(plan)}
+            />
           ))}
         </div>
 
@@ -131,14 +102,10 @@ export default function SubscriptionsView() {
         <div className="space-y-4">
           <h3 className="tech-label">Active Subscribers</h3>
           <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-            <DataTable
-              columns={subscriberColumns}
-              data={SUBSCRIBERS}
-            />
+            <DataTable columns={subscriberColumns} data={SUBSCRIBERS} />
           </div>
         </div>
 
-        {/* SHEET */}
         <PlanEditorSheet
           open={isEditorOpen}
           onOpenChange={setIsEditorOpen}

@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 export const productColumns: ColumnDef<any>[] = [
   {
@@ -20,7 +21,7 @@ export const productColumns: ColumnDef<any>[] = [
     accessorKey: "name",
     cell: ({ row }) => (
       <div className="flex items-center gap-3 py-1">
-        <div className="h-10 w-10 bg-zinc-100 rounded border border-zinc-200 shrink-0" />
+        <Image src={row.original.image} alt={row.original.name} width={40} height={40} className="h-10 w-10 rounded border border-zinc-200 shrink-0" />
         <div>
           <p className="font-bold text-zinc-900 font-display line-clamp-1 w-48">
             {row.original.name}

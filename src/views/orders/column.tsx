@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/cards/status-badge";
+import { OrderStatusBadge } from "@/components/cards/status-badge";
 import { Eye, MoreHorizontal, Ban } from "lucide-react";
 import Link from "next/link";
 import {
@@ -76,7 +76,7 @@ export const orderColumns: ColumnDef<Order>[] = [
   {
     header: "Status",
     accessorKey: "status",
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
   },
   {
     id: "actions",

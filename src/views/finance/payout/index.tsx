@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PAYOUT_REQUESTS } from "@/src/lib/dummy_data";
 import { payoutColumns } from "./column";
 import { AlertCircle, History, CheckCircle2 } from "lucide-react";
+import { StatCard } from "@/components/cards/stat-card";
+import { FilterTabs } from "@/components/tabs/filter-tab";
 
 export default function PayoutsView() {
   const pending = PAYOUT_REQUESTS.filter((p) => p.status === "Pending");
@@ -29,49 +31,48 @@ export default function PayoutsView() {
         </Button>
       </header>
 
-      <main className="p-6 max-w-[1600px] mx-auto space-y-6">
+      <main className="p-6 max-w-400 mx-auto space-y-6">
         {/* METRICS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PayoutMetric
+          <StatCard
             label="Pending Requests"
             value={String(pending.length)}
             icon={AlertCircle}
-            color="text-[#EAB308]"
+            variant="rose"
           />
-          <PayoutMetric
+          <StatCard
             label="Processed Today"
             value="12"
             icon={CheckCircle2}
-            color="text-emerald-600"
+            variant="cyan"
           />
-          <PayoutMetric
+          <StatCard
             label="Total Disbursed"
             value="₦45.2M"
             icon={History}
-            color="text-zinc-900"
+            variant="emerald"
           />
         </div>
 
         {/* TABS */}
         <Tabs defaultValue="pending" className="w-full flex flex-col">
           <div className="flex items-center justify-between">
-            <TabsList className="bg-white border border-zinc-200 h-10 p-1">
-              <TabsTrigger
-                value="pending"
-                className="text-xs uppercase tracking-wide data-[state=active]:bg-amber-50 data-[state=active]:text-amber-700"
-              >
-                Queue{" "}
-                <span className="ml-2 bg-amber-200 text-amber-800 px-1.5 rounded-full text-[9px]">
-                  {pending.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="history"
-                className="text-xs uppercase tracking-wide"
-              >
-                History
-              </TabsTrigger>
-            </TabsList>
+            <FilterTabs
+              tabs={[
+                {
+                  value: "pending",
+                  label: "Queue",
+                  count: 45,
+                  variant: "rose",
+                },
+                {
+                  value: "history",
+                  label: "History",
+                  count: 12,
+                  variant: "indigo",
+                },
+              ]}
+            />
           </div>
 
           <div className="mt-4 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">

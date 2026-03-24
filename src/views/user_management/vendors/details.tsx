@@ -26,7 +26,7 @@ import {
 } from "./actions";
 import { KycViewer } from "./kyc_viewer";
 import { InfoRow } from "@/components/buyers/buyers-helper";
-import { TabItem } from "@/components/tab-item";
+import { TabItem } from "@/components/tabs/tab-item";
 import MetricCard from "@/components/cards/metric-card";
 
 const productColumns: ColumnDef<any>[] = [
