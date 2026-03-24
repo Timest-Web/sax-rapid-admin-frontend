@@ -3,11 +3,12 @@
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PROMOTION_PACKAGES, ACTIVE_PROMOTIONS } from "@/src/lib/dummy_data";
 import { adColumns } from "./column";
 import { PackageModal } from "@/components/package-modal";
-import { Megaphone, Zap, BarChart } from "lucide-react";
+import { Megaphone, Zap, BarChart} from "lucide-react";
+import { FilterTabs } from "@/components/tabs/filter-tab";
 
 export default function PromotionsView() {
   return (
@@ -43,25 +44,30 @@ export default function PromotionsView() {
         </div>
 
         {/* TABS */}
-        <Tabs defaultValue="active" className="w-full">
+        <Tabs defaultValue="active" className="w-full flex flex-col">
           <div className="flex items-center justify-between border-b border-zinc-200">
-            <TabsList className="bg-transparent p-0 h-12 justify-start w-full">
-              <TabsTrigger value="active" className="tab-trigger">
-                Active Ads
-              </TabsTrigger>
-              <TabsTrigger value="packages" className="tab-trigger">
-                Pricing Packages
-              </TabsTrigger>
-            </TabsList>
+            <FilterTabs
+              tabs={[
+                {
+                  value: "active",
+                  label: "Active Ads",
+                  count: 12,
+                  variant: "emerald",
+                },
+                {
+                  value: "packages",
+                  label: "Pricing Packages",
+                  count: 45,
+                  variant: "indigo",
+                },
+              ]}
+            />
           </div>
 
           {/* TAB 1: RUNNING ADS */}
           <TabsContent value="active">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
-              <DataTable
-                columns={adColumns}
-                data={ACTIVE_PROMOTIONS}
-              />
+              <DataTable columns={adColumns} data={ACTIVE_PROMOTIONS} />
             </div>
           </TabsContent>
 
@@ -71,7 +77,7 @@ export default function PromotionsView() {
               {PROMOTION_PACKAGES.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="bg-white border border-zinc-200 rounded-xl p-6 flex flex-col justify-between h-48 relative overflow-hidden group hover:border-[#EAB308] transition-colors"
+                  className="bg-white border border-zinc-200 rounded-xl p-6 flex flex-col justify-between h-48 relative overflow-hidden group hover:border-sax-gold transition-colors"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <PackageModal initialData={pkg} />

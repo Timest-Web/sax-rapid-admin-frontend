@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-// ... imports same as before ...
 import {
   LayoutDashboard,
   BarChart3,
@@ -38,11 +37,12 @@ import {
   SidebarMenuButton,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
+import logo from "@/public/images/sax_logo.png";
 
-// ... NAV ARRAY same as before ...
-// (I will omit the full NAV array to save space, paste the previous one here)
+
 const NAV = [
-  // ... Paste the exact NAV array from the previous response ...
+ 
   {
     label: "Overview",
     items: [
@@ -107,11 +107,7 @@ export function AppSidebar() {
     >
       {/* HEADER */}
       <SidebarHeader className="h-16 flex items-center justify-center border-b border-white/10">
-        <div className="group-data-[collapsible=icon]:hidden text-center">
-          <h1 className="text-white font-bold tracking-[0.2em] text-sm">
-            SAX<span className="text-sax-gold">.ADMIN</span>
-          </h1>
-        </div>
+        <div className="px-4"><Image src={logo} alt="SAX Admin" className="h-10 w-full" /></div>
         <div className="hidden group-data-[collapsible=icon]:block text-sax-gold font-bold text-xl">
           S
         </div>
