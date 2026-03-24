@@ -13,52 +13,63 @@ import {
 } from "./column";
 import { StatCard } from "@/components/cards/stat-card";
 
-// --- DUMMY DATA (Ideally move to lib/dummy_data.ts) ---
+// --- DUMMY DATA ---
 const REVIEWS_DATA: Review[] = [
   {
     id: "1",
     customerName: "Alice M.",
+    avatar: "AM",
     vendorName: "Tech Haven",
+    productName: "iPhone 15 Pro Max Case",
     rating: 5,
-    comment: "Amazing service and fast delivery!",
+    comment:
+      "Amazing service and fast delivery! The quality exceeds expectations.",
     date: "2023-10-25",
-    status: "published",
+    status: "active",
   },
   {
     id: "2",
     customerName: "John D.",
+    avatar: "JD",
     vendorName: "Burger King",
+    productName: "Double Whopper Meal",
     rating: 1,
-    comment: "Food was cold and arrived late. Totally unacceptable.",
+    comment: "Food was cold and arrived late. Totally unacceptable experience.",
     date: "2023-10-24",
     status: "flagged",
   },
   {
     id: "3",
     customerName: "Sarah W.",
+    avatar: "SW",
     vendorName: "Style Loft",
+    productName: "Floral Summer Dress",
     rating: 4,
-    comment: "Great fabric but size runs small.",
+    comment: "Great fabric but size runs small. Order one size up.",
     date: "2023-10-23",
-    status: "published",
+    status: "active",
   },
   {
     id: "4",
     customerName: "Mike R.",
+    avatar: "MR",
     vendorName: "Tech Haven",
+    productName: "Wireless Earbuds Gen 2",
     rating: 2,
-    comment: "Product stopped working after 2 days.",
+    comment: "Product stopped working after 2 days. Trying to get a refund.",
     date: "2023-10-22",
     status: "flagged",
   },
   {
     id: "5",
     customerName: "Jenny L.",
+    avatar: "JL",
     vendorName: "Fresh Mart",
+    productName: "Organic Avocados (Pack of 4)",
     rating: 5,
-    comment: "Freshest vegetables in town.",
+    comment: "Freshest vegetables in town. Will order again.",
     date: "2023-10-22",
-    status: "published",
+    status: "active",
   },
 ];
 
@@ -66,6 +77,7 @@ const VENDOR_RATINGS_DATA: VendorRating[] = [
   {
     id: "1",
     vendorName: "Tech Haven",
+    logo: "TH",
     category: "Electronics",
     avgRating: 4.2,
     totalReviews: 128,
@@ -74,6 +86,7 @@ const VENDOR_RATINGS_DATA: VendorRating[] = [
   {
     id: "2",
     vendorName: "Burger King",
+    logo: "BK",
     category: "Food",
     avgRating: 3.5,
     totalReviews: 850,
@@ -82,6 +95,7 @@ const VENDOR_RATINGS_DATA: VendorRating[] = [
   {
     id: "3",
     vendorName: "Style Loft",
+    logo: "SL",
     category: "Fashion",
     avgRating: 4.8,
     totalReviews: 45,
@@ -90,6 +104,7 @@ const VENDOR_RATINGS_DATA: VendorRating[] = [
   {
     id: "4",
     vendorName: "Fresh Mart",
+    logo: "FM",
     category: "Groceries",
     avgRating: 4.9,
     totalReviews: 312,
@@ -109,7 +124,6 @@ export default function ReviewsView() {
             Platform / Reviews & Ratings
           </h1>
         </div>
-        {/* Optional: Add a 'Export Report' button here if needed */}
       </header>
 
       <main className="p-6 max-w-400 mx-auto space-y-8">
@@ -119,13 +133,13 @@ export default function ReviewsView() {
             label="Total Reviews"
             value="1,245"
             icon={MessageSquare}
-            variant="gold"
+            variant="default"
           />
           <StatCard
             label="Avg Platform Rating"
             value="4.5"
             icon={Star}
-            variant="emerald"
+            variant="gold"
           />
           <StatCard
             label="Flagged / Abusive"
