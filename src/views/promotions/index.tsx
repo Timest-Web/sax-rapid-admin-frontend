@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -7,8 +6,9 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { PROMOTION_PACKAGES, ACTIVE_PROMOTIONS } from "@/src/lib/dummy_data";
 import { adColumns } from "./column";
 import { PackageModal } from "@/components/package-modal";
-import { Megaphone, Zap, BarChart} from "lucide-react";
+import { Megaphone, Zap, BarChart } from "lucide-react";
 import { FilterTabs } from "@/components/tabs/filter-tab";
+import { StatCard } from "@/components/cards/stat-card";
 
 export default function PromotionsView() {
   return (
@@ -28,18 +28,23 @@ export default function PromotionsView() {
       <main className="p-6 max-w-400 mx-auto space-y-8">
         {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <AdMetric label="Active Campaigns" value="12" icon={Megaphone} />
-          <AdMetric
+          <StatCard
+            label="Active Campaigns"
+            value="12"
+            icon={Megaphone}
+            variant="emerald"
+          />
+          <StatCard
             label="Ad Revenue (MTD)"
             value="₦450,000"
             icon={BarChart}
-            color="text-emerald-600"
+            variant="cyan"
           />
-          <AdMetric
+          <StatCard
             label="Avg. Click Rate"
             value="4.2%"
             icon={Zap}
-            color="text-[#EAB308]"
+            variant="amber"
           />
         </div>
 
@@ -106,26 +111,6 @@ export default function PromotionsView() {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
-  );
-}
-
-function AdMetric({ label, value, icon: Icon, color }: any) {
-  return (
-    <div className="bg-white p-4 border border-zinc-200 rounded-lg shadow-sm flex items-center justify-between">
-      <div>
-        <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">
-          {label}
-        </p>
-        <p
-          className={`text-2xl font-bold font-mono mt-1 ${color || "text-zinc-900"}`}
-        >
-          {value}
-        </p>
-      </div>
-      <div className="h-10 w-10 rounded bg-zinc-50 flex items-center justify-center text-zinc-400">
-        <Icon size={20} />
-      </div>
     </div>
   );
 }

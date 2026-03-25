@@ -55,11 +55,11 @@ const NAV = [
     items: [
       { title: "Buyers", icon: Users, href: "/admin/buyers" },
       { title: "Vendors", icon: Store, href: "/admin/vendors" },
-      {
-        title: "Vendor Apps",
-        icon: ClipboardList,
-        href: "/admin/vendor-applications",
-      },
+      // {
+      //   title: "Vendor Apps",
+      //   icon: ClipboardList,
+      //   href: "/admin/vendor-applications",
+      // },
       { title: "Roles & Perms", icon: Shield, href: "/admin/roles" },
     ],
   },
