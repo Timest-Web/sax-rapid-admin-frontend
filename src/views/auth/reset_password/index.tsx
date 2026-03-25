@@ -216,11 +216,11 @@ export default function ResetPasswordView() {
                   )}
                 </button>
 
-                {!token && (
+                {/* {!token && (
                   <p className="text-sm text-amber-600">
                     No reset token found in the URL.
                   </p>
-                )}
+                )} */}
 
                 <div className="border-t border-zinc-100 pt-4">
                   <Link
