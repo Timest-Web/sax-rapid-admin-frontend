@@ -75,7 +75,7 @@ export default function AnalyticsView() {
 
       <main className="p-6 max-w-7xl mx-auto space-y-8">
         {/* KEY METRICS */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <StatCard
             label="Total Revenue"
             value="₦12.5M"
