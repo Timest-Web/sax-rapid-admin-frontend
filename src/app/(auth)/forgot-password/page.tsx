@@ -47,9 +47,9 @@ export default function ForgotPasswordPage() {
       <div className="relative z-10 w-full max-w-105 p-6">
         {/* Logo Area */}
         <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <Image src={logo} alt="Logo" width={80} height={32} />
+          <Image src={logo} alt="Logo" width={150} height={50} />
           <h1 className="font-display mt-4 text-2xl font-bold text-white tracking-tight text-center">
-            Recovery
+            Recover Your Account
           </h1>
         </div>
 

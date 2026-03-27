@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
       <div className="relative z-10 w-full max-w-105 p-6">
         {/* Logo Area */}
         <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <Image src={logo} alt="Logo" width={100} height={40} />
+          <Image src={logo} alt="Logo" width={150} height={50} />
           <h1 className="font-display mt-4 text-3xl font-bold text-white tracking-tight text-center">
             Admin Portal
           </h1>
