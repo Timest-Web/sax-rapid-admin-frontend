@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-  Mail,
-  LockKeyhole,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/public/images/sax_logo.png";
@@ -21,155 +15,136 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsLoading(false);
     alert("Login logic goes here");
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-zinc-50">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute left-1/2 top-0 h-105 w-175 -translate-x-1/2 rounded-full bg-sax-gold/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-75 w-75 rounded-full bg-amber-100/40 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-65 w-65 rounded-full bg-zinc-200/40 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.7),transparent_35%)]" />
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-sax-black overflow-hidden selection:bg-sax-gold selection:text-sax-black font-sans">
+      {/* ── ANIMATED BACKGROUND ── */}
+      <div className="absolute inset-0 z-0">
+        {/* Grid Pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `linear-gradient(#EAB308 1px, transparent 1px), linear-gradient(to right, #EAB308 1px, transparent 1px)`,
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        {/* Animated Gold Glow Orbs */}
+        <div
+          className="absolute top-[-10%] left-[-10%] w-125 h-125 bg-sax-gold/10 rounded-full blur-[120px] animate-pulse"
+          style={{ animationDuration: "4s" }}
+        />
+        <div
+          className="absolute bottom-[-10%] right-[-10%] w-125 h-125 bg-sax-zinc/40 rounded-full blur-[120px] animate-pulse"
+          style={{ animationDuration: "7s" }}
+        />
       </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          {/* Logo + heading */}
-          <div className="mb-8 text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-lg shadow-black/5 backdrop-blur-xl">
-                <Image
-                  src={logo}
-                  alt="Sax Logo"
-                  className="h-10 w-auto"
-                  priority
+      {/* ── CONTENT CARD ── */}
+      <div className="relative z-10 w-full max-w-105 p-6">
+        {/* Logo Area */}
+        <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <Image src={logo} alt="Logo" width={100} height={40} />
+          <h1 className="font-display mt-4 text-3xl font-bold text-white tracking-tight text-center">
+            Admin Portal
+          </h1>
+        </div>
+
+        {/* Glassmorphism Form Card */}
+        <div className="backdrop-blur-xl bg-sax-zinc/30 border border-white/10 rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 delay-150">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 font-mono ml-1"
+              >
+                Email Address
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-zinc-500 group-focus-within:text-sax-gold transition-colors duration-300" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@platform.com"
+                  required
+                  className="w-full pl-10 pr-4 h-12 bg-sax-black/50 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-sax-gold/50 focus:border-sax-gold/50 transition-all font-sans text-sm"
                 />
               </div>
             </div>
 
-            {/* <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Secure Admin Portal
-            </div> */}
-
-            <h1 className="mt-5 text-3xl font-semibold tracking-tight text-zinc-900">
-              Welcome back
-            </h1>
-            <p className="mt-2 text-sm text-zinc-500">
-              Sign in to access the admin dashboard.
-            </p>
-          </div>
-
-          {/* Card */}
-          <div className="rounded-2xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-7">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email */}
-              <div className="space-y-1.5">
+            {/* Password Field */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between ml-1">
                 <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-zinc-700"
+                  htmlFor="password"
+                  className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 font-mono"
                 >
-                  Email address
+                  Password
                 </label>
-                <div className="relative">
-                  <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@company.com"
-                    required
-                    className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-3.5 text-sm text-zinc-900 placeholder:text-zinc-400 shadow-sm outline-none transition-all focus:border-sax-gold focus:ring-4 focus:ring-sax-gold/15"
-                  />
-                </div>
+                <Link
+                  href="#"
+                  className="text-[10px] text-sax-gold hover:text-sax-gold-dim transition-colors font-medium"
+                >
+                  Forgot Password?
+                </Link>
               </div>
-
-              {/* Password */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-zinc-700"
-                  >
-                    Password
-                  </label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs font-medium text-sax-gold hover:text-sax-gold/80 transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-zinc-500 group-focus-within:text-sax-gold transition-colors duration-300" />
                 </div>
-
-                <div className="relative">
-                  <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                    className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-11 text-sm text-zinc-900 placeholder:text-zinc-400 shadow-sm outline-none transition-all focus:border-sax-gold focus:ring-4 focus:ring-sax-gold/15"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 transition-colors hover:text-zinc-600"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  required
+                  className="w-full pl-10 pr-10 h-12 bg-sax-black/50 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-sax-gold/50 focus:border-sax-gold/50 transition-all font-sans text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
-
-              {/* Remember / helper */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-zinc-600">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 rounded border-zinc-300 text-sax-gold focus:ring-sax-gold/30"
-                  />
-                  Remember me
-                </label>
-                <span className="text-xs text-zinc-400">Protected session</span>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white shadow-lg shadow-zinc-900/10 transition-all hover:-translate-y-0.5 hover:bg-zinc-800 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Signing in...
-                  </span>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
-            </form>
-
-            {/* Footer note */}
-            <div className="mt-6 border-t border-zinc-100 pt-4 text-center">
-              <p className="text-xs text-zinc-400">
-                Authorized personnel only. All access is monitored and logged.
-              </p>
             </div>
-          </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full h-12 bg-sax-gold text-sax-black font-display font-bold rounded-lg overflow-hidden transition-all hover:bg-sax-gold-dim disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Verifying...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 transition-transform group-hover:translate-x-1">
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              )}
+            </button>
+          </form>
         </div>
       </div>
     </div>
