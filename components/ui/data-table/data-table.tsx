@@ -4,29 +4,32 @@
 import * as React from "react";
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
   useReactTable,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import { DataTableToolbar } from "./data-table-toolbar";
+import { DataTableToolbar, FilterOption } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  filters?: FilterOption[]; // <--- Accept filters from parent
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  filters,
 }: DataTableProps<TData, TValue>) {
-  // 1. Memoize data and columns so React doesn't re-calculate them on every render
   const memoizedData = React.useMemo(() => data, [data]);
   const memoizedColumns = React.useMemo(() => columns, [columns]);
-  
+
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]); // <--- New State
 
   const table = useReactTable({
     data: memoizedData,
@@ -36,17 +39,20 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     state: {
       globalFilter,
+      columnFilters, // <--- Apply state
     },
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters, // <--- Handle changes
   });
 
   return (
     <div className="space-y-4">
       {/* 1. Modular Toolbar */}
-      <DataTableToolbar 
-        table={table} 
-        globalFilter={globalFilter} 
-        setGlobalFilter={setGlobalFilter} 
+      <DataTableToolbar
+        table={table}
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
+        filters={filters} // <--- Pass down config
       />
 
       {/* 2. Main Table */}

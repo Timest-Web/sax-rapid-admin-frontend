@@ -110,7 +110,7 @@ export const columns: ColumnDef<Buyer>[] = [
   },
   {
     id: "actions",
-    cell: ({row}) => {
+    cell: ({ row }) => {
       return (
         <div className="text-right">
           <DropdownMenu>
@@ -127,17 +127,21 @@ export const columns: ColumnDef<Buyer>[] = [
                 Actions
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zinc-100" />
-              <DropdownMenuItem className="text-xs cursor-pointer ">
-              <Link className="flex gap-1" href={`/admin/buyers/${row.original.id}`}>
-                <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" />
-                <p> View Profile</p>
-              </Link>
+              
+              {/* Added asChild so the Next.js Link works properly inside the Radix UI Dropdown */}
+              <DropdownMenuItem asChild className="text-xs cursor-pointer">
+                <Link href={`/admin/buyers/${row.original.id}`} className="flex items-center w-full">
+                  <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" />
+                  View Profile
+                </Link>
               </DropdownMenuItem>
+              
               <DropdownMenuItem className="text-xs cursor-pointer">
-                <RefreshCw className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Reset
-                Password
+                <RefreshCw className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Reset Password
               </DropdownMenuItem>
+              
               <DropdownMenuSeparator className="bg-zinc-100" />
+              
               <DropdownMenuItem className="text-xs cursor-pointer text-rose-600 focus:text-rose-700 focus:bg-rose-50">
                 <ShieldBan className="mr-2 h-3.5 w-3.5" /> Suspend Account
               </DropdownMenuItem>

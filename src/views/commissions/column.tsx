@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -40,22 +39,28 @@ export type CategoryCommission = {
   slug: string;
   totalSales: string;
   revenueGenerated: string;
-  rate: number; // e.g. 5.0
+  rate: number;
   lastUpdated: string;
   status: "active" | "archived";
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   icon: any; // Using Lucide Icon component
 };
 
 // --- Action Component (The Modal) ---
-const CommissionActionCell = ({ row }: { row: any }) => {
+const CommissionActionCell = ({
+  row,
+  onUpdate,
+}: {
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  row: any;
+  onUpdate: (id: string, newRate: number) => void;
+}) => {
   const [rate, setRate] = useState(row.original.rate);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSave = () => {
-    // Simulate API Call
+    onUpdate(row.original.id, rate);
     setIsOpen(false);
-    // In a real app, you would trigger a toast here
-    console.log(`Updated ${row.original.name} to ${rate}%`);
   };
 
   return (
@@ -66,11 +71,16 @@ const CommissionActionCell = ({ row }: { row: any }) => {
             <MoreHorizontal size={16} />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Manage</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="bg-white border-zinc-200">
+          <DropdownMenuLabel className="text-xs text-zinc-500 uppercase tracking-wider font-bold">
+            Manage
+          </DropdownMenuLabel>
           <DialogTrigger asChild>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <Edit3 className="mr-2 h-3.5 w-3.5" /> Edit Rate
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              className="text-xs cursor-pointer"
+            >
+              <Edit3 className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Edit Rate
             </DropdownMenuItem>
           </DialogTrigger>
         </DropdownMenuContent>
@@ -79,7 +89,7 @@ const CommissionActionCell = ({ row }: { row: any }) => {
       <DialogContent className="sm:max-w-[425px] bg-white text-zinc-900">
         <DialogHeader>
           <DialogTitle>Update Commission Rate</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs text-zinc-500">
             Adjust the percentage fee taken from {row.original.name} sales.
           </DialogDescription>
         </DialogHeader>
@@ -95,7 +105,7 @@ const CommissionActionCell = ({ row }: { row: any }) => {
               id="name"
               value={row.original.name}
               disabled
-              className="col-span-3 bg-zinc-100 border-zinc-200"
+              className="col-span-3 bg-zinc-50 border-zinc-200 text-zinc-500 font-medium"
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
@@ -111,7 +121,7 @@ const CommissionActionCell = ({ row }: { row: any }) => {
                 type="number"
                 value={rate}
                 onChange={(e) => setRate(Number(e.target.value))}
-                className="pr-8"
+                className="pr-8 border-zinc-200 focus-visible:ring-zinc-900 font-mono"
               />
               <Percent
                 size={14}
@@ -119,9 +129,9 @@ const CommissionActionCell = ({ row }: { row: any }) => {
               />
             </div>
           </div>
-          <div className="p-3 bg-amber-50 border border-amber-100 rounded text-xs text-amber-800 flex gap-2 items-start">
+          <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-[10px] uppercase tracking-wider font-bold text-amber-800 flex gap-2 items-start mt-2">
             <AlertCircle size={14} className="mt-0.5 shrink-0" />
-            <p>
+            <p className="leading-relaxed">
               Changing this rate will only apply to new orders placed after the
               update.
             </p>
@@ -129,11 +139,13 @@ const CommissionActionCell = ({ row }: { row: any }) => {
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline" className="text-xs">
+              Cancel
+            </Button>
           </DialogClose>
           <Button
             onClick={handleSave}
-            className="bg-zinc-900 hover:bg-zinc-800"
+            className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs"
           >
             <Save className="mr-2 h-4 w-4" /> Save Changes
           </Button>
@@ -143,7 +155,9 @@ const CommissionActionCell = ({ row }: { row: any }) => {
   );
 };
 
-export const commissionColumns: ColumnDef<CategoryCommission>[] = [
+export const getCommissionColumns = (
+  onUpdate: (id: string, newRate: number) => void,
+): ColumnDef<CategoryCommission>[] => [
   {
     header: "Category",
     accessorKey: "name",
@@ -180,7 +194,7 @@ export const commissionColumns: ColumnDef<CategoryCommission>[] = [
           {row.original.rate}%
         </span>
         {row.original.rate > 7 && (
-          <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase">
+          <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
             High
           </span>
         )}
@@ -204,6 +218,6 @@ export const commissionColumns: ColumnDef<CategoryCommission>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <CommissionActionCell row={row} />,
+    cell: ({ row }) => <CommissionActionCell row={row} onUpdate={onUpdate} />,
   },
 ];

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
 import { getPageColumns, getBlogColumns } from "./column";
-import { PageEditorModal, ContentPage, BlogPost } from "./actions";
+import { PageEditorModal, BlogEditorModal, ContentPage, BlogPost } from "./actions";
 
 // --- DUMMY DATA ---
 const INITIAL_PAGES: ContentPage[] = [
@@ -54,6 +54,7 @@ const INITIAL_BLOGS: BlogPost[] = [
   {
     id: "1",
     title: "Top 10 Gadgets for 2024",
+    description: "Discover the most anticipated tech of the year.",
     category: "Tech",
     author: "Sarah J.",
     date: "Oct 20",
@@ -63,6 +64,7 @@ const INITIAL_BLOGS: BlogPost[] = [
   {
     id: "2",
     title: "Summer Fashion Trends",
+    description: "What to wear when the heat turns up.",
     category: "Fashion",
     author: "Mike R.",
     date: "Oct 18",
@@ -79,63 +81,75 @@ export default function CMSView() {
   const [pages, setPages] = useState<ContentPage[]>(INITIAL_PAGES);
   const [blogs, setBlogs] = useState<BlogPost[]>(INITIAL_BLOGS);
 
-  // Editor States
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ContentPage | null>(null);
+  // Editor States (Pages)
+  const [isPageEditorOpen, setIsPageEditorOpen] = useState(false);
+  const [editingPage, setEditingPage] = useState<ContentPage | null>(null);
+
+  // Editor States (Blogs)
+  const [isBlogEditorOpen, setIsBlogEditorOpen] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
 
   // --- HANDLERS FOR PAGES ---
-
-  // 1. Delete Page
   const handleDeletePage = (item: ContentPage) => {
     if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
       setPages(pages.filter((p) => p.id !== item.id));
     }
   };
 
-  // 2. Edit Page (Open Modal)
   const handleEditPage = (item: ContentPage) => {
-    setEditingItem(item);
-    setIsEditorOpen(true);
+    setEditingPage(item);
+    setIsPageEditorOpen(true);
   };
 
-  // 3. Create New Page (Open Modal)
   const handleCreatePage = () => {
-    setEditingItem(null); // Clear previous data
-    setIsEditorOpen(true);
+    setEditingPage(null);
+    setIsPageEditorOpen(true);
   };
 
-  // 4. Save Page (From Modal)
   const handleSavePage = (savedPage: ContentPage) => {
     const exists = pages.find((p) => p.id === savedPage.id);
     if (exists) {
-      // Update existing
       setPages(pages.map((p) => (p.id === savedPage.id ? savedPage : p)));
     } else {
-      // Add new
       setPages([savedPage, ...pages]);
     }
   };
 
-  // 5. View Page (Simulated)
-  const handleViewPage = (item: ContentPage) => {
-    alert(`Simulating preview for: ${item.slug}`);
+  // --- HANDLERS FOR BLOGS ---
+  const handleDeleteBlog = (item: BlogPost) => {
+    if (confirm(`Delete article "${item.title}"?`)) {
+      setBlogs(blogs.filter((b) => b.id !== item.id));
+    }
   };
 
-  // --- HANDLERS FOR BLOGS (Simplified for brevity) ---
-  const handleDeleteBlog = (item: BlogPost) => {
-    setBlogs(blogs.filter((b) => b.id !== item.id));
+  const handleEditBlog = (item: BlogPost) => {
+    setEditingBlog(item);
+    setIsBlogEditorOpen(true);
+  };
+
+  const handleCreateBlog = () => {
+    setEditingBlog(null);
+    setIsBlogEditorOpen(true);
+  };
+
+  const handleSaveBlog = (savedBlog: BlogPost) => {
+    const exists = blogs.find((b) => b.id === savedBlog.id);
+    if (exists) {
+      setBlogs(blogs.map((b) => (b.id === savedBlog.id ? savedBlog : b)));
+    } else {
+      setBlogs([savedBlog, ...blogs]);
+    }
   };
 
   // --- COLUMN CONFIGURATION ---
-  // Pass handlers into column generators
   const pageColumns = getPageColumns({
     onEdit: handleEditPage,
     onDelete: handleDeletePage,
-    onView: handleViewPage,
+    onView: (item) => alert(`Simulating preview for: ${item.slug}`),
   });
 
   const blogColumns = getBlogColumns({
-    onEdit: (item) => alert(`Editing blog: ${item.title}`),
+    onEdit: handleEditBlog,
     onDelete: handleDeleteBlog,
     onView: (item) => alert(`Reading: ${item.title}`),
   });
@@ -231,7 +245,10 @@ export default function CMSView() {
           <TabsContent value="blog">
             <div className="mt-6 space-y-4">
               <div className="flex justify-end">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-xs text-white">
+                <Button 
+                  onClick={handleCreateBlog}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-xs text-white"
+                >
                   <Plus size={16} className="mr-2" /> Write Article
                 </Button>
               </div>
@@ -252,7 +269,6 @@ export default function CMSView() {
                   Add Hero Banner
                 </p>
               </div>
-              {/* Static Banners for visual demo */}
               <BannerCard
                 title="Black Friday Sale"
                 color="bg-zinc-900"
@@ -268,12 +284,19 @@ export default function CMSView() {
         </Tabs>
       </main>
 
-      {/* SHARED EDITOR MODAL */}
+      {/* MODALS */}
       <PageEditorModal
-        isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
-        initialData={editingItem}
+        isOpen={isPageEditorOpen}
+        onClose={() => setIsPageEditorOpen(false)}
+        initialData={editingPage}
         onSave={handleSavePage}
+      />
+
+      <BlogEditorModal
+        isOpen={isBlogEditorOpen}
+        onClose={() => setIsBlogEditorOpen(false)}
+        initialData={editingBlog}
+        onSave={handleSaveBlog}
       />
     </div>
   );

@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/cards/status-badge";
-import { ProductSheet } from "./product_sheet";
 import { MoreHorizontal, Eye, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -14,6 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import Image from "next/image";
+import Link from "next/link";
 
 export const productColumns: ColumnDef<any>[] = [
   {
@@ -21,7 +20,7 @@ export const productColumns: ColumnDef<any>[] = [
     accessorKey: "name",
     cell: ({ row }) => (
       <div className="flex items-center gap-3 py-1">
-        <Image src={row.original.image} alt={row.original.name} width={40} height={40} className="h-10 w-10 rounded border border-zinc-200 shrink-0" />
+        <Image src={row.original.image} alt={row.original.name} width={40} height={40} className="h-10 w-10 rounded border border-zinc-200 shrink-0 object-cover" />
         <div>
           <p className="font-bold text-zinc-900 font-display line-clamp-1 w-48">
             {row.original.name}
@@ -67,16 +66,7 @@ export const productColumns: ColumnDef<any>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <ProductActionCell product={row.original} />,
-  },
-];
-
-// Helper to manage sheet state per row
-const ProductActionCell = ({ product }: { product: any }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
+    cell: ({ row }) => (
       <div className="text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -84,21 +74,20 @@ const ProductActionCell = ({ product }: { product: any }) => {
               <MoreHorizontal size={16} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => setOpen(true)}
-              className="text-xs cursor-pointer"
-            >
-              <Eye className="mr-2 h-3.5 w-3.5" /> Inspect / Edit
+          <DropdownMenuContent align="end" className="border-zinc-200">
+            {/* Navigates directly to the comprehensive edit page */}
+            <DropdownMenuItem asChild className="text-xs cursor-pointer">
+              <Link href={`/admin/products/${row.original.id}`} className="flex items-center w-full">
+                <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Inspect / Edit
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="bg-zinc-100" />
             <DropdownMenuItem className="text-xs text-rose-600 cursor-pointer">
               <Trash2 className="mr-2 h-3.5 w-3.5" /> Remove
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <ProductSheet product={product} open={open} onOpenChange={setOpen} />
-    </>
-  );
-};
+    ),
+  },
+];

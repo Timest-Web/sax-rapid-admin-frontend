@@ -10,6 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+export type RegionState = {
+  id: string;
+  name: string;
+  status: "active" | "inactive";
+};
+
 export type Country = {
   id: string;
   name: string;
@@ -17,16 +23,24 @@ export type Country = {
   currency: string;
   gateway: string;
   regions: number;
-  status: string;
+  status: "active" | "inactive";
+  statesList: RegionState[]; // Added to manage specific states
 };
 
-export const countryColumns: ColumnDef<Country>[] = [
+interface CountryActions {
+  onManageStates: (country: Country) => void;
+  onEditConfig: (country: Country) => void;
+}
+
+export const getCountryColumns = ({
+  onManageStates,
+  onEditConfig,
+}: CountryActions): ColumnDef<Country>[] => [
   {
     header: "Country",
     accessorKey: "name",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        {/* Flag Placeholder - In real app use a flag library */}
         <div className="h-8 w-10 bg-zinc-100 rounded border border-zinc-200 flex items-center justify-center font-bold text-xs text-zinc-400">
           {row.original.code}
         </div>
@@ -50,7 +64,7 @@ export const countryColumns: ColumnDef<Country>[] = [
           <span className="text-zinc-400">Curr:</span> {row.original.currency}
         </div>
         <div className="flex items-center gap-1.5 text-xs font-medium">
-          <Wallet size={10} className="text-sax-gold" /> {row.original.gateway}
+          <Wallet size={10} className="text-[#EAB308]" /> {row.original.gateway}
         </div>
       </div>
     ),
@@ -62,7 +76,7 @@ export const countryColumns: ColumnDef<Country>[] = [
       <div className="flex items-center gap-2">
         <Map size={12} className="text-zinc-400" />
         <span className="font-mono text-xs">
-          {row.original.regions} Regions
+          {row.original.statesList.length} Regions
         </span>
       </div>
     ),
@@ -74,28 +88,33 @@ export const countryColumns: ColumnDef<Country>[] = [
   },
   {
     id: "actions",
-    cell: () => (
-      <div className="text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="h-8 w-8 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors">
-              <MoreHorizontal size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-48 bg-white border-zinc-200"
-          >
-            <DropdownMenuItem className="text-xs text-black cursor-pointer">
-              <Map className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Manage States
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-xs text-black cursor-pointer">
-              <Settings className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Edit
-              Config
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const country = row.original;
+      return (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="h-8 w-8 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900 transition-colors">
+                <MoreHorizontal size={16} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-white border-zinc-200">
+              <DropdownMenuItem
+                onClick={() => onManageStates(country)}
+                className="text-xs text-black cursor-pointer"
+              >
+                <Map className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Manage States
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onEditConfig(country)}
+                className="text-xs text-black cursor-pointer"
+              >
+                <Settings className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Edit Config
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
   },
 ];

@@ -1,16 +1,9 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ShippingZone, DeliveryProvider } from "./types";
+import { DeliveryProvider } from "./types";
 import { StatusBadge } from "@/components/cards/status-badge";
-import {
-  MoreHorizontal,
-  Edit,
-  Trash,
-  Truck,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
+import { MoreHorizontal, Trash, Truck, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,52 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// --- ZONE COLUMNS ---
-export const zoneColumns: ColumnDef<ShippingZone>[] = [
-  {
-    accessorKey: "name",
-    header: "Zone Region",
-    cell: ({ row }) => (
-      <div className="font-bold text-zinc-900">{row.getValue("name")}</div>
-    ),
-  },
-  {
-    accessorKey: "baseFee",
-    header: "Shipping Fee",
-    cell: ({ row }) => (
-      <div className="font-mono text-zinc-900">
-        ₦{Number(row.getValue("baseFee")).toLocaleString()}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "duration",
-    header: "Est. Time",
-    cell: ({ row }) => (
-      <div className="text-xs text-zinc-500 font-mono">
-        {row.original.minDays} - {row.original.maxDays} Business Days
-      </div>
-    ),
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
-  },
-  {
-    id: "actions",
-    cell: () => (
-      <div className="text-right">
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal size={16} />
-        </Button>
-      </div>
-    ),
-  },
-];
-
-// --- PROVIDER COLUMNS ---
-export const providerColumns: ColumnDef<DeliveryProvider>[] = [
+// Exporting as a function so we can pass the delete handler from the main view
+export const getProviderColumns = (
+  onDelete: (id: string) => void
+): ColumnDef<DeliveryProvider>[] => [
   {
     accessorKey: "name",
     header: "Provider",
@@ -113,5 +64,30 @@ export const providerColumns: ColumnDef<DeliveryProvider>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const provider = row.original;
+      return (
+        <div className="text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => onDelete(provider.id)} 
+                className="text-red-600 focus:text-red-700 cursor-pointer"
+              >
+                <Trash size={14} className="mr-2" /> Remove Partner
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
   },
 ];

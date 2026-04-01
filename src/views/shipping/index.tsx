@@ -1,109 +1,72 @@
+/* eslint-disable react-hooks/preserve-manual-memoization */
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { Button } from "@/components/ui/button";
-import { Plus, Map, Truck, Globe, Settings2 } from "lucide-react";
+import { Plus, Truck, Globe, Settings2, Star } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
-import { zoneColumns, providerColumns } from "./column";
-import { ManageZoneModal, ManageProviderModal } from "./actions";
-import { ShippingZone, DeliveryProvider } from "./types";
+import { getProviderColumns } from "./column";
+import { ManageProviderModal } from "./actions";
+import { DeliveryProvider } from "./types";
 
 // --- INITIAL DUMMY DATA ---
-const INITIAL_ZONES: ShippingZone[] = [
-  {
-    id: "1",
-    name: "Lagos (Island)",
-    baseFee: 1500,
-    minDays: 1,
-    maxDays: 2,
-    status: "active",
-  },
-  {
-    id: "2",
-    name: "Lagos (Mainland)",
-    baseFee: 1200,
-    minDays: 1,
-    maxDays: 2,
-    status: "active",
-  },
-  {
-    id: "3",
-    name: "Abuja (FCT)",
-    baseFee: 3500,
-    minDays: 2,
-    maxDays: 4,
-    status: "active",
-  },
-  {
-    id: "4",
-    name: "Port Harcourt",
-    baseFee: 4000,
-    minDays: 3,
-    maxDays: 5,
-    status: "active",
-  },
-  {
-    id: "5",
-    name: "Nationwide (Remote)",
-    baseFee: 7500,
-    minDays: 5,
-    maxDays: 10,
-    status: "inactive",
-  },
-];
-
 const INITIAL_PROVIDERS: DeliveryProvider[] = [
   {
     id: "1",
-    name: "GIG Logistics",
+    name: "Uber",
     type: "integrated",
     rating: 4.5,
     activeShipments: 124,
     status: "active",
-    logo: "GI",
+    logo: "UB",
   },
   {
     id: "2",
-    name: "DHL Express",
+    name: "Bolt",
     type: "integrated",
     rating: 4.8,
     activeShipments: 45,
     status: "active",
-    logo: "DH",
-  },
-  {
-    id: "3",
-    name: "Local Riders Co.",
-    type: "manual",
-    rating: 3.9,
-    activeShipments: 212,
-    status: "active",
-    logo: "LR",
+    logo: "BO",
   },
 ];
 
 export default function ShippingView() {
   // --- STATE FOR INTERACTIVITY ---
-  const [zones, setZones] = useState<ShippingZone[]>(INITIAL_ZONES);
   const [providers, setProviders] =
     useState<DeliveryProvider[]>(INITIAL_PROVIDERS);
-
-  // Modal States
-  const [isZoneModalOpen, setIsZoneModalOpen] = useState(false);
   const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
 
   // Handlers
-  const handleAddZone = (newZone: ShippingZone) => {
-    setZones([newZone, ...zones]);
-  };
-
   const handleAddProvider = (newProvider: DeliveryProvider) => {
     setProviders([newProvider, ...providers]);
   };
+
+  const handleDeleteProvider = (id: string) => {
+    setProviders(providers.filter((provider) => provider.id !== id));
+  };
+
+  // Dynamic Statistics
+  const totalShipments = providers.reduce(
+    (sum, p) => sum + p.activeShipments,
+    0,
+  );
+  const avgRating =
+    providers.length > 0
+      ? (
+          providers.reduce((sum, p) => sum + p.rating, 0) / providers.length
+        ).toFixed(1)
+      : "0.0";
+
+  // Init columns with the delete handler
+  const columns = useMemo(
+    () => getProviderColumns(handleDeleteProvider),
+    [providers],
+  );
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
@@ -125,36 +88,32 @@ export default function ShippingView() {
         {/* STATS OVERVIEW */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
-            label="Active Zones"
-            value={zones.filter((z) => z.status === "active").length.toString()}
-            icon={Map}
+            label="Active Partners"
+            value={providers
+              .filter((p) => p.status === "active")
+              .length.toString()}
+            icon={Truck}
             variant="default"
           />
           <StatCard
-            label="Partner Fleet"
-            value={providers.length.toString()}
-            icon={Truck}
+            label="Total Active Shipments"
+            value={totalShipments.toString()}
+            icon={Globe}
             variant="indigo"
           />
           <StatCard
-            label="Avg. Delivery Cost"
-            value="₦2,850"
-            icon={Globe}
+            label="Avg. Partner Rating"
+            value={`${avgRating} / 5.0`}
+            icon={Star}
             variant="emerald"
           />
         </div>
 
         {/* TABS & ACTIONS */}
-        <Tabs defaultValue="zones" className="w-full flex flex-col">
+        <Tabs defaultValue="providers" className="w-full flex flex-col">
           <div className="flex items-center justify-between border-b border-zinc-200">
             <FilterTabs
               tabs={[
-                {
-                  value: "zones",
-                  label: "Delivery Zones & Rates",
-                  count: zones.length,
-                  variant: "amber",
-                },
                 {
                   value: "providers",
                   label: "Logistics Partners",
@@ -165,24 +124,7 @@ export default function ShippingView() {
             />
           </div>
 
-          {/* TAB 1: ZONES */}
-          <TabsContent value="zones">
-            <div className="mt-6 space-y-4">
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setIsZoneModalOpen(true)}
-                  className="bg-zinc-900 hover:bg-zinc-800 text-xs"
-                >
-                  <Plus size={16} className="mr-2" /> Add New Zone
-                </Button>
-              </div>
-              <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <DataTable columns={zoneColumns} data={zones} />
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* TAB 2: PROVIDERS */}
+          {/* TAB: PROVIDERS */}
           <TabsContent value="providers">
             <div className="mt-6 space-y-4">
               <div className="flex justify-end">
@@ -194,7 +136,7 @@ export default function ShippingView() {
                 </Button>
               </div>
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <DataTable columns={providerColumns} data={providers} />
+                <DataTable columns={columns} data={providers}  />
               </div>
             </div>
           </TabsContent>
@@ -202,12 +144,6 @@ export default function ShippingView() {
       </main>
 
       {/* MODALS */}
-      <ManageZoneModal
-        isOpen={isZoneModalOpen}
-        onClose={() => setIsZoneModalOpen(false)}
-        onSave={handleAddZone}
-      />
-
       <ManageProviderModal
         isOpen={isProviderModalOpen}
         onClose={() => setIsProviderModalOpen(false)}

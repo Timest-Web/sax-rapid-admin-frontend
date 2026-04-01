@@ -1,14 +1,31 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import { Eye, Clock, Globe, Laptop, Key } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
+// ─── 1. SIMPLE ORDER COLUMNS ───
 export type Order = {
   id: string;
   date: string;
   items: number;
   total: string;
   status: string;
+};
+
+// Component to dynamically grab the buyerId from the URL for the link
+const OrderActionLink = ({ orderId }: { orderId: string }) => {
+  const params = useParams();
+  const buyerId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
+
+  return (
+    <Link href={`/admin/buyers/${buyerId}/orders/${orderId}`}>
+      <button className="p-1.5 border border-zinc-200 text-zinc-500 hover:bg-zinc-900 hover:text-white transition-colors rounded">
+        <Eye size={14} />
+      </button>
+    </Link>
+  );
 };
 
 export const orderColumns: ColumnDef<Order>[] = [
@@ -69,10 +86,65 @@ export const orderColumns: ColumnDef<Order>[] = [
   },
   {
     id: "actions",
-    cell: () => (
-      <button className="p-1.5 border border-zinc-200 hover:bg-zinc-900 hover:text-white transition-colors rounded">
-        <Eye size={14} />
-      </button>
+    cell: ({ row }) => <OrderActionLink orderId={row.original.id} />,
+  },
+];
+
+// ─── 2. ACTIVITY LOG COLUMNS ───
+export type ActivityLog = {
+  id: string;
+  action: string;
+  ipLocation: string;
+  browser: string;
+  timestamp: string;
+};
+
+export const activityColumns: ColumnDef<ActivityLog>[] = [
+  {
+    header: "Action",
+    accessorKey: "action",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <div className="h-8 w-8 bg-zinc-50 border border-zinc-200 rounded flex items-center justify-center text-zinc-500">
+          <Key size={14} />
+        </div>
+        <span className="font-bold text-xs text-zinc-900">{row.original.action}</span>
+      </div>
+    ),
+  },
+  {
+    header: "IP Address / Location",
+    accessorKey: "ipLocation",
+    cell: ({ row }) => {
+      const [ip, loc] = row.original.ipLocation.split("/");
+      return (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-mono text-xs text-zinc-900">{ip}</span>
+          <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+            <Globe size={10} /> {loc}
+          </div>
+        </div>
+      );
+    },
+  },
+  {
+    header: "Browser & OS",
+    accessorKey: "browser",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2 text-xs text-zinc-600">
+        <Laptop size={14} className="text-zinc-400" />
+        {row.original.browser}
+      </div>
+    ),
+  },
+  {
+    header: "Timestamp",
+    accessorKey: "timestamp",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono">
+        <Clock size={12} />
+        {row.original.timestamp}
+      </div>
     ),
   },
 ];
