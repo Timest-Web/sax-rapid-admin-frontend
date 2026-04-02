@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Image as ImageIcon, UploadCloud } from "lucide-react";
+import { FileText, Image as ImageIcon, UploadCloud, Edit3 } from "lucide-react";
 
 // --- TYPES ---
 export type ContentPage = {
@@ -45,7 +46,9 @@ export type BlogPost = {
   views: number;
 };
 
-// --- PAGE EDITOR MODAL ---
+// ==========================================
+// MODAL: PAGE EDITOR (CMS)
+// ==========================================
 interface PageEditorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -72,7 +75,8 @@ export function PageEditorModal({
     }
   }, [isOpen, initialData]);
 
-  const handleSave = () => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!title) return;
 
     const newPage: ContentPage = {
@@ -91,57 +95,91 @@ export function PageEditorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] h-[80vh] flex flex-col bg-white text-zinc-900">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText size={18} />{" "}
-            {initialData ? "Edit Content" : "Create New Page"}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[800px] h-[85vh] flex flex-col bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
+        {/* ─── HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                <FileText size={16} />
+              </div>
+              {initialData ? "Edit Content Page" : "Create Content Page"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+              Manage core platform pages like Terms of Service, Privacy Policy, or custom landing pages.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="flex-1 flex flex-col gap-4 py-4 overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Page Title</Label>
+        {/* ─── FORM BODY ─── */}
+        <form
+          id="pageForm"
+          onSubmit={handleSave}
+          className="flex-1 overflow-y-auto p-6 space-y-5 flex flex-col custom-scrollbar"
+        >
+          <div className="grid grid-cols-2 gap-5 shrink-0">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Page Title <span className="text-[#D4AF37]">*</span>
+              </Label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Refund Policy"
+                required
+                className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
               />
             </div>
-            <div className="space-y-2">
-              <Label>URL Slug</Label>
-              <div className="flex items-center">
-                <span className="bg-zinc-100 border border-r-0 border-zinc-200 px-3 py-2 text-sm text-zinc-500 rounded-l-md">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                URL Slug
+              </Label>
+              <div className="flex items-center h-11 rounded-lg border border-zinc-200 bg-zinc-50/50 overflow-hidden focus-within:border-[#D4AF37] focus-within:ring-1 focus-within:ring-[#D4AF37] transition-all">
+                <span className="flex items-center justify-center px-4 bg-zinc-100 border-r border-zinc-200 text-xs font-bold text-zinc-500 uppercase tracking-widest h-full">
                   /pages
                 </span>
                 <Input
-                  className="rounded-l-none"
+                  className="h-full border-0 focus-visible:ring-0 bg-transparent rounded-none"
                   placeholder="/refund-policy"
                   value={`/${title.toLowerCase().replace(/\s+/g, "-")}`}
                   readOnly
+                  tabIndex={-1}
                 />
               </div>
             </div>
           </div>
 
-          <div className="space-y-2 flex-1 flex flex-col">
-            <Label>Content Body (Rich Text)</Label>
+          <div className="space-y-1.5 flex-1 flex flex-col">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Content Body (Rich Text) <span className="text-[#D4AF37]">*</span>
+            </Label>
             <Textarea
-              className="flex-1 font-mono text-sm bg-zinc-50 resize-none p-4 focus:ring-zinc-900"
+              className="flex-1 resize-none p-4 custom-scrollbar bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="# Start typing in Markdown or HTML..."
+              placeholder="# Start typing your Markdown or HTML content here..."
+              required
             />
           </div>
-        </div>
+        </form>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="bg-zinc-900 text-white">
+        {/* ─── FOOTER ─── */}
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse bg-white shrink-0">
+          <Button
+            type="submit"
+            form="pageForm"
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
+          >
             {initialData ? "Update Page" : "Publish Page"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+          >
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -149,7 +187,9 @@ export function PageEditorModal({
   );
 }
 
-// --- BLOG EDITOR MODAL (NEW) ---
+// ==========================================
+// MODAL: BLOG EDITOR
+// ==========================================
 interface BlogEditorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -179,7 +219,8 @@ export function BlogEditorModal({
     }
   }, [isOpen, initialData]);
 
-  const handleSave = () => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!title || !category) return;
 
     const newBlog: BlogPost = {
@@ -199,30 +240,50 @@ export function BlogEditorModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] bg-white text-zinc-900">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText size={18} />{" "}
-            {initialData ? "Edit Article" : "Write New Article"}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[650px] max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col">
+        {/* ─── HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                <Edit3 size={16} />
+              </div>
+              {initialData ? "Edit Article" : "Write New Article"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+              Publish news, guides, and platform updates to the community blog.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="grid gap-6 py-4">
+        {/* ─── FORM BODY ─── */}
+        <form
+          id="blogForm"
+          onSubmit={handleSave}
+          className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar"
+        >
           {/* Title */}
-          <div className="space-y-2">
-            <Label>Post Title</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Post Title <span className="text-[#D4AF37]">*</span>
+            </Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. 10 Tips for Better Logistics"
+              required
+              className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
             />
           </div>
 
           {/* Category */}
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Category <span className="text-[#D4AF37]">*</span>
+            </Label>
+            <Select value={category} onValueChange={setCategory} required>
+              <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-bold focus:ring-[#D4AF37] transition-all rounded-lg">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
@@ -236,36 +297,51 @@ export function BlogEditorModal({
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label>Short Description / Excerpt</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Short Description / Excerpt
+            </Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="A brief summary of your article..."
-              rows={3}
-              className="resize-none"
+              className="resize-none h-24 bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-[#D4AF37] rounded-lg custom-scrollbar"
             />
           </div>
 
           {/* Featured Image Upload (Visual Mockup) */}
-          <div className="space-y-2">
-            <Label>Featured Image</Label>
-            <div className="border-2 border-dashed border-zinc-200 rounded-lg p-6 flex flex-col items-center justify-center bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer group">
-              <div className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center text-zinc-400 group-hover:text-indigo-600 mb-3">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Featured Image
+            </Label>
+            <div className="border-2 border-dashed border-zinc-200 rounded-xl p-8 flex flex-col items-center justify-center bg-zinc-50/50 hover:bg-zinc-100 hover:border-[#D4AF37]/50 transition-all cursor-pointer group">
+              <div className="h-12 w-12 rounded-full bg-white shadow-sm flex items-center justify-center text-zinc-400 group-hover:text-[#D4AF37] group-hover:bg-zinc-900 transition-all mb-4">
                 <UploadCloud size={20} />
               </div>
-              <p className="text-sm font-bold text-zinc-600">Click to upload image</p>
-              <p className="text-xs text-zinc-400 mt-1">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+              <p className="text-sm font-bold text-zinc-900">Click to upload image</p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-400 mt-2 font-bold">
+                SVG, PNG, JPG (MAX. 800x400px)
+              </p>
             </div>
           </div>
-        </div>
+        </form>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+        {/* ─── FOOTER ─── */}
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse bg-white shrink-0">
+          <Button
+            type="submit"
+            form="blogForm"
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
+          >
             {initialData ? "Update Article" : "Publish Article"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+          >
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>

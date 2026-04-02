@@ -164,15 +164,15 @@ export default function FinancePage() {
           <Tabs defaultValue="transactions" className="w-full flex flex-col">
             <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-200 gap-4 md:gap-0">
               <TabsList className="bg-transparent p-0 h-12 justify-start">
-                <TabItem value="transactions" label="Transaction Log" />
-                <TabItem value="wallets" label="Vendor Wallets" />
-                <TabItem value="gateways" label="Payment Gateways" />
+                <TabTrigger value="transactions" label="Transaction Log" />
+                <TabTrigger value="wallets" label="Vendor Wallets" />
+                <TabTrigger value="gateways" label="Payment Gateways" />
               </TabsList>
 
               {/* GLOBAL FILTERS (Date & Status) */}
               <div className="flex items-center gap-2 pb-2 md:pb-0">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="h-9 w-[140px] text-xs bg-white shadow-sm border-zinc-200">
+                  <SelectTrigger className="h-9 w-35 text-xs bg-white shadow-sm border-zinc-200">
                     <SelectValue placeholder="All Statuses" />
                   </SelectTrigger>
                   <SelectContent>
@@ -270,17 +270,17 @@ export default function FinancePage() {
 
 // ─── LOCAL COMPONENTS ───
 
-function TabItem({ value, label }: { value: string; label: string }) {
+function TabTrigger({ value, label, hasPulse = false }: { value: string; label: string; hasPulse?: boolean }) {
   return (
     <TabsTrigger
       value={value}
-      className="rounded-none border-b-2 border-transparent px-6 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 data-[state=active]:border-[#EAB308] data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent transition-all"
+      className="rounded-full px-6 py-2 text-xs font-bold uppercase tracking-widest text-zinc-500 data-[state=active]:bg-zinc-900 data-[state=active]:text-[#D4AF37] transition-all hover:text-zinc-900 data-[state=active]:hover:text-[#D4AF37] flex items-center gap-2"
     >
       {label}
+      {hasPulse && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
     </TabsTrigger>
   );
 }
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function GatewayCard({ name, status, transactions, volume }: any) {
   return (
@@ -312,7 +312,7 @@ function GatewayCard({ name, status, transactions, volume }: any) {
           </span>
         </div>
         <div className="w-full bg-zinc-100 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div className="bg-[#EAB308] h-full w-[70%]" />
+          <div className="bg-sax-gold h-full w-[70%]" />
         </div>
       </div>
     </div>

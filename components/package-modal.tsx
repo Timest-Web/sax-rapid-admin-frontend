@@ -8,6 +8,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,9 +31,9 @@ export function PackageModal({ initialData }: { initialData?: any }) {
 
   // Form States
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("0");
+  const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("NGN");
-  const [duration, setDuration] = useState("1");
+  const [duration, setDuration] = useState("");
   const [description, setDescription] = useState("");
 
   // Populate data when modal opens
@@ -39,21 +41,22 @@ export function PackageModal({ initialData }: { initialData?: any }) {
     if (open) {
       if (isEdit) {
         setName(initialData.name || "");
-        setPrice(initialData.price?.toString().replace(/[^0-9.]/g, "") || "0");
+        setPrice(initialData.price?.toString().replace(/[^0-9.]/g, "") || "");
         setCurrency(initialData.currency || "NGN");
-        setDuration(initialData.duration?.toString().replace(/[^0-9]/g, "") || "1");
+        setDuration(initialData.duration?.toString().replace(/[^0-9]/g, "") || "");
         setDescription(initialData.description || "");
       } else {
         setName("");
-        setPrice("0");
+        setPrice("");
         setCurrency("NGN");
-        setDuration("1");
+        setDuration("");
         setDescription("");
       }
     }
   }, [open, isEdit, initialData]);
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     console.log({ name, price, currency, duration, description });
     setOpen(false);
   };
@@ -65,129 +68,139 @@ export function PackageModal({ initialData }: { initialData?: any }) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-zinc-500 hover:text-emerald-600 bg-white shadow-sm border border-zinc-200 rounded-full"
+            className="h-8 w-8 bg-white/80 backdrop-blur border border-zinc-200 text-zinc-600 hover:text-[#D4AF37] hover:bg-zinc-900 hover:border-zinc-900 shadow-sm rounded-lg transition-all"
           >
             <Edit2 size={14} />
           </Button>
         ) : (
-          <Button className="bg-[#059669] hover:bg-[#047857] text-white font-bold text-[11px] tracking-widest uppercase rounded-md h-10 px-4">
-            <Plus className="mr-2 h-4 w-4" /> New Package
+          <Button className="bg-zinc-900 hover:bg-[#D4AF37] hover:text-black transition-colors text-white text-xs gap-2 rounded-lg px-4 h-9 font-bold uppercase tracking-widest">
+            <Plus size={14} className="mr-1" /> New Package
           </Button>
         )}
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[500px] bg-white text-zinc-900 rounded-2xl p-0 overflow-hidden border-0 shadow-2xl">
-        {/* HEADER */}
-        <DialogHeader className="p-6 pb-4 flex flex-row items-center gap-4 space-y-0 border-b border-zinc-100">
-          <div className="h-12 w-12 rounded-full bg-emerald-50 text-[#059669] flex items-center justify-center shrink-0">
-            <Zap size={24} className="fill-current" />
-          </div>
-          <div className="text-left">
-            <DialogTitle className="text-lg font-black uppercase tracking-wider text-zinc-900 flex items-center gap-2">
-              {isEdit ? "Edit" : "Add"} Boost Package
+      <DialogContent className="sm:max-w-125 max-h-[90vh] overflow-scroll bg-white border-zinc-200 p-0 rounded-2xl shadow-2xl">
+        {/* ─── MODAL HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                <Zap size={16} />
+              </div>
+              {isEdit ? "Edit Boost Package" : "Add Boost Package"}
             </DialogTitle>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
-              {isEdit ? "Update promotion tier details" : "Create a new promotion tier"}
-            </p>
-          </div>
-        </DialogHeader>
+            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+              {isEdit
+                ? "Update promotion tier details and pricing configurations."
+                : "Create a new promotion tier for vendor advertisements."}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        {/* BODY */}
-        <div className="p-6 space-y-5">
+        {/* ─── FORM BODY ─── */}
+        <form id="packageForm" onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
           {/* Package Name */}
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-zinc-700">
-              Package Name <span className="text-red-500">*</span>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Package Name <span className="text-[#D4AF37]">*</span>
             </Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Gold Boost"
-              className="h-11 border-zinc-200 focus-visible:ring-[#059669] rounded-lg"
+              required
+              className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
             />
           </div>
 
           {/* Price & Currency Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-700">
-                Price <span className="text-red-500">*</span>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Price <span className="text-[#D4AF37]">*</span>
               </Label>
               <Input
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="h-11 border-zinc-200 focus-visible:ring-[#059669] rounded-lg font-mono"
+                placeholder="0.00"
+                required
+                className="h-11 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-700">
-                Currency <span className="text-red-500">*</span>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Currency <span className="text-[#D4AF37]">*</span>
               </Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="h-11 border-zinc-200 focus:ring-[#059669] rounded-lg">
+                <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-bold focus:ring-[#D4AF37] transition-all rounded-lg">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="NGN">NGN</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
+                  <SelectItem value="NGN">NGN (Naira)</SelectItem>
+                  <SelectItem value="USD">USD (Dollar)</SelectItem>
+                  <SelectItem value="GBP">GBP (Pounds)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           {/* Duration */}
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-zinc-700">
-              Duration (Days) <span className="text-red-500">*</span>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Duration (Days) <span className="text-[#D4AF37]">*</span>
             </Label>
             <Input
               type="number"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
-              className="h-11 border-zinc-200 focus-visible:ring-[#059669] rounded-lg font-mono"
+              placeholder="e.g. 7"
+              required
+              className="h-11 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
             />
-            <p className="text-[11px] text-zinc-500 font-medium">
-              Days the boost remains active
-            </p>
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-zinc-700">Description</Label>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Description
+            </Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Package features and benefits..."
-              className="resize-none border-zinc-200 focus-visible:ring-[#059669] rounded-lg min-h-[80px]"
+              className="resize-none h-24 bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-[#D4AF37] rounded-lg custom-scrollbar"
             />
           </div>
 
           {/* Info Banner */}
-          <div className="bg-[#f0fdf4] border border-[#dcfce7] rounded-lg p-3.5 flex gap-3 items-start mt-2">
-            <Info size={16} className="text-[#059669] shrink-0 mt-0.5" />
-            <p className="text-[9px] font-bold text-[#065f46] uppercase tracking-[0.15em] leading-relaxed">
+          <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3.5 flex gap-3 items-start mt-2">
+            <Info size={16} className="text-[#D4AF37] shrink-0 mt-0.5" />
+            <p className="text-[10px] font-medium text-zinc-600 leading-relaxed">
               New boost packages are immediately visible to users. Verify all specifications before execution.
             </p>
           </div>
-        </div>
+        </form>
 
-        {/* FOOTER */}
-        <div className="p-6 pt-0">
+        {/* ─── MODAL FOOTER ─── */}
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse bg-white">
           <Button
-            onClick={handleSubmit}
-            className="w-full h-12 bg-[#059669] hover:bg-[#047857] text-white font-bold tracking-widest uppercase text-xs rounded-xl"
+            type="submit"
+            form="packageForm"
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
           >
-            {isEdit ? (
-              "Update Package"
-            ) : (
-              <>
-                <Plus size={16} className="mr-2" /> Deploy Package
-              </>
-            )}
+            {isEdit ? "Update Package" : "Deploy Package"}
           </Button>
-        </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+          >
+            Cancel
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

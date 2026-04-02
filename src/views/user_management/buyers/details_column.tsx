@@ -17,7 +17,7 @@ export type Order = {
 // Component to dynamically grab the buyerId from the URL for the link
 const OrderActionLink = ({ orderId }: { orderId: string }) => {
   const params = useParams();
-  const buyerId = Array.isArray(params?.id) ? params.id[0] : params?.id || "";
+  const buyerId = Array.isArray(params?.buyerId) ? params.buyerId[0] : params?.buyerId || "";
 
   return (
     <Link href={`/admin/buyers/${buyerId}/orders/${orderId}`}>

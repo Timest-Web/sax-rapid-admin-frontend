@@ -16,60 +16,40 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  RAW_REVENUE_DATA,
+  RAW_ORDERS_DATA,
+  RAW_VENDOR_DATA,
+  CATEGORY_DATA,
+} from "./data";
 
-// --- TYPES ---
 interface ChartProps {
   symbol?: string;
   exchangeRate?: number;
 }
 
-// --- DUMMY DATA (Base NGN) ---
-const RAW_SALES_DATA = [
-  { name: "Mon", value: 1200000 },
-  { name: "Tue", value: 1800000 },
-  { name: "Wed", value: 1400000 },
-  { name: "Thu", value: 2200000 },
-  { name: "Fri", value: 2800000 },
-  { name: "Sat", value: 3500000 },
-  { name: "Sun", value: 3100000 },
-];
+const COLORS = ["#18181b", "#10b981", "#3f3f46", "#a1a1aa", "#e4e4e7"];
 
-const RAW_VENDOR_DATA = [
-  { name: "TechHub", sales: 4500000 },
-  { name: "StyleCo", sales: 3200000 },
-  { name: "HomeLux", sales: 2800000 },
-  { name: "GameStop", sales: 1900000 },
-  { name: "SneakerX", sales: 1500000 },
-];
-
-const CATEGORY_DATA = [
-  { name: "Electronics", value: 45 },
-  { name: "Fashion", value: 25 },
-  { name: "Home", value: 15 },
-  { name: "Beauty", value: 10 },
-  { name: "Other", value: 5 },
-];
-const COLORS = ["#18181b", "#4f46e5", "#10b981", "#eab308", "#a1a1aa"];
-
-// --- HELPERS ---
-const formatYAxis = (value: number, symbol: string) => {
-  if (value >= 1000000) return `${symbol}${(value / 1000000).toFixed(1)}m`;
-  if (value >= 1000) return `${symbol}${(value / 1000).toFixed(0)}k`;
-  return `${symbol}${value}`;
-};
-
-const CustomTooltip = ({ active, payload, label, symbol }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  symbol = "",
+  isCurrency = true,
+}: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 rounded-lg shadow-xl border border-zinc-200">
+      <div className="bg-zinc-900 p-3 rounded-lg shadow-xl border border-zinc-800">
         <p className="text-zinc-500 text-[10px] font-mono mb-1 uppercase tracking-wider">
           {label}
         </p>
-        <p className="text-zinc-900 text-sm font-bold font-mono">
-          {symbol}
+        <p className="text-emerald-400 text-sm font-bold font-mono">
+          {isCurrency ? symbol : ""}
           {payload[0].value.toLocaleString(undefined, {
-            maximumFractionDigits: 0,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: isCurrency ? 2 : 0,
           })}
+          {payload[0].name === "value" && !isCurrency ? "%" : ""}
         </p>
       </div>
     );
@@ -77,29 +57,40 @@ const CustomTooltip = ({ active, payload, label, symbol }: any) => {
   return null;
 };
 
-// ==========================================
-// 1. SALES TREND CHART (Area)
-// ==========================================
-export function SalesTrendChart({ symbol = "₦", exchangeRate = 1 }: ChartProps) {
-  // Apply exchange rate to data
-  const data = useMemo(() => {
-    return RAW_SALES_DATA.map((d) => ({
-      name: d.name,
-      value: d.value * exchangeRate,
-    }));
-  }, [exchangeRate]);
+const formatYAxis = (value: number, symbol: string) => {
+  if (value >= 1000000) return `${symbol}${(value / 1000000).toFixed(1)}m`;
+  if (value >= 1000) return `${symbol}${(value / 1000).toFixed(0)}k`;
+  return `${symbol}${value}`;
+};
+
+export function RevenueTrendChart({
+  symbol = "₦",
+  exchangeRate = 1,
+}: ChartProps) {
+  const data = useMemo(
+    () =>
+      RAW_REVENUE_DATA.map((d) => ({
+        name: d.name,
+        revenue: d.revenue * exchangeRate,
+      })),
+    [exchangeRate],
+  );
 
   return (
     <div className="h-[300px] w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>
-            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#18181b" stopOpacity={0.2} />
-              <stop offset="95%" stopColor="#18181b" stopOpacity={0} />
+            <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#f4f4f5"
+          />
           <XAxis
             dataKey="name"
             axisLine={false}
@@ -114,14 +105,18 @@ export function SalesTrendChart({ symbol = "₦", exchangeRate = 1 }: ChartProps
             tickFormatter={(val) => formatYAxis(val, symbol)}
             width={60}
           />
-          <Tooltip content={(props) => <CustomTooltip {...props} symbol={symbol} />} />
+          <Tooltip
+            content={(props) => (
+              <CustomTooltip {...props} symbol={symbol} isCurrency={true} />
+            )}
+          />
           <Area
             type="monotone"
-            dataKey="value"
-            stroke="#18181b"
+            dataKey="revenue"
+            stroke="#10b981"
             strokeWidth={3}
             fillOpacity={1}
-            fill="url(#colorSales)"
+            fill="url(#colorRev)"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -129,23 +124,67 @@ export function SalesTrendChart({ symbol = "₦", exchangeRate = 1 }: ChartProps
   );
 }
 
-// ==========================================
-// 2. VENDOR PERFORMANCE CHART (Bar)
-// ==========================================
-export function VendorPerformanceBarChart({ symbol = "₦", exchangeRate = 1 }: ChartProps) {
-  // Apply exchange rate to data
-  const data = useMemo(() => {
-    return RAW_VENDOR_DATA.map((d) => ({
-      name: d.name,
-      sales: d.sales * exchangeRate,
-    }));
-  }, [exchangeRate]);
+export function OrdersBarChart() {
+  return (
+    <div className="h-[300px] w-full mt-4">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={RAW_ORDERS_DATA}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            vertical={false}
+            stroke="#f4f4f5"
+          />
+          <XAxis
+            dataKey="name"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 10, fontFamily: "monospace", fill: "#a1a1aa" }}
+            dy={10}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fontFamily: "monospace", fill: "#a1a1aa" }}
+            width={40}
+          />
+          <Tooltip
+            content={(props) => <CustomTooltip {...props} isCurrency={false} />}
+            cursor={{ fill: "#f4f4f5", radius: 8 }}
+          />
+          <Bar
+            dataKey="orders"
+            fill="#18181b"
+            radius={[6, 6, 6, 6]}
+            barSize={32}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function VendorPerformanceBarChart({
+  symbol = "₦",
+  exchangeRate = 1,
+}: ChartProps) {
+  const data = useMemo(
+    () =>
+      RAW_VENDOR_DATA.map((d) => ({
+        name: d.name,
+        sales: d.sales * exchangeRate,
+      })),
+    [exchangeRate],
+  );
 
   return (
     <div className="h-[300px] w-full mt-4">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f4f4f5" />
+          <CartesianGrid
+            strokeDasharray="3 3"
+            horizontal={false}
+            stroke="#f4f4f5"
+          />
           <XAxis
             type="number"
             axisLine={false}
@@ -158,25 +197,33 @@ export function VendorPerformanceBarChart({ symbol = "₦", exchangeRate = 1 }: 
             type="category"
             axisLine={false}
             tickLine={false}
-            tick={{ fontSize: 11, fill: "#71717a", fontWeight: 500 }}
-            width={80}
+            tick={{
+              fontSize: 11,
+              fill: "#71717a",
+              fontWeight: 500,
+              fontFamily: "monospace",
+            }}
+            width={100}
           />
           <Tooltip
-            content={(props) => <CustomTooltip {...props} symbol={symbol} />}
-            cursor={{ fill: "#f4f4f5" }}
+            content={(props) => (
+              <CustomTooltip {...props} symbol={symbol} isCurrency={true} />
+            )}
+            cursor={{ fill: "#f4f4f5", radius: 6 }}
           />
-          <Bar dataKey="sales" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={24} />
+          <Bar
+            dataKey="sales"
+            fill="#10b981"
+            radius={[0, 6, 6, 0]}
+            barSize={24}
+          />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
 }
 
-// ==========================================
-// 3. CATEGORY PIE CHART
-// ==========================================
 export function CategoryPieChart() {
-  // Pie chart typically shows percentages, so no currency conversion needed here
   return (
     <div className="h-[300px] w-full flex flex-col mt-4">
       <div className="flex-1 min-h-0">
@@ -193,40 +240,32 @@ export function CategoryPieChart() {
               stroke="none"
             >
               {CATEGORY_DATA.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
             <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-white p-3 rounded-lg shadow-xl border border-zinc-200">
-                      <p className="text-zinc-500 text-[10px] font-mono mb-1 uppercase tracking-wider">
-                        {payload[0].name}
-                      </p>
-                      <p className="text-zinc-900 text-sm font-bold font-mono">
-                        {payload[0].value}% of Sales
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
+              content={(props) => (
+                <CustomTooltip {...props} isCurrency={false} />
+              )}
             />
           </PieChart>
         </ResponsiveContainer>
       </div>
-
-      {/* Custom Legend */}
-      <div className="grid grid-cols-2 gap-2 mt-4 px-4">
+      <div className="grid grid-cols-2 gap-3 mt-4 px-4">
         {CATEGORY_DATA.map((item, index) => (
           <div key={item.name} className="flex items-center gap-2">
             <div
               className="w-2.5 h-2.5 rounded-full"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
-            <span className="text-[11px] text-zinc-600 font-medium">
-              {item.name} <span className="text-zinc-400">({item.value}%)</span>
+            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+              {item.name}{" "}
+              <span className="text-zinc-900 font-mono ml-1">
+                {item.value}%
+              </span>
             </span>
           </div>
         ))}

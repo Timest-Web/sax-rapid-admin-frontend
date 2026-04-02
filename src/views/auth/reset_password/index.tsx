@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-  LockKeyhole,
-  CheckCircle2,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, LockKeyhole, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -142,7 +136,9 @@ export default function ResetPasswordView() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 transition-colors hover:text-zinc-600"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />

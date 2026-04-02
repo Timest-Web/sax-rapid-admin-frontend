@@ -81,6 +81,7 @@ const NAV = [
       { title: "Subscriptions", icon: Crown, href: "/admin/subscriptions" },
       { title: "Commissions", icon: Coins, href: "/admin/commissions" },
       { title: "Currencies", icon: BadgePercent, href: "/admin/currencies" },
+      { title: "Coupons", icon: BadgePercent, href: "/admin/coupons" },
     ],
   },
   {

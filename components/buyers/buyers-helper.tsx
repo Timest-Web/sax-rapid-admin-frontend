@@ -35,7 +35,7 @@ export function TabItem({ value, label }: { value: string; label: string }) {
   return (
     <TabsTrigger
       value={value}
-      className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 data-[state=active]:border-[#EAB308] data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent transition-all"
+      className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-400 data-[state=active]:border-sax-gold data-[state=active]:text-zinc-900 data-[state=active]:bg-transparent transition-all"
     >
       {label}
     </TabsTrigger>

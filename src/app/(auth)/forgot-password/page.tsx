@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-sax-black overflow-hidden selection:bg-sax-gold selection:text-sax-black font-sans">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-black overflow-hidden selection:bg-sax-gold selection:text-sax-black font-sans">
       {/* ── BACKGROUND ── */}
       <div className="absolute inset-0 z-0">
         <div

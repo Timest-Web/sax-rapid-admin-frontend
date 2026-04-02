@@ -14,8 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Plug, ShieldCheck, Key, RefreshCw, AlertTriangle } from "lucide-react";
+import { Plug, ShieldCheck, Key, RefreshCw, AlertTriangle, Link as LinkIcon } from "lucide-react";
 
 // --- TYPES ---
 export type IntegrationCategory = "payment" | "delivery" | "map" | "email";
@@ -56,7 +55,8 @@ export function IntegrationConfigModal({
     }
   }, [data]);
 
-  const handleSave = () => {
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     // Simulate API verification delay
     setTimeout(() => {
@@ -71,7 +71,7 @@ export function IntegrationConfigModal({
   const handleDisconnect = () => {
     if (
       confirm(
-        "Are you sure? This will stop all services relying on this integration.",
+        "Are you sure? This will instantly halt all services relying on this integration.",
       )
     ) {
       if (data)
@@ -84,35 +84,49 @@ export function IntegrationConfigModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] bg-white text-zinc-900">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <Plug size={18} /> Configure {data.name}
-            </DialogTitle>
-            <Badge
-              variant={data.status === "connected" ? "default" : "secondary"}
-              className={
-                data.status === "connected"
-                  ? "bg-emerald-600"
-                  : "bg-zinc-200 text-zinc-500"
-              }
-            >
-              {data.status === "connected" ? "Active" : "Inactive"}
-            </Badge>
-          </div>
-          <DialogDescription>
-            Manage API keys and environment settings for {data.provider}.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[550px] max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col">
+        {/* ─── MODAL HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+                  <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                    <Plug size={16} />
+                  </div>
+                  Configure {data.name}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+                  Manage API keys, environment settings, and webhooks for {data.provider}.
+                </DialogDescription>
+              </div>
+              <div className="shrink-0 pt-1">
+                <span
+                  className={`text-[10px] uppercase font-bold px-3 py-1.5 rounded-lg tracking-widest border ${
+                    data.status === "connected"
+                      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                      : "bg-zinc-100 text-zinc-500 border-zinc-200"
+                  }`}
+                >
+                  {data.status === "connected" ? "Active" : "Inactive"}
+                </span>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
 
-        <div className="grid gap-6 py-4">
+        {/* ─── FORM BODY ─── */}
+        <form id="configForm" onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+          
           {/* Environment Toggle */}
-          <div className="flex items-center justify-between bg-zinc-50 p-3 rounded-lg border border-zinc-100">
-            <div className="space-y-0.5">
-              <Label className="text-sm font-bold">Production Mode</Label>
-              <p className="text-xs text-zinc-500">
-                Toggle between Test and Live keys
+          <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 shadow-sm">
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-zinc-900 uppercase tracking-widest">
+                Production Mode
+              </Label>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-medium">
+                Toggle between Test and Live environments
               </p>
             </div>
             <Switch
@@ -120,89 +134,114 @@ export function IntegrationConfigModal({
               onCheckedChange={(c) =>
                 setFormData({ ...formData, isLiveMode: c })
               }
-              className="data-[state=checked]:bg-emerald-600"
+              className="data-[state=checked]:bg-[#D4AF37]"
             />
           </div>
 
+          <div className="h-px w-full bg-zinc-100" />
+
           {/* API Keys */}
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-zinc-500 uppercase">
-                Public Key / Client ID
+          <div className="space-y-5">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Public Key / Client ID <span className="text-[#D4AF37]">*</span>
               </Label>
-              <div className="relative">
+              <div className="relative flex items-center">
                 <Key
                   size={14}
-                  className="absolute left-3 top-3 text-zinc-400"
+                  className="absolute left-3 text-zinc-400"
                 />
                 <Input
-                  className="pl-9 font-mono text-sm bg-zinc-50"
+                  className="h-11 pl-9 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
                   value={formData.apiKey || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, apiKey: e.target.value })
                   }
-                  placeholder="pk_live_..."
+                  placeholder={formData.isLiveMode ? "pk_live_..." : "pk_test_..."}
+                  required
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-zinc-500 uppercase">
-                Secret Key
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Secret Key <span className="text-[#D4AF37]">*</span>
               </Label>
-              <div className="relative">
+              <div className="relative flex items-center">
                 <ShieldCheck
                   size={14}
-                  className="absolute left-3 top-3 text-zinc-400"
+                  className="absolute left-3 text-zinc-400"
                 />
                 <Input
                   type="password"
-                  className="pl-9 font-mono text-sm bg-zinc-50"
+                  className="h-11 pl-9 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
                   value={formData.secretKey || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, secretKey: e.target.value })
                   }
-                  placeholder="sk_live_..."
+                  placeholder={formData.isLiveMode ? "sk_live_..." : "sk_test_..."}
+                  required
                 />
               </div>
             </div>
           </div>
 
           {/* Webhook Info (Read Only) */}
-          <div className="space-y-1">
-            <Label className="text-xs font-bold text-zinc-500 uppercase">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
               Webhook Callback URL
             </Label>
-            <div className="bg-zinc-100 p-2 rounded text-xs font-mono text-zinc-600 break-all border border-zinc-200">
-              https://api.platform.com/webhooks/
-              {data.provider.toLowerCase().replace(" ", "-")}
+            <div className="bg-zinc-50 border border-dashed border-zinc-200 p-3 rounded-lg text-[11px] font-mono text-zinc-500 break-all flex items-start gap-2 select-all hover:bg-zinc-100 transition-colors">
+              <LinkIcon size={12} className="shrink-0 mt-0.5 text-zinc-400" />
+              https://api.platform.com/webhooks/{data.provider.toLowerCase().replace(" ", "-")}
             </div>
+            <p className="text-[10px] text-zinc-400 pt-1 leading-relaxed">
+              Copy and paste this URL into your {data.provider} dashboard to receive automated event updates.
+            </p>
           </div>
-        </div>
 
-        <DialogFooter className="flex justify-between items-center sm:justify-between">
+          {/* Security Banner */}
+          {formData.isLiveMode && (
+            <div className="bg-[#fff9e6] border border-[#f5e6b3] rounded-lg p-3.5 flex gap-3 items-start">
+              <AlertTriangle size={16} className="text-[#b38a00] shrink-0 mt-0.5" />
+              <p className="text-[10px] font-bold text-[#806200] uppercase tracking-widest leading-relaxed">
+                You are editing LIVE production keys. Incorrect configurations will cause immediate transaction failures.
+              </p>
+            </div>
+          )}
+        </form>
+
+        {/* ─── MODAL FOOTER ─── */}
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 flex items-center justify-between sm:justify-between bg-white shrink-0">
           {data.status === "connected" ? (
             <Button
+              type="button"
               variant="ghost"
               onClick={handleDisconnect}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-[10px] uppercase tracking-widest font-bold text-red-500 hover:text-red-600 hover:bg-red-50 px-4 h-11 rounded-xl transition-all"
             >
               Disconnect
             </Button>
           ) : (
             <div /> // Spacer
           )}
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex gap-3">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+            >
               Cancel
             </Button>
             <Button
-              onClick={handleSave}
-              className="bg-zinc-900 hover:bg-zinc-800"
-              disabled={isLoading}
+              type="submit"
+              form="configForm"
+              disabled={isLoading || !formData.apiKey || !formData.secretKey}
+              className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md disabled:opacity-50 min-w-[160px]"
             >
               {isLoading ? (
-                <RefreshCw className="animate-spin h-4 w-4" />
+                <RefreshCw className="animate-spin h-4 w-4 mx-auto" />
               ) : (
                 "Save & Connect"
               )}

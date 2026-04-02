@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Map, Settings2, Trash2, Globe } from "lucide-react";
+import { Plus, Map, Settings2, Trash2, Globe, Globe2, Percent } from "lucide-react";
 import { getCountryColumns, Country, RegionState } from "./column";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/cards/status-badge";
+import { StatCard } from "@/components/cards/stat-card";
 
 // --- DUMMY DATA WITH STATE ARRAYS ---
 const INITIAL_COUNTRIES: Country[] = [
@@ -138,17 +140,26 @@ export default function LocationsView() {
       <main className="p-6 max-w-6xl mx-auto space-y-6 mt-4">
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <MetricCard
+          <StatCard
             label="Active Countries"
             value={countries.filter((c) => c.status === "active").length.toString()}
+            icon={Globe}
+            variant="amber"
           />
-          <MetricCard
+          <StatCard
             label="Total Regions Mapped"
             value={countries
               .reduce((acc, curr) => acc + curr.statesList.length, 0)
               .toString()}
+            icon={Map}
+            variant="emerald"
           />
-          <MetricCard label="Map Coverage" value="85%" />
+          <StatCard
+            label="Map Coverage"
+            value="85%"
+            icon={Percent}
+            variant="indigo"
+          />
         </div>
 
         {/* Table */}
@@ -213,7 +224,8 @@ function AddCountryModal({
   const [currency, setCurrency] = useState("");
   const [gateway, setGateway] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!name || !code || !currency || !gateway) return;
 
     const newCountry: Country = {
@@ -222,8 +234,8 @@ function AddCountryModal({
       code: code.toUpperCase(),
       currency: currency.toUpperCase(),
       gateway,
-      regions: 0, // Starts at 0, configured later
-      status: "inactive", // Default to inactive so it doesn't go live immediately
+      regions: 0,
+      status: "inactive",
       statesList: [],
     };
 
@@ -239,48 +251,73 @@ function AddCountryModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-white">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Globe size={18} /> Expand to New Country
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
+        {/* ─── HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                <Globe size={16} />
+              </div>
+              Expand to New Country
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+              Set up a new geographical region, assign its currency, and configure the payment gateway.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <div className="py-4 space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-zinc-700">Country Name <span className="text-red-500">*</span></Label>
+        {/* ─── FORM ─── */}
+        <form id="addCountryForm" onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Country Name <span className="text-[#D4AF37]">*</span>
+            </Label>
             <Input
               placeholder="e.g. Kenya"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
+              className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-700">ISO Code (2-Letter) <span className="text-red-500">*</span></Label>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                ISO Code (2-Letter) <span className="text-[#D4AF37]">*</span>
+              </Label>
               <Input
                 placeholder="e.g. KE"
                 maxLength={2}
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
+                required
+                className="h-11 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-700">Currency Code <span className="text-red-500">*</span></Label>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Currency Code <span className="text-[#D4AF37]">*</span>
+              </Label>
               <Input
                 placeholder="e.g. KES"
                 maxLength={3}
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                required
+                className="h-11 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-zinc-700">Payment Gateway Integration <span className="text-red-500">*</span></Label>
-            <Select value={gateway} onValueChange={setGateway}>
-              <SelectTrigger>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Payment Gateway Integration <span className="text-[#D4AF37]">*</span>
+            </Label>
+            <Select value={gateway} onValueChange={setGateway} required>
+              <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-bold focus:ring-[#D4AF37] transition-all rounded-lg">
                 <SelectValue placeholder="Select Gateway Provider" />
               </SelectTrigger>
               <SelectContent>
@@ -291,22 +328,32 @@ function AddCountryModal({
               </SelectContent>
             </Select>
           </div>
-          
-          <p className="text-[10px] text-zinc-500 font-medium">
-            New countries are added as <span className="font-bold">INACTIVE</span> by default. You must configure their states/regions before marking them active.
-          </p>
-        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
+          <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-lg">
+            <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">
+              New countries are added as <strong className="text-zinc-900">INACTIVE</strong> by default. 
+              Configure their states/regions before marking them active.
+            </p>
+          </div>
+        </form>
+
+        {/* ─── FOOTER ─── */}
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse">
           <Button
-            onClick={handleSubmit}
+            type="submit"
+            form="addCountryForm"
             disabled={!name || !code || !currency || !gateway}
-            className="bg-zinc-900 text-white hover:bg-zinc-800"
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md disabled:opacity-50"
           >
             Create Country
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+          >
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -330,47 +377,68 @@ function EditConfigModal({
 }) {
   const [status, setStatus] = useState<"active" | "inactive">(country.status);
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     onSave({ ...country, status });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-white">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings2 size={18} /> Edit Config: {country.name}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="py-6 space-y-4">
-          <div className="space-y-2">
-            <Label>Market Status</Label>
+      <DialogContent className="sm:max-w-[450px] max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
+        {/* ─── HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                <Settings2 size={16} />
+              </div>
+              Edit Config: {country.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+              Enable or disable trading operations for this specific market.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        {/* ─── FORM ─── */}
+        <form id="editConfigForm" onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Market Status <span className="text-[#D4AF37]">*</span>
+            </Label>
             <Select value={status} onValueChange={(v: any) => setStatus(v)}>
-              <SelectTrigger>
+              <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-bold focus:ring-[#D4AF37] transition-all rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active (Trading Enabled)</SelectItem>
-                <SelectItem value="inactive">
-                  Inactive (Trading Disabled)
-                </SelectItem>
+                <SelectItem value="inactive">Inactive (Trading Disabled)</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-zinc-500 mt-1">
+            <p className="text-[10px] text-zinc-500 mt-2 pl-1 leading-relaxed">
               Marking as inactive hides this country from the user onboarding
-              and checkout flows.
+              and checkout flows entirely.
             </p>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
+        </form>
+
+        {/* ─── FOOTER ─── */}
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse">
           <Button
-            onClick={handleSubmit}
-            className="bg-zinc-900 text-white hover:bg-zinc-800"
+            type="submit"
+            form="editConfigForm"
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
           >
             Save Changes
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={onClose}
+            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+          >
+            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -410,58 +478,71 @@ function ManageStatesModal({
     setStates(states.filter((s) => s.id !== id));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     onSave(country.id, states);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col bg-white">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Map size={18} /> Manage Territories: {country.name}
-          </DialogTitle>
-          <p className="text-xs text-zinc-500">
-            Total configured regions:{" "}
-            <span className="font-bold">{states.length}</span>
-          </p>
-        </DialogHeader>
-
-        {/* Input for new state */}
-        <div className="flex items-end gap-2 mt-2">
-          <div className="space-y-1.5 flex-1">
-            <Label className="text-xs font-bold text-zinc-600">
-              Add New Region / State
-            </Label>
-            <Input
-              placeholder="e.g. Rivers State"
-              value={newStateName}
-              onChange={(e) => setNewStateName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddState()}
-            />
-          </div>
-          <Button
-            onClick={handleAddState}
-            className="bg-zinc-900 text-white hover:bg-zinc-800"
-          >
-            Add
-          </Button>
+      <DialogContent className="sm:max-w-[550px] h-[85vh] flex flex-col bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
+        {/* ─── HEADER ─── */}
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
+                <Map size={16} />
+              </div>
+              Territories: {country.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
+              Manage configured states or regions. Total active territories: <strong className="text-zinc-900 font-bold">{states.length}</strong>.
+            </DialogDescription>
+          </DialogHeader>
         </div>
 
-        <div className="h-px bg-zinc-200 my-4" />
+        {/* ─── INPUT AREA ─── */}
+        <div className="p-6 pb-2 shrink-0 space-y-4">
+          <div className="flex items-end gap-3">
+            <div className="space-y-1.5 flex-1">
+              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Add New Region / State
+              </Label>
+              <Input
+                placeholder="e.g. Rivers State"
+                value={newStateName}
+                onChange={(e) => setNewStateName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddState()}
+                className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
+              />
+            </div>
+            <Button
+              onClick={handleAddState}
+              disabled={!newStateName.trim()}
+              className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-6 rounded-xl transition-all shadow-md disabled:opacity-50"
+            >
+              Add
+            </Button>
+          </div>
+          <div className="h-px w-full bg-zinc-100 mt-4" />
+        </div>
 
-        {/* Scrollable List of States */}
-        <div className="flex-1 overflow-y-auto pr-2 space-y-2">
+        {/* ─── SCROLLABLE STATES LIST ─── */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-2 custom-scrollbar">
           {states.length === 0 ? (
-            <p className="text-sm text-zinc-400 text-center py-10">
-              No states configured.
-            </p>
+            <div className="flex flex-col items-center justify-center py-10 bg-zinc-50/50 rounded-xl border border-dashed border-zinc-200">
+              <Map size={24} className="text-zinc-300 mb-2" />
+              <p className="text-sm font-medium text-zinc-500 text-center">
+                No states configured yet.
+              </p>
+            </div>
           ) : (
             states.map((state) => (
               <div
                 key={state.id}
-                className="flex items-center justify-between p-3 border border-zinc-100 bg-zinc-50 rounded-lg group"
+                className="flex items-center justify-between px-4 py-3 border border-zinc-200 bg-white rounded-xl shadow-sm group hover:border-zinc-300 transition-colors"
               >
                 <div>
                   <p className="text-sm font-bold text-zinc-900">
@@ -474,9 +555,9 @@ function ManageStatesModal({
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveState(state.id)}
-                    className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </Button>
                 </div>
               </div>
@@ -484,17 +565,25 @@ function ManageStatesModal({
           )}
         </div>
 
-        <DialogFooter className="mt-4 pt-4 border-t border-zinc-100">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-zinc-900 text-white hover:bg-zinc-800"
-          >
-            Save Changes
-          </Button>
-        </DialogFooter>
+        {/* ─── FOOTER ─── */}
+        <form id="saveStatesForm" onSubmit={handleSubmit} className="shrink-0">
+          <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse bg-white">
+            <Button
+              type="submit"
+              className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
+            >
+              Save Regions
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

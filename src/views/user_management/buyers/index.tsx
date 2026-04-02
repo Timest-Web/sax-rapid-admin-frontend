@@ -39,8 +39,8 @@ export default function BuyersView() {
       <PageHeader
         title="User Management / Buyers"
         actionLabel="Add New Buyer"
-        // Triggers the modal to open
         onAction={() => setIsAddModalOpen(true)}
+        icon={UserPlus}
       />
 
       <main className="p-6 space-y-6 max-w-7xl mx-auto">

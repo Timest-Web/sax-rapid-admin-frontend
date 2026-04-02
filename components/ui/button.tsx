@@ -20,7 +20,6 @@ const buttonVariants = cva(
           "hover:bg-zinc-100 hover:text-zinc-900",
         link:
           "text-zinc-900 underline-offset-4 hover:underline",
-        // Special "Gold" variant for high-value actions
         gold: 
           "bg-sax-gold text-sax-black hover:bg-sax-gold-dim hover:text-white shadow-sm",
       },
