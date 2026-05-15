@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { StatCard } from "@/components/cards/stat-card";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
@@ -32,8 +32,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useDashboard } from "@/src/features/dashboard/hooks/useDashboard";
 
-// ─── DATA ───
+// ─── MOCK DATA (leave as-is for now) ───
 const RAW_REVENUE_DATA = [
   { name: "Mon", revenue: 1500000 },
   { name: "Tue", revenue: 2300000 },
@@ -55,11 +56,41 @@ const ORDER_DATA = [
 ];
 
 const RECENT_ORDERS = [
-  { id: 1, customer: "John Doe", product: "iPhone 15 Pro Max", baseAmount: 1200000, date: "Oct 24" },
-  { id: 2, customer: "Sarah Smith", product: "MacBook Air M2", baseAmount: 1850000, date: "Oct 24" },
-  { id: 3, customer: "Michael K.", product: "Sony PlayStation 5", baseAmount: 650000, date: "Oct 23" },
-  { id: 4, customer: "Amaka Ndidi", product: "Samsung 65\" TV", baseAmount: 840000, date: "Oct 23" },
-  { id: 5, customer: "David Chen", product: "AirPods Pro 2", baseAmount: 250000, date: "Oct 22" },
+  {
+    id: 1,
+    customer: "John Doe",
+    product: "iPhone 15 Pro Max",
+    baseAmount: 1200000,
+    date: "Oct 24",
+  },
+  {
+    id: 2,
+    customer: "Sarah Smith",
+    product: "MacBook Air M2",
+    baseAmount: 1850000,
+    date: "Oct 24",
+  },
+  {
+    id: 3,
+    customer: "Michael K.",
+    product: "Sony PlayStation 5",
+    baseAmount: 650000,
+    date: "Oct 23",
+  },
+  {
+    id: 4,
+    customer: "Amaka Ndidi",
+    product: 'Samsung 65" TV',
+    baseAmount: 840000,
+    date: "Oct 23",
+  },
+  {
+    id: 5,
+    customer: "David Chen",
+    product: "AirPods Pro 2",
+    baseAmount: 250000,
+    date: "Oct 22",
+  },
 ];
 
 // ─── MODERN TOOLTIP ───
@@ -84,17 +115,26 @@ const CustomTooltip = ({ active, payload, label, symbol }: any) => {
 };
 
 export default function DashboardPage() {
+  const {
+    data: dashboard,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useDashboard();
+
   // --- CURRENCY STATE ---
   const [currency, setCurrency] = useState("NGN");
-  
+
   // Exchange Rate Mock (1 NGN = 0.011 ZAR)
   const isNGN = currency === "NGN";
   const symbol = isNGN ? "₦" : "R";
   const exchangeRate = isNGN ? 1 : 0.011;
 
-  // Dynamic Data Calculation
-  const totalRevenue = 23500000 * exchangeRate;
-  
+  // API-derived values
+  const totalRevenue = (dashboard?.totalRevenue ?? 0) * exchangeRate;
+
+  // Keep chart as mock but convert currency display
   const displayRevenueData = useMemo(() => {
     return RAW_REVENUE_DATA.map((d) => ({
       name: d.name,
@@ -133,9 +173,11 @@ export default function DashboardPage() {
               placeholder="SEARCH METRICS..."
             />
           </div>
+
           <button className="h-9 w-9 flex items-center justify-center border border-zinc-200 bg-white rounded-md hover:bg-zinc-50 transition shadow-sm">
             <Bell size={16} className="text-zinc-500" />
           </button>
+
           <div className="h-9 w-9 bg-zinc-900 text-white flex items-center justify-center font-bold text-xs rounded-md shadow-sm">
             SA
           </div>
@@ -143,14 +185,64 @@ export default function DashboardPage() {
       </header>
 
       <main className="p-6 space-y-8 max-w-7xl mx-auto mt-4">
+        {isError && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl p-4 flex items-center justify-between">
+            <span>Failed to load dashboard metrics.</span>
+            <button
+              onClick={() => refetch()}
+              className="text-xs font-bold underline"
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
         {/* ─── 1. KEY METRICS ─── */}
         <section>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Users" value="12,450" icon={Users} variant="gold" />
-            <StatCard label="Total Vendors" value="1,284" icon={Store} variant="cyan" />
-            <StatCard label="Total Products" value="45,200" icon={ShoppingBag} variant="indigo" />
-            <StatCard label="Total Orders" value="9,731" icon={ShoppingCart} variant="emerald" />
+            <StatCard
+              label="Total Users"
+              value={
+                isLoading ? "—" : (dashboard?.totalUsers ?? 0).toLocaleString()
+              }
+              icon={Users}
+              variant="gold"
+            />
+            <StatCard
+              label="Total Vendors"
+              value={
+                isLoading
+                  ? "—"
+                  : (dashboard?.totalVendors ?? 0).toLocaleString()
+              }
+              icon={Store}
+              variant="cyan"
+            />
+            <StatCard
+              label="Total Products"
+              value={
+                isLoading
+                  ? "—"
+                  : (dashboard?.totalProducts ?? 0).toLocaleString()
+              }
+              icon={ShoppingBag}
+              variant="indigo"
+            />
+            <StatCard
+              label="Total Orders"
+              value={
+                isLoading ? "—" : (dashboard?.totalOrders ?? 0).toLocaleString()
+              }
+              icon={ShoppingCart}
+              variant="emerald"
+            />
           </div>
+
+          {isFetching && (
+            <div className="mt-3 text-[11px] text-zinc-500 font-mono">
+              Updating metrics…
+            </div>
+          )}
         </section>
 
         {/* ─── 2. MODERN CHARTS ─── */}
@@ -163,9 +255,21 @@ export default function DashboardPage() {
                   Total Revenue
                 </h3>
                 <h2 className="text-3xl font-bold text-zinc-900 mt-1 font-mono tracking-tight">
-                  {symbol}{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                  {symbol}
+                  {totalRevenue.toLocaleString(undefined, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2,
+                  })}
                 </h2>
+
+                {dashboard?.generatedAt && (
+                  <p className="text-[10px] text-zinc-400 font-mono mt-1">
+                    Generated:{" "}
+                    {new Date(dashboard.generatedAt).toLocaleString()}
+                  </p>
+                )}
               </div>
+
               <div className="flex gap-2">
                 <button className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-zinc-100 text-zinc-400 transition">
                   <MoreHorizontal size={16} />
@@ -182,6 +286,7 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
+
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
@@ -208,13 +313,19 @@ export default function DashboardPage() {
                       fill: "#a1a1aa",
                     }}
                     tickFormatter={(value) => {
-                      if (value >= 1000000) return `${symbol}${(value / 1000000).toFixed(1)}m`;
-                      if (value >= 1000) return `${symbol}${(value / 1000).toFixed(0)}k`;
+                      if (value >= 1_000_000)
+                        return `${symbol}${(value / 1_000_000).toFixed(1)}m`;
+                      if (value >= 1_000)
+                        return `${symbol}${(value / 1_000).toFixed(0)}k`;
                       return `${symbol}${value}`;
                     }}
                     width={60}
                   />
-                  <Tooltip content={(props) => <CustomTooltip {...props} symbol={symbol} />} />
+                  <Tooltip
+                    content={(props) => (
+                      <CustomTooltip {...props} symbol={symbol} />
+                    )}
+                  />
 
                   <Area
                     type="monotone"
@@ -236,14 +347,24 @@ export default function DashboardPage() {
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
                   Total Orders
                 </h3>
+
                 <div className="flex items-center gap-2 mt-1">
                   <h2 className="text-3xl font-bold text-zinc-900 font-mono tracking-tight">
-                    9,240
+                    {isLoading
+                      ? "—"
+                      : (dashboard?.totalOrders ?? 0).toLocaleString()}
                   </h2>
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <ArrowUpRight size={10} /> 8%
+                    <ArrowUpRight size={10} /> —
                   </span>
                 </div>
+
+                <p className="text-[10px] text-zinc-400 font-mono mt-1">
+                  Pending:{" "}
+                  {isLoading
+                    ? "—"
+                    : (dashboard?.pendingOrders ?? 0).toLocaleString()}
+                </p>
               </div>
             </div>
 
@@ -282,7 +403,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ─── 3. RECENT ORDERS TABLE ─── */}
+        {/* ─── 3. RECENT ORDERS TABLE (still mock) ─── */}
         <div className="bg-white rounded-3xl shadow-sm border border-zinc-200 overflow-hidden">
           <div className="p-8 pb-4 flex justify-between items-center">
             <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-900">
@@ -317,10 +438,14 @@ export default function DashboardPage() {
                     <td className="py-4">{order.customer}</td>
                     <td className="py-4">{order.product}</td>
                     <td className="py-4 font-mono font-bold text-zinc-900">
-                      {symbol}{(order.baseAmount * exchangeRate).toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2,
-                      })}
+                      {symbol}
+                      {(order.baseAmount * exchangeRate).toLocaleString(
+                        undefined,
+                        {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                        },
+                      )}
                     </td>
                     <td className="py-4">
                       <span className="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">

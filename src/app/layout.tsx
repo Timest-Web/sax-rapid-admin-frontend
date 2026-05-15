@@ -2,6 +2,8 @@
 import type { Metadata } from "next";
 import { Inter, Sora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import Providers from "./provider";
+import { Toaster } from "sonner";
 
 // ── BODY FONT ──
 // Inter: The #1 UI font. Designed specifically for screens.
@@ -53,7 +55,8 @@ export default function RootLayout({
           antialiased
         `}
       >
-        {children}
+      <Providers>{children}</Providers>  
+       <Toaster richColors position="top-right"/>
       </body>
     </html>
   );

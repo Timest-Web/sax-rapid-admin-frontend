@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, notFound } from "next/navigation";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
-import { DateRange } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { StatusBadge } from "@/components/cards/status-badge";
@@ -26,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Phone,
   MapPin,
@@ -39,93 +41,34 @@ import {
   Filter,
   CalendarIcon,
   Download,
+  Eye,
 } from "lucide-react";
 
-import { BUYERS } from "@/src/lib/dummy_data";
-import {
-  CreditWalletModal,
-  ResetPasswordModal,
-  SuspendUserModal,
-} from "@/components/buyers/buyers-action";
+import { cn } from "@/lib/utils";
 import { InfoRow } from "@/components/buyers/buyers-helper";
 import MetricCard from "@/components/cards/metric-card";
-import { cn } from "@/lib/utils";
+
+import { activityColumns, makeOrderColumns } from "./details_column"; // <-- IMPORTANT: use makeOrderColumns
+
 import {
-  orderColumns,
-  activityColumns,
-  ActivityLog,
-  Order,
-} from "./details_column";
+  useBuyerProfile,
+  useBuyerOrders,
+  useBuyerActivity,
+  useSuspendBuyer,
+  useReactivateBuyer,
+} from "@/src/features/buyers/hooks";
 
-// --- MOCK DATA ---
-const MOCK_ACTIVITY_LOG: ActivityLog[] = [
-  {
-    id: "1",
-    action: "Password Reset",
-    ipLocation: "123.456.281.34 / Lagos, NG",
-    browser: "Firefox on Windows",
-    timestamp: "2 hrs ago",
-  },
-  {
-    id: "2",
-    action: "Profile Updated",
-    ipLocation: "123.456.281.34 / Lagos, NG",
-    browser: "Firefox on Windows",
-    timestamp: "1 day ago",
-  },
-  {
-    id: "3",
-    action: "Successful Login",
-    ipLocation: "192.168.100.12 / Abuja, NG",
-    browser: "Chrome on macOS",
-    timestamp: "3 days ago",
-  },
-];
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-const MOCK_BUYER_ORDERS: Order[] = [
-  {
-    id: "1003163",
-    date: "March 30, 2026",
-    items: 3,
-    total: "₦12,500",
-    status: "Processing",
-  },
-  {
-    id: "1003162",
-    date: "March 28, 2026",
-    items: 1,
-    total: "₦4,200",
-    status: "Shipped",
-  },
-  {
-    id: "1003161",
-    date: "March 25, 2026",
-    items: 5,
-    total: "₦45,000",
-    status: "Delivered",
-  },
-  {
-    id: "1003160",
-    date: "March 20, 2026",
-    items: 2,
-    total: "₦8,900",
-    status: "Failed",
-  },
-  {
-    id: "1003159",
-    date: "March 15, 2026",
-    items: 1,
-    total: "₦15,000",
-    status: "On-Hold",
-  },
-  {
-    id: "1003158",
-    date: "March 10, 2026",
-    items: 4,
-    total: "₦22,000",
-    status: "Delivered",
-  },
-];
+import type { BuyerOrder } from "@/src/features/buyers/api";
+import { AppDialog } from "@/components/custom-dialog";
 
 function TabTrigger({
   value,
@@ -148,25 +91,116 @@ function TabTrigger({
     </TabsTrigger>
   );
 }
+
+function initials(name: string) {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const a = parts[0]?.[0] ?? "B";
+  const b = parts[parts.length - 1]?.[0] ?? "Y";
+  return (a + b).toUpperCase();
+}
+
+function money(amount: number, currency: string) {
+  const symbol = currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : "";
+  return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
+}
+
 export default function BuyerDetailsView() {
   const params = useParams();
-  const rawId = params?.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId || "";
+  const buyerIdRaw = (params as any)?.buyerId;
+  const buyerId = decodeURIComponent(
+    Array.isArray(buyerIdRaw) ? buyerIdRaw[0] : buyerIdRaw || "",
+  );
 
-  const buyerId = decodeURIComponent(id);
-  const buyer = BUYERS.find((b) => b.id === buyerId) || BUYERS[0];
+  // Queries
+  const profileQ = useBuyerProfile(buyerId);
+  const ordersQ = useBuyerOrders(buyerId, 1, 20);
+  const activityQ = useBuyerActivity(buyerId, 1, 20);
 
+  // Mutations
+  const suspend = useSuspendBuyer();
+  const reactivate = useReactivateBuyer();
+
+  // UI state
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
   const [orderDateRange, setOrderDateRange] = useState<DateRange | undefined>();
 
-  const filteredOrders = MOCK_BUYER_ORDERS.filter((order) => {
-    const matchesStatus =
-      orderStatusFilter === "all" || order.status === orderStatusFilter;
-    return matchesStatus;
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [reason, setReason] = useState("");
+
+  // Order quick-view (no backend order-details endpoint)
+  const [orderOpen, setOrderOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<BuyerOrder | null>(null);
+
+  const orderColumns = useMemo(
+    () =>
+      makeOrderColumns({
+        onView: (order) => {
+          setSelectedOrder(order);
+          setOrderOpen(true);
+        },
+      }),
+    [],
+  );
+
+  if (!buyerId) {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10 text-sm text-rose-600">
+        Missing buyerId in route.
+      </div>
+    );
+  }
+
+  if (profileQ.isLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10 text-sm text-zinc-500">
+        Loading buyer…
+      </div>
+    );
+  }
+
+  if (profileQ.isError || !profileQ.data) {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10">
+        <p className="text-sm text-rose-600 font-semibold">
+          Buyer not found or failed to load.
+        </p>
+        <Link
+          href="/admin/buyers"
+          className="text-xs underline text-zinc-700 mt-3 inline-block"
+        >
+          Back to Buyers
+        </Link>
+      </div>
+    );
+  }
+
+  const buyer = profileQ.data;
+
+  const allOrders = ordersQ.data ?? [];
+
+  const filteredOrders = (allOrders ?? []).filter((o) => {
+    const statusOk =
+      orderStatusFilter === "all" || String(o.status) === orderStatusFilter;
+
+    const dateOk = (() => {
+      if (!orderDateRange?.from) return true;
+      const d = new Date(o.date).getTime();
+      const from = orderDateRange.from.getTime();
+      const to = orderDateRange.to ? orderDateRange.to.getTime() : from;
+      return d >= from && d <= to;
+    })();
+
+    return statusOk && dateOk;
   });
 
-  if (!buyer && id) return notFound();
-  if (!buyer) return null;
+  const locationLabel =
+    [buyer.city, buyer.country].filter(Boolean).join(", ") || "—";
+  const joinedLabel = buyer.joinedDate
+    ? new Date(buyer.joinedDate).toLocaleDateString()
+    : "—";
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans pb-10">
@@ -183,45 +217,232 @@ export default function BuyerDetailsView() {
               <ArrowLeft size={14} /> BUYERS
             </Link>
             <span>/</span>
-            <span className="text-zinc-900 font-mono">{buyer.id}</span>
+            <span className="text-zinc-900 font-mono">
+              {buyer.customerCode}
+            </span>
+
+            {/* NOTE: profile endpoint doesn’t include status */}
+            <StatusBadge status={"—"} />
           </div>
         </div>
 
         <div className="flex gap-2">
-          <ResetPasswordModal />
-          <SuspendUserModal />
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg border-zinc-200 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200"
+            onClick={() => {
+              setReason("");
+              setSuspendOpen(true);
+            }}
+            disabled={suspend.isPending}
+          >
+            Suspend
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg border-zinc-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
+            onClick={() => reactivate.mutate(buyerId)}
+            disabled={reactivate.isPending}
+          >
+            Reactivate
+          </Button>
         </div>
       </header>
+
+      {/* Suspend dialog */}
+      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle className="uppercase tracking-widest font-display">
+              Suspend Buyer
+            </DialogTitle>
+            <DialogDescription>
+              Provide a reason. This will suspend the buyer account.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">
+              Reason <span className="text-rose-600">*</span>
+            </Label>
+            <Input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. Fraudulent activity"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSuspendOpen(false)}
+              disabled={suspend.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-zinc-900 text-white"
+              disabled={!reason.trim() || suspend.isPending}
+              onClick={() => {
+                suspend.mutate(
+                  { customerId: buyerId, reason: reason.trim() },
+                  { onSuccess: () => setSuspendOpen(false) },
+                );
+              }}
+            >
+              {suspend.isPending ? "Suspending..." : "Confirm Suspend"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Order quick-view dialog */}
+      <AppDialog
+        open={orderOpen}
+        onOpenChange={setOrderOpen}
+        title="Order Details"
+        description=""
+        icon={<Eye size={16} />}
+        size="custom"
+        maxWidthClassName="sm:max-w-[760px]"
+        footer={
+          <>
+            <Button
+              type="button"
+              className="bg-zinc-900 text-[#D4AF37] px-8 h-11"
+              onClick={() => window.print()}
+              disabled={!selectedOrder}
+            >
+              Print
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOrderOpen(false)}
+              className="px-6 h-11"
+            >
+              Close
+            </Button>
+          </>
+        }
+      >
+        {!selectedOrder ? (
+          <div className="text-sm text-zinc-500">No order selected.</div>
+        ) : (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                  Order ID
+                </p>
+                <p className="font-mono font-bold text-zinc-900">
+                  {selectedOrder.orderId}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <StatusBadge status={selectedOrder.status} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                  Date
+                </p>
+                <p className="text-sm font-medium text-zinc-900">
+                  {selectedOrder.date
+                    ? format(new Date(selectedOrder.date), "PPp")
+                    : "—"}
+                </p>
+              </div>
+
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                  Currency
+                </p>
+                <p className="text-sm font-medium text-zinc-900">
+                  {selectedOrder.currency ?? "—"}
+                </p>
+              </div>
+
+              <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3">
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                  Total Amount
+                </p>
+                <p className="text-sm font-mono font-bold text-zinc-900">
+                  {money(selectedOrder.totalAmount, selectedOrder.currency)}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-zinc-100 bg-zinc-50">
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-700">
+                  Items
+                </p>
+              </div>
+              <div className="p-4">
+                {selectedOrder.items?.length ? (
+                  <ul className="space-y-2">
+                    {selectedOrder.items.map((it, idx) => (
+                      <li
+                        key={`${it}-${idx}`}
+                        className="flex items-center justify-between gap-3 text-sm"
+                      >
+                        <span className="text-zinc-900">{it}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-zinc-500">No items.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </AppDialog>
 
       {/* ─── MAIN CONTENT ─── */}
       <main className="p-6 max-w-7xl mx-auto space-y-8">
         {/* ─── CARDS ROW ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Profile card */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
             <div className="flex items-center gap-5">
               <div className="h-20 w-20 rounded-full bg-zinc-900 flex items-center justify-center text-2xl font-bold text-[#D4AF37] border-4 border-zinc-50 shrink-0 shadow-sm">
-                {buyer.avatar}
+                {initials(buyer.fullName)}
               </div>
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 font-display">
-                  {buyer.name}
+                  {buyer.fullName}
                 </h2>
                 <p className="text-xs text-zinc-500 font-mono mt-1 mb-2">
                   {buyer.email}
                 </p>
                 <div className="mt-1">
-                  <StatusBadge status={buyer.status} />
+                  <StatusBadge status={"—"} />
                 </div>
               </div>
             </div>
+
             <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
-              <InfoRow icon={Phone} label="Phone" value={buyer.phone} />
-              <InfoRow icon={MapPin} label="Location" value={buyer.location} />
-              <InfoRow icon={Calendar} label="Joined" value={buyer.joinDate} />
+              <InfoRow
+                icon={Phone}
+                label="Phone"
+                value={buyer.phoneNumber || "—"}
+              />
+              <InfoRow icon={MapPin} label="Location" value={locationLabel} />
+              <InfoRow icon={Calendar} label="Joined" value={joinedLabel} />
             </div>
           </div>
 
+          {/* Wallet card */}
           <div className="lg:col-span-4 bg-zinc-900 text-white border border-zinc-800 rounded-2xl p-6 shadow-md flex flex-col justify-between h-full relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-800 via-[#D4AF37] to-zinc-800" />
             <div>
@@ -232,43 +453,53 @@ export default function BuyerDetailsView() {
                 </span>
               </div>
               <p className="text-4xl font-bold font-mono tracking-tight">
-                ₦24,500.00
+                {money(buyer.walletBalance, buyer.currency)}
               </p>
             </div>
+
             <div className="mt-6 flex gap-3">
-              <CreditWalletModal />
               <Button
                 variant="outline"
-                className="flex-1 bg-transparent text-white border-zinc-700 hover:bg-zinc-800 hover:text-[#D4AF37] hover:border-[#D4AF37] h-10 text-xs font-bold uppercase tracking-widest rounded-xl transition-colors"
+                className="flex-1 bg-transparent text-white border-zinc-700 h-10 text-xs font-bold uppercase tracking-widest rounded-xl"
+                disabled
+                title=""
+              >
+                Credit Wallet
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 bg-transparent text-white border-zinc-700 h-10 text-xs font-bold uppercase tracking-widest rounded-xl"
+                disabled
               >
                 View Logs
               </Button>
             </div>
           </div>
 
+          {/* Metrics stack */}
           <div className="lg:col-span-4 flex flex-col gap-4 h-full">
             <MetricCard
               icon={Wallet}
               label="Total Spent"
-              value={buyer.totalSpent}
+              value={money(buyer.totalSpent, buyer.currency)}
               variant="gold"
             />
             <MetricCard
               icon={ShoppingCart}
               label="Total Orders"
-              value={String(buyer.orders)}
+              value={String(buyer.totalOrders)}
               variant="indigo"
             />
             <MetricCard
               icon={TrendingUp}
               label="Avg. Order Value"
-              value="₦45,000"
+              value={money(buyer.averageOrderValue, buyer.currency)}
               variant="emerald"
             />
           </div>
         </div>
 
-        {/* ─── TABS & TABLE (Analytics Style) ─── */}
+        {/* ─── TABS ─── */}
         <div className="space-y-6">
           <Tabs defaultValue="orders" className="w-full flex flex-col">
             <div className="flex justify-center mb-6">
@@ -279,6 +510,7 @@ export default function BuyerDetailsView() {
               </TabsList>
             </div>
 
+            {/* Orders tab */}
             <TabsContent
               value="orders"
               className="m-0 animate-in fade-in duration-500"
@@ -331,10 +563,13 @@ export default function BuyerDetailsView() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Confirmed">Confirmed</SelectItem>
                         <SelectItem value="Processing">Processing</SelectItem>
-                        <SelectItem value="Shipped">Shipped</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
                         <SelectItem value="Delivered">Delivered</SelectItem>
                         <SelectItem value="Failed">Failed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -342,6 +577,7 @@ export default function BuyerDetailsView() {
                       variant="outline"
                       size="sm"
                       className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg"
+                      disabled
                     >
                       <Download className="mr-2 h-3.5 w-3.5 text-zinc-500" />{" "}
                       Export CSV
@@ -350,12 +586,22 @@ export default function BuyerDetailsView() {
                 </div>
 
                 <div className="p-0">
-                  <DataTable columns={orderColumns} data={filteredOrders} />
+                  {ordersQ.isLoading ? (
+                    <div className="p-6 text-sm text-zinc-500">
+                      Loading orders…
+                    </div>
+                  ) : ordersQ.isError ? (
+                    <div className="p-6 text-sm text-rose-600">
+                      Failed to load orders.
+                    </div>
+                  ) : (
+                    <DataTable columns={orderColumns} data={filteredOrders} />
+                  )}
                 </div>
               </div>
             </TabsContent>
 
-            {/* ACTIVITY TAB */}
+            {/* Activity tab */}
             <TabsContent value="activity" className="m-0">
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/30">
@@ -363,33 +609,49 @@ export default function BuyerDetailsView() {
                     Recent Account Activity
                   </h3>
                 </div>
+
                 <div className="p-0">
-                  <DataTable
-                    columns={activityColumns}
-                    data={MOCK_ACTIVITY_LOG}
-                  />
+                  {activityQ.isLoading ? (
+                    <div className="p-6 text-sm text-zinc-500">
+                      Loading activity…
+                    </div>
+                  ) : activityQ.isError ? (
+                    <div className="p-6 text-sm text-rose-600">
+                      Failed to load activity.
+                    </div>
+                  ) : (
+                    <DataTable
+                      columns={activityColumns}
+                      data={activityQ.data ?? []}
+                    />
+                  )}
                 </div>
               </div>
             </TabsContent>
 
-            {/* SETTINGS TAB */}
+            {/* Settings tab */}
             <TabsContent value="settings" className="m-0">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Edit Profile Info */}
                 <div className="bg-white border border-zinc-200 rounded-lg shadow-sm p-6">
                   <div className="mb-6 border-b border-zinc-100 pb-4">
                     <h3 className="font-bold text-zinc-900 mb-1">
                       Profile Information
                     </h3>
                     <p className="text-xs text-zinc-500">
-                      Update the basic personal details for this user.
+                    
                     </p>
                   </div>
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label className="text-xs text-zinc-600">Full Name</Label>
-                      <Input defaultValue={buyer.name} className="h-9" />
+                      <Input
+                        defaultValue={buyer.fullName}
+                        className="h-9"
+                        disabled
+                      />
                     </div>
+
                     <div className="space-y-2">
                       <Label className="text-xs text-zinc-600">
                         Email Address
@@ -398,34 +660,38 @@ export default function BuyerDetailsView() {
                         defaultValue={buyer.email}
                         type="email"
                         className="h-9"
+                        disabled
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label className="text-xs text-zinc-600">
                         Phone Number
                       </Label>
                       <Input
-                        defaultValue={buyer.phone}
+                        defaultValue={buyer.phoneNumber}
                         type="tel"
                         className="h-9 font-mono"
+                        disabled
                       />
                     </div>
-                    <Button className="w-full mt-4 bg-zinc-900">
+
+                    <Button className="w-full mt-4 bg-zinc-900" disabled>
                       <Save className="mr-2 h-4 w-4" /> Save Profile Changes
                     </Button>
                   </div>
                 </div>
 
-                {/* Change Password */}
                 <div className="bg-white border border-zinc-200 rounded-lg shadow-sm p-6">
                   <div className="mb-6 border-b border-zinc-100 pb-4">
                     <h3 className="font-bold text-zinc-900 mb-1">
                       Change Password
                     </h3>
                     <p className="text-xs text-zinc-500">
-                      Force a password update for this user account.
+                     
                     </p>
                   </div>
+
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label className="text-xs text-zinc-600">
@@ -435,8 +701,10 @@ export default function BuyerDetailsView() {
                         type="password"
                         placeholder="••••••••"
                         className="h-9"
+                        disabled
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label className="text-xs text-zinc-600">
                         Confirm New Password
@@ -445,10 +713,12 @@ export default function BuyerDetailsView() {
                         type="password"
                         placeholder="••••••••"
                         className="h-9"
+                        disabled
                       />
                     </div>
+
                     <div className="pt-4">
-                      <Button variant="destructive" className="w-full">
+                      <Button variant="destructive" className="w-full" disabled>
                         <Key className="mr-2 h-4 w-4" /> Update Password
                       </Button>
                     </div>

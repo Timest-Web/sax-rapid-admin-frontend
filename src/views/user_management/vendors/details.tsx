@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useParams, notFound } from "next/navigation";
+import { useMemo } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { StatusBadge } from "@/components/cards/status-badge";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -10,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import {
   MapPin,
   Mail,
@@ -22,19 +25,33 @@ import {
   CheckCircle2,
   Save,
 } from "lucide-react";
-import { VENDORS, VENDOR_PRODUCTS } from "@/src/lib/dummy_data";
+
 import { ColumnDef } from "@tanstack/react-table";
+
 import {
   ApproveVendorModal,
   RejectVendorModal,
   SuspendStoreModal,
 } from "./actions";
+
 import { KycViewer } from "./kyc_viewer";
 import { InfoRow } from "@/components/buyers/buyers-helper";
 import MetricCard from "@/components/cards/metric-card";
 
+import { VENDOR_PRODUCTS } from "@/src/lib/dummy_data"; // keep mock for now
+import { useVendor } from "@/src/features/vendors/hooks/useVendor";
+
+
 // ─── HELPER FOR BLACK & GOLD TAB STYLING ───
-function TabTriggerItem({ value, label, hasPulse = false }: { value: string; label: string; hasPulse?: boolean }) {
+function TabTriggerItem({
+  value,
+  label,
+  hasPulse = false,
+}: {
+  value: string;
+  label: string;
+  hasPulse?: boolean;
+}) {
   return (
     <TabsTrigger
       value={value}
@@ -46,7 +63,7 @@ function TabTriggerItem({ value, label, hasPulse = false }: { value: string; lab
   );
 }
 
-// ─── PRODUCT COLUMNS WITH NEW "ACTION" COLUMN ───
+// ─── PRODUCT COLUMNS ───
 const productColumns: ColumnDef<any>[] = [
   {
     accessorKey: "name",
@@ -90,7 +107,6 @@ const productColumns: ColumnDef<any>[] = [
     header: () => <div className="text-right">Action</div>,
     cell: ({ row }) => (
       <div className="text-right">
-        {/* Links to product details page */}
         <Link href={`/admin/products/${row.original.id}`}>
           <button className="p-1.5 border border-zinc-200 hover:bg-zinc-900 hover:text-[#D4AF37] text-zinc-500 transition-colors rounded inline-flex items-center justify-center">
             <Eye size={14} />
@@ -103,37 +119,64 @@ const productColumns: ColumnDef<any>[] = [
 
 // Mock Transactions for Payouts Tab
 const MOCK_TRANSACTIONS = [
-  {
-    id: 1,
-    type: "Wallet Debit",
-    date: "2 days ago",
-    amount: "-$5.00",
-    isNegative: true,
-  },
-  {
-    id: 2,
-    type: "Wallet Topup",
-    date: "2 days ago",
-    amount: "+$50.00",
-    isNegative: false,
-  },
-  {
-    id: 3,
-    type: "Wallet Topup",
-    date: "2 days ago",
-    amount: "+₦50,000.00",
-    isNegative: false,
-  },
+  { id: 1, type: "Wallet Debit", date: "2 days ago", amount: "-$5.00", isNegative: true },
+  { id: 2, type: "Wallet Topup", date: "2 days ago", amount: "+$50.00", isNegative: false },
+  { id: 3, type: "Wallet Topup", date: "2 days ago", amount: "+₦50,000.00", isNegative: false },
 ];
+
+function initials(text: string) {
+  const parts = String(text || "").trim().split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] ?? "V";
+  const b = parts[parts.length - 1]?.[0] ?? "D";
+  return (a + b).toUpperCase();
+}
 
 export default function VendorDetailsView() {
   const params = useParams();
-  const id = Array.isArray(params?.id) ? params?.id[0] : params?.id;
-  const vendor = VENDORS.find((v) => v.id === decodeURIComponent(id || ""));
+  const vendorId =
+    typeof (params as any)?.id === "string"
+      ? decodeURIComponent((params as any).id)
+      : decodeURIComponent(((params as any)?.id?.[0] as string) ?? "");
 
-  if (!vendor) return notFound();
+  const { data: vendor, isLoading, isError } = useVendor(vendorId);
 
-  const isPending = vendor.status === "Pending";
+  const pageState = useMemo(() => {
+    if (isLoading) return "loading";
+    if (isError || !vendor) return "error";
+    return "ready";
+  }, [isLoading, isError, vendor]);
+
+  if (pageState === "loading") {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10 text-sm text-zinc-500">
+        Loading vendor…
+      </div>
+    );
+  }
+
+  if (pageState === "error") {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10">
+        <div className="max-w-xl bg-white border border-zinc-200 rounded-xl p-6">
+          <p className="text-sm text-rose-600 font-semibold">
+            Vendor not found or failed to load.
+          </p>
+          <Link href="/admin/vendors" className="text-xs underline text-zinc-700 mt-3 inline-block">
+            Back to Vendors
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- vendor is defined here ----
+  const isPending = vendor.verificationStatus === "NotVerified" && !vendor.verifiedAt;
+
+  // Map API verification -> your StatusBadge-friendly labels
+  const statusLabel = vendor.verificationStatus === "Verified" ? "Active" : "Pending";
+
+  const locationLabel =
+    [vendor.storeAddress, vendor.storeCity, vendor.storeState].filter(Boolean).join(", ") || "—";
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans pb-10">
@@ -150,7 +193,7 @@ export default function VendorDetailsView() {
               <ArrowLeft size={14} /> VENDORS
             </Link>
             <span>/</span>
-            <span className="text-zinc-900 font-mono">{vendor.storeName}</span>
+            <span className="text-zinc-900 font-mono">{vendor.shopName}</span>
           </div>
         </div>
 
@@ -158,70 +201,82 @@ export default function VendorDetailsView() {
         <div className="flex gap-2">
           {isPending ? (
             <>
-              <RejectVendorModal name={vendor.storeName} />
-              <ApproveVendorModal name={vendor.storeName} />
+              <RejectVendorModal vendorId={vendor.id} name={vendor.shopName} />
+              <ApproveVendorModal vendorId={vendor.id} name={vendor.shopName} />
             </>
           ) : (
-            <SuspendStoreModal name={vendor.storeName} />
+            <SuspendStoreModal vendorId={vendor.id} name={vendor.shopName} />
           )}
         </div>
       </header>
 
       <main className="p-6 max-w-7xl mx-auto space-y-8 mt-2">
-        
         {/* ─── TOP SECTION: PROFILE & METRICS ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          
           {/* 1. Store Identity & Account Info */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
+
             <div className="flex items-start gap-5">
               <div className="h-20 w-20 rounded-2xl bg-zinc-900 flex items-center justify-center text-2xl font-bold text-[#D4AF37] shrink-0 shadow-sm border border-zinc-800">
-                {vendor.logo}
+                {initials(vendor.shopName)}
               </div>
+
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 font-display leading-tight">
-                  {vendor.storeName}
+                  {vendor.shopName}
                 </h2>
                 <p className="text-xs text-zinc-500 mt-1 mb-2 font-mono">
                   Owner: {vendor.ownerName}
                 </p>
-                <StatusBadge status={vendor.status} />
+                <StatusBadge status={statusLabel} />
               </div>
             </div>
 
             <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
-              <InfoRow icon={Mail} label="Email" value={vendor.email} />
-              <InfoRow icon={Phone} label="Phone" value={vendor.phone} />
-              <InfoRow icon={MapPin} label="Location" value={vendor.location} />
+              <InfoRow icon={Mail} label="Email" value={vendor.ownerEmail} />
+              <InfoRow icon={Phone} label="Phone" value={"—"} />
+              <InfoRow icon={MapPin} label="Location" value={locationLabel} />
 
               <div className="flex justify-between items-center pt-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">User ID</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  Vendor ID
+                </span>
                 <span className="text-xs font-mono font-bold text-zinc-900 uppercase bg-zinc-100 px-2 py-0.5 rounded-md">
-                  {vendor.id.split("-")[0]}ZG
+                  {vendor.id.split("-")[0]}
                 </span>
               </div>
+
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Email Status</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1 border border-emerald-100">
-                  <CheckCircle2 size={10} /> Verified
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  Verification
+                </span>
+                <span
+                  className={[
+                    "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md flex items-center gap-1 border",
+                    vendor.verificationStatus === "Verified"
+                      ? "text-emerald-600 bg-emerald-50 border-emerald-100"
+                      : "text-amber-700 bg-amber-50 border-amber-100",
+                  ].join(" ")}
+                >
+                  <CheckCircle2 size={10} />
+                  {vendor.verificationStatus}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* 2. Wallet Card */}
+          {/* 2. Wallet Card (mock) */}
           <div className="lg:col-span-4 bg-zinc-900 text-white border border-zinc-800 rounded-2xl p-6 shadow-md flex flex-col justify-between h-full relative overflow-hidden group">
             <Wallet className="absolute -right-6 -bottom-6 w-36 h-36 text-zinc-800/50 rotate-12 transition-transform group-hover:rotate-6" />
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-800 via-[#D4AF37] to-zinc-800" />
 
             <div className="relative z-10 space-y-6">
-              {/* NGN Balance */}
               <div>
                 <div className="flex items-center gap-2 mb-2 text-[#D4AF37]">
                   <Wallet size={16} />
                   <span className="text-[10px] font-bold uppercase tracking-widest">
-                    NGN Wallet
+                    NGN Wallet (Mock)
                   </span>
                 </div>
                 <p className="text-3xl font-bold font-mono tracking-tight text-white mb-1">
@@ -234,12 +289,11 @@ export default function VendorDetailsView() {
 
               <div className="h-px w-full bg-zinc-800" />
 
-              {/* USD Balance */}
               <div>
                 <div className="flex items-center gap-2 mb-2 text-blue-400">
                   <Wallet size={16} />
                   <span className="text-[10px] font-bold uppercase tracking-widest">
-                    USD Wallet
+                    USD Wallet (Mock)
                   </span>
                 </div>
                 <p className="text-3xl font-bold font-mono tracking-tight text-white mb-1">
@@ -252,36 +306,27 @@ export default function VendorDetailsView() {
             </div>
           </div>
 
-          {/* 3. Metrics Stack */}
+          {/* 3. Metrics Stack (mostly mock) */}
           <div className="lg:col-span-4 flex flex-col gap-3 h-full">
-            {/* Store Rating Mini Card */}
             <div className="bg-white border border-zinc-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
               <div>
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
-                  Store Rating
+                  Store Rating (Mock)
                 </h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-bold font-mono text-zinc-900">
-                    {vendor.rating}
+                    0.0
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">/ 5.0</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    / 5.0
+                  </span>
                 </div>
               </div>
               <Star className="text-[#D4AF37] fill-[#D4AF37]" size={28} />
             </div>
 
-            <MetricCard
-              label="Total Revenue"
-              value={vendor.totalSales}
-              icon={Wallet}
-              variant="gold"
-            />
-            <MetricCard
-              label="Active Products"
-              value={String(vendor.products)}
-              icon={ShoppingCart}
-              variant="emerald"
-            />
+            <MetricCard label="Product Limit" value={String(vendor.productLimit)} icon={Wallet} variant="gold" />
+            <MetricCard label="Active Products (Mock)" value={"0"} icon={ShoppingCart} variant="emerald" />
           </div>
         </div>
 
@@ -291,7 +336,6 @@ export default function VendorDetailsView() {
             defaultValue={isPending ? "kyc" : "products"}
             className="w-full flex flex-col"
           >
-            {/* Tab List */}
             <div className="flex justify-center mb-8">
               <TabsList className="bg-zinc-200/50 p-1 h-12 rounded-full inline-flex gap-1 overflow-x-auto whitespace-nowrap">
                 <TabTriggerItem value="products" label="Products" />
@@ -302,7 +346,7 @@ export default function VendorDetailsView() {
               </TabsList>
             </div>
 
-            {/* TAB 1: PRODUCTS TABLE */}
+            {/* TAB 1: PRODUCTS TABLE (mock) */}
             <TabsContent value="products" className="animate-in fade-in duration-500 m-0">
               <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-0">
@@ -311,7 +355,7 @@ export default function VendorDetailsView() {
               </div>
             </TabsContent>
 
-            {/* TAB 2: CUSTOMER ORDERS */}
+            {/* TAB 2: CUSTOMER ORDERS (empty) */}
             <TabsContent value="orders" className="animate-in fade-in duration-500 m-0">
               <div className="bg-white border border-zinc-200 rounded-2xl p-12 text-center shadow-sm">
                 <p className="text-zinc-400 font-mono text-sm uppercase tracking-widest font-bold">
@@ -320,7 +364,7 @@ export default function VendorDetailsView() {
               </div>
             </TabsContent>
 
-            {/* TAB 3: KYC VIEWER */}
+            {/* TAB 3: KYC VIEWER (no API data yet) */}
             <TabsContent value="kyc" className="animate-in fade-in duration-500 m-0">
               <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
@@ -328,22 +372,21 @@ export default function VendorDetailsView() {
                     Submitted Documents
                   </h3>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white px-3 py-1.5 rounded-lg border border-zinc-200 shadow-sm">
-                    {vendor.documents?.filter((d) => d.status === "Verified").length || 0}{" "}
-                    / {vendor.documents?.length || 0} Verified
+                    0 / 0 Verified
                   </span>
                 </div>
                 <div className="p-6">
-                  <KycViewer documents={vendor.documents} />
+                  <KycViewer documents={[]} />
                 </div>
               </div>
             </TabsContent>
 
-            {/* TAB 4: PAYOUT HISTORY */}
+            {/* TAB 4: PAYOUT HISTORY (mock) */}
             <TabsContent value="payouts" className="animate-in fade-in duration-500 m-0">
               <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-zinc-100 bg-zinc-50/50">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                    Recent Wallet Activity
+                    Recent Wallet Activity (Mock)
                   </h3>
                 </div>
                 <div className="divide-y divide-zinc-100">
@@ -353,15 +396,15 @@ export default function VendorDetailsView() {
                       className="p-5 flex justify-between items-center hover:bg-zinc-50/50 transition-colors"
                     >
                       <div className="space-y-1">
-                        <p className="text-sm font-bold text-zinc-900">
-                          {tx.type}
-                        </p>
+                        <p className="text-sm font-bold text-zinc-900">{tx.type}</p>
                         <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest">
                           {tx.date}
                         </p>
                       </div>
                       <p
-                        className={`text-lg font-bold font-mono ${tx.isNegative ? "text-rose-600" : "text-emerald-600"}`}
+                        className={`text-lg font-bold font-mono ${
+                          tx.isNegative ? "text-rose-600" : "text-emerald-600"
+                        }`}
                       >
                         {tx.amount}
                       </p>
@@ -371,42 +414,60 @@ export default function VendorDetailsView() {
               </div>
             </TabsContent>
 
-            {/* TAB 5: SETTINGS */}
+            {/* TAB 5: SETTINGS (no save endpoint yet) */}
             <TabsContent value="settings" className="animate-in fade-in duration-500 m-0">
               <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden max-w-3xl">
                 <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 relative">
-                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
                   <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-900 font-display">
                     Vendor Configuration
                   </h3>
                   <p className="text-xs text-zinc-500 mt-2 leading-relaxed">
-                    Edit core details for this vendor profile. These changes will reflect immediately.
+                    Edit core details for this vendor profile. (Save endpoint not wired yet)
                   </p>
                 </div>
 
                 <div className="p-6 space-y-5">
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Store Name</Label>
-                    <Input defaultValue={vendor.storeName} className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-[#D4AF37] rounded-lg" />
+                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Store Name
+                    </Label>
+                    <Input
+                      defaultValue={vendor.shopName}
+                      className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-[#D4AF37] rounded-lg"
+                    />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Owner Name</Label>
-                      <Input defaultValue={vendor.ownerName} className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-[#D4AF37] rounded-lg" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Phone Number</Label>
+                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                        Owner Name
+                      </Label>
                       <Input
-                        defaultValue={vendor.phone}
+                        defaultValue={vendor.ownerName}
+                        className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-[#D4AF37] rounded-lg"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                        Phone Number
+                      </Label>
+                      <Input
+                        defaultValue={"—"}
                         className="h-11 font-mono text-sm bg-zinc-50/50 border-zinc-200 focus-visible:ring-[#D4AF37] rounded-lg"
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Headquarters / Address</Label>
-                    <Input defaultValue={vendor.location} className="h-11 bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-[#D4AF37] rounded-lg" />
+                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Headquarters / Address
+                    </Label>
+                    <Input
+                      defaultValue={locationLabel}
+                      className="h-11 bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-[#D4AF37] rounded-lg"
+                    />
                   </div>
 
                   <div className="pt-4 mt-2 border-t border-zinc-100 flex justify-end">
@@ -417,7 +478,6 @@ export default function VendorDetailsView() {
                 </div>
               </div>
             </TabsContent>
-
           </Tabs>
         </div>
       </main>
