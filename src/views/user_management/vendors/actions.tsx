@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, ShieldBan } from "lucide-react";
-import { useApproveVendor, useRejectVendor, useSuspendVendor } from "@/src/features/vendors/hooks/useVendorActions";
+import { useApproveVendor, useRejectVendor, useSuspendVendor } from "@/src/features/vendors/hooks";
 
 
 export function ApproveVendorModal({ vendorId, name }: { vendorId: string; name: string }) {

@@ -118,3 +118,37 @@ export async function reactivateBuyer(customerId: string) {
   const res = await apiClient.patch(`/api/customers/${customerId}/reactivate`);
   return res.data;
 }
+
+
+export type UpdateUserInput = {
+  firstName?: string;
+  lastName?: string;
+  phoneNumber?: string;
+  profileImageUrl?: string;
+  email?: string;
+};
+
+export type UpdatedUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  countryCode: string;
+  role: string;
+  status: string;
+  verificationStatus: string;
+  profileImageUrl: string | null;
+  isTwoFactorEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function updateUser(userId: string, payload: UpdateUserInput) {
+  const res = await apiClient.patch<MaybeWrapped<UpdatedUser>>(
+    `/api/Users/${userId}`,
+    payload,
+  );
+  return unwrap(res.data);
+}

@@ -19,6 +19,7 @@ import {
 
 import { useOrder } from "@/src/features/orders/hooks";
 import { useCancelOrder, useUpdateOrderStatus } from "@/src/features/orders/hooks";
+import { DetailsPageSkeleton } from "@/components/skeletons/details";
 
 function StatusBadge({ status }: { status: string }) {
   const getColors = () => {
@@ -61,7 +62,7 @@ export default function OrderDetailsView() {
   const [currency, setCurrency] = useState<"NGN" | "ZAR">("NGN");
 
   if (isLoading) {
-    return <div className="min-h-screen bg-zinc-50 p-10 text-sm text-zinc-500">Loading order…</div>;
+    return <DetailsPageSkeleton/>
   }
 
   if (isError || !order) {

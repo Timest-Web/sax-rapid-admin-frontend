@@ -54,6 +54,7 @@ import {
   RejectProductDialog,
   FlagProductDialog,
 } from "./dialogs";
+import { DetailsPageSkeleton } from "@/components/skeletons/details";
 
 function fmtMoney(n: number | null | undefined) {
   if (n === null || n === undefined) return "—";
@@ -162,9 +163,7 @@ export default function ProductDetailsView() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50 p-10 text-sm text-zinc-500">
-        Loading product…
-      </div>
+      <DetailsPageSkeleton/>
     );
   }
 

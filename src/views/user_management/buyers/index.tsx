@@ -10,6 +10,8 @@ import { Users, UserPlus } from "lucide-react";
 
 import { useBuyers } from "@/src/features/buyers/hooks";
 import { useBuyerStats } from "@/src/features/buyers/hooks";
+import { StatsAndTableSkeleton } from "@/components/skeletons/stat-table";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 export default function BuyersView() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -56,7 +58,7 @@ export default function BuyersView() {
 
         <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-4">
           {listQ.isLoading ? (
-            <div className="p-6 text-sm text-zinc-500">Loading buyers...</div>
+             <TableSkeleton />
           ) : listQ.isError ? (
             <div className="p-6 text-sm">
               <p className="text-red-600">

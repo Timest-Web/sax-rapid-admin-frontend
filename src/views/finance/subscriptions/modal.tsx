@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -87,6 +87,8 @@ export function SubscriptionModal(props: {
     }
   }, [open, initialData]);
 
+  const formId = "subscriptionPlanForm";
+
   return (
     <AppDialog
       open={open}
@@ -96,31 +98,18 @@ export function SubscriptionModal(props: {
       icon={<Crown size={16} />}
       size="custom"
       maxWidthClassName="sm:max-w-[620px]"
-      as="form"
-      onSubmit={(e: any) => {
-        e.preventDefault();
-
-        onSubmit({
-          name: v.name.trim(),
-          description: v.description.trim(),
-          monthlyPrice: Number(v.monthlyPrice),
-          yearlyPrice: Number(v.yearlyPrice),
-          maxProducts: Number(v.maxProducts),
-          displayOrder: Number(v.displayOrder),
-          canBoostProducts: v.canBoostProducts,
-          hasAnalytics: v.hasAnalytics,
-          hasPrioritySupport: v.hasPrioritySupport,
-        });
-      }}
+      bodyMaxHeightClassName="max-h-[40vh]"
       footer={
         <>
           <Button
             type="submit"
+            form={formId}
             className="bg-zinc-900 text-[#D4AF37] px-8 h-11"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Saving..." : isEdit ? "Update Plan" : "Create Plan"}
           </Button>
+
           <Button
             type="button"
             variant="outline"
@@ -133,7 +122,25 @@ export function SubscriptionModal(props: {
         </>
       }
     >
-      <div className="space-y-5">
+      <form
+        id={formId}
+        className="space-y-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          onSubmit({
+            name: v.name.trim(),
+            description: v.description.trim(),
+            monthlyPrice: Number(v.monthlyPrice),
+            yearlyPrice: Number(v.yearlyPrice),
+            maxProducts: Number(v.maxProducts),
+            displayOrder: Number(v.displayOrder),
+            canBoostProducts: v.canBoostProducts,
+            hasAnalytics: v.hasAnalytics,
+            hasPrioritySupport: v.hasPrioritySupport,
+          });
+        }}
+      >
         <div className="space-y-1.5">
           <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
             Plan Name <span className="text-[#D4AF37]">*</span>
@@ -213,7 +220,6 @@ export function SubscriptionModal(props: {
           />
         </div>
 
-        {/* simple feature toggles */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <label className="flex items-center gap-2 text-xs">
             <input
@@ -242,7 +248,7 @@ export function SubscriptionModal(props: {
             Priority support
           </label>
         </div>
-      </div>
+      </form>
     </AppDialog>
   );
 }

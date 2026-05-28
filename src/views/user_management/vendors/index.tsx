@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useVendors } from "@/src/features/vendors/hooks/useVendors";
+import { useVendors } from "@/src/features/vendors/hooks";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 export default function VendorsView() {
   const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
@@ -146,9 +147,7 @@ export default function VendorsView() {
 
             <div className="mt-4 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
               {isLoading ? (
-                <div className="p-6 text-sm text-zinc-500">
-                  Loading vendors...
-                </div>
+                  <TableSkeleton columns={vendorColumns.length} rows={12} withToolbar={false} />
               ) : isError ? (
                 <div className="p-6 text-sm">
                   <p className="text-red-600">
@@ -196,7 +195,6 @@ export default function VendorsView() {
         onOpenChange={setIsAddVendorModalOpen}
       >
         <DialogContent className="sm:max-w-125 bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
-          {/* ...unchanged modal... */}
           <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
             <DialogHeader>

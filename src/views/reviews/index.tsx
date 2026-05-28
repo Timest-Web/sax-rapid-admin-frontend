@@ -1,121 +1,73 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useMemo } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Star, AlertTriangle, MessageSquare, ShieldCheck } from "lucide-react";
 import { FilterTabs } from "@/components/tabs/filter-tab";
-import {
-  reviewColumns,
-  vendorRatingColumns,
-  Review,
-  VendorRating,
-} from "./column";
 import { StatCard } from "@/components/cards/stat-card";
 
-// --- DUMMY DATA ---
-const REVIEWS_DATA: Review[] = [
-  {
-    id: "1",
-    customerName: "Alice M.",
-    avatar: "AM",
-    vendorName: "Tech Haven",
-    productName: "iPhone 15 Pro Max Case",
-    rating: 5,
-    comment:
-      "Amazing service and fast delivery! The quality exceeds expectations.",
-    date: "2023-10-25",
-    status: "active",
-  },
-  {
-    id: "2",
-    customerName: "John D.",
-    avatar: "JD",
-    vendorName: "Burger King",
-    productName: "Double Whopper Meal",
-    rating: 1,
-    comment: "Food was cold and arrived late. Totally unacceptable experience.",
-    date: "2023-10-24",
-    status: "flagged",
-  },
-  {
-    id: "3",
-    customerName: "Sarah W.",
-    avatar: "SW",
-    vendorName: "Style Loft",
-    productName: "Floral Summer Dress",
-    rating: 4,
-    comment: "Great fabric but size runs small. Order one size up.",
-    date: "2023-10-23",
-    status: "active",
-  },
-  {
-    id: "4",
-    customerName: "Mike R.",
-    avatar: "MR",
-    vendorName: "Tech Haven",
-    productName: "Wireless Earbuds Gen 2",
-    rating: 2,
-    comment: "Product stopped working after 2 days. Trying to get a refund.",
-    date: "2023-10-22",
-    status: "flagged",
-  },
-  {
-    id: "5",
-    customerName: "Jenny L.",
-    avatar: "JL",
-    vendorName: "Fresh Mart",
-    productName: "Organic Avocados (Pack of 4)",
-    rating: 5,
-    comment: "Freshest vegetables in town. Will order again.",
-    date: "2023-10-22",
-    status: "active",
-  },
-];
+import { makeReviewColumns, vendorRatingColumns, type ReviewRow, type VendorRatingRow } from "./column";
+import { useFlagReview, useRecentReviews, useReviewStats, useVendorRatings } from "@/src/features/reviews/hooks";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
-const VENDOR_RATINGS_DATA: VendorRating[] = [
-  {
-    id: "1",
-    vendorName: "Tech Haven",
-    logo: "TH",
-    category: "Electronics",
-    avgRating: 4.2,
-    totalReviews: 128,
-    status: "active",
-  },
-  {
-    id: "2",
-    vendorName: "Burger King",
-    logo: "BK",
-    category: "Food",
-    avgRating: 3.5,
-    totalReviews: 850,
-    status: "active",
-  },
-  {
-    id: "3",
-    vendorName: "Style Loft",
-    logo: "SL",
-    category: "Fashion",
-    avgRating: 4.8,
-    totalReviews: 45,
-    status: "active",
-  },
-  {
-    id: "4",
-    vendorName: "Fresh Mart",
-    logo: "FM",
-    category: "Groceries",
-    avgRating: 4.9,
-    totalReviews: 312,
-    status: "active",
-  },
-];
+function initials(name: string) {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] ?? "U";
+  const b = parts[parts.length - 1]?.[0] ?? "R";
+  return (a + b).toUpperCase();
+}
 
 export default function ReviewsView() {
+  const statsQ = useReviewStats();
+  const recentQ = useRecentReviews(1, 20);
+  const vendorsQ = useVendorRatings(1, 20);
+  const flagM = useFlagReview();
+
+  const reviews: ReviewRow[] = useMemo(() => {
+    const items: any[] = recentQ.data?.items ?? [];
+    return items.map((r) => ({
+      id: r.id,
+      userName: r.userName,
+      rating: r.rating,
+      comment: r.comment,
+      createdAt: r.createdAt,
+      productId: r.productId,
+      isVerifiedPurchase: r.isVerifiedPurchase,
+      status: r.isFlagged ? "flagged" : "active",
+      avatar: initials(r.userName),
+    }));
+  }, [recentQ.data]);
+
+  const vendorRows: VendorRatingRow[] = useMemo(() => {
+    const items = vendorsQ.data?.items ?? [];
+    return items.map((v) => ({
+      vendorId: v.vendorId,
+      vendorName: v.vendorName,
+      rating: v.rating,
+      totalProducts: v.totalProducts,
+      totalRevenue: v.totalRevenue,
+      currency: v.currency,
+      status: v.status,
+      verificationStatus: v.verificationStatus,
+      storeCity: v.storeCity,
+      storeState: v.storeState,
+      email: v.email,
+    }));
+  }, [vendorsQ.data]);
+
+  const reviewColumns = useMemo(
+    () =>
+      makeReviewColumns({
+        onFlag: (reviewId) => flagM.mutate(reviewId),
+      }),
+    [flagM],
+  );
+
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
-      {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
@@ -126,30 +78,28 @@ export default function ReviewsView() {
         </div>
       </header>
 
-      <main className="p-6 max-w-400 mx-auto space-y-8">
-        {/* STATS */}
+      <main className="p-6 max-w-7xl mx-auto space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             label="Total Reviews"
-            value="1,245"
+            value={statsQ.isLoading ? "—" : String(statsQ.data?.totalReviews ?? 0)}
             icon={MessageSquare}
             variant="default"
           />
           <StatCard
             label="Avg Platform Rating"
-            value="4.5"
+            value={statsQ.isLoading ? "—" : String(statsQ.data?.averageRating ?? 0)}
             icon={Star}
             variant="gold"
           />
           <StatCard
             label="Flagged / Abusive"
-            value="12"
+            value={statsQ.isLoading ? "—" : String(statsQ.data?.flagged ?? 0)}
             icon={AlertTriangle}
             variant="rose"
           />
         </div>
 
-        {/* TABS */}
         <Tabs defaultValue="reviews" className="w-full flex flex-col">
           <div className="flex items-center justify-between border-b border-zinc-200">
             <FilterTabs
@@ -157,20 +107,19 @@ export default function ReviewsView() {
                 {
                   value: "reviews",
                   label: "Recent Reviews",
-                  count: 5,
+                  count: recentQ.data?.totalCount ?? reviews.length,
                   variant: "indigo",
                 },
                 {
                   value: "vendors",
                   label: "Vendor Ratings",
-                  count: 4,
+                  count: vendorsQ.data?.totalCount ?? vendorRows.length,
                   variant: "amber",
                 },
               ]}
             />
           </div>
 
-          {/* TAB 1: MODERATE REVIEWS */}
           <TabsContent value="reviews">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
               <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
@@ -182,17 +131,26 @@ export default function ReviewsView() {
                   <span>Auto-moderation is active</span>
                 </div>
               </div>
-              <DataTable columns={reviewColumns} data={REVIEWS_DATA} />
+
+              {recentQ.isLoading ? (
+               <TableSkeleton columns={6} rows={10} withToolbar />
+              ) : recentQ.isError ? (
+                <div className="p-6 text-sm text-rose-600">Failed to load reviews.</div>
+              ) : (
+                <DataTable columns={reviewColumns} data={reviews} />
+              )}
             </div>
           </TabsContent>
 
-          {/* TAB 2: VENDOR RATINGS MONITORING */}
           <TabsContent value="vendors">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
-              <DataTable
-                columns={vendorRatingColumns}
-                data={VENDOR_RATINGS_DATA}
-              />
+              {vendorsQ.isLoading ? (
+                <div className="p-6 text-sm text-zinc-500">Loading vendor ratings…</div>
+              ) : vendorsQ.isError ? (
+                <div className="p-6 text-sm text-rose-600">Failed to load vendor ratings.</div>
+              ) : (
+                <DataTable columns={vendorRatingColumns} data={vendorRows} />
+              )}
             </div>
           </TabsContent>
         </Tabs>

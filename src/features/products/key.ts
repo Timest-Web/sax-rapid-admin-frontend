@@ -11,4 +11,7 @@ export const productKeys = {
   counts: () => [...productKeys.all, "count"] as const,
   count: (status?: string) =>
     [...productKeys.counts(), { status: status ?? "ALL" }] as const,
+  
+  vendorProducts: (userId: string, q: Record<string, any>) =>
+    [...productKeys.all, "vendor-products", userId, q] as const,
 };

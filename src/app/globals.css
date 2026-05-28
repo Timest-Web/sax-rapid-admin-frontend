@@ -118,3 +118,9 @@
     @apply text-zinc-900 border-sax-gold bg-transparent;
   }
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

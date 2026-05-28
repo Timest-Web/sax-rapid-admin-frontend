@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -15,11 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -37,18 +34,19 @@ import {
   ShoppingCart,
   TrendingUp,
   Save,
-  Key,
   Filter,
   CalendarIcon,
   Download,
   Eye,
+  Ban,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { InfoRow } from "@/components/buyers/buyers-helper";
 import MetricCard from "@/components/cards/metric-card";
 
-import { activityColumns, makeOrderColumns } from "./details_column"; // <-- IMPORTANT: use makeOrderColumns
+import { activityColumns, makeOrderColumns } from "./details_column";
+import type { BuyerOrder } from "@/src/features/buyers/api";
 
 import {
   useBuyerProfile,
@@ -56,19 +54,11 @@ import {
   useBuyerActivity,
   useSuspendBuyer,
   useReactivateBuyer,
+  useUpdateBuyerUser,
 } from "@/src/features/buyers/hooks";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-
-import type { BuyerOrder } from "@/src/features/buyers/api";
 import { AppDialog } from "@/components/custom-dialog";
+import { DetailsPageSkeleton } from "@/components/skeletons/details";
 
 function TabTrigger({
   value,
@@ -107,6 +97,17 @@ function money(amount: number, currency: string) {
   return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
 }
 
+function splitName(fullName: string) {
+  const parts = String(fullName ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
 export default function BuyerDetailsView() {
   const params = useParams();
   const buyerIdRaw = (params as any)?.buyerId;
@@ -114,14 +115,20 @@ export default function BuyerDetailsView() {
     Array.isArray(buyerIdRaw) ? buyerIdRaw[0] : buyerIdRaw || "",
   );
 
+  /**
+   * IMPORTANT:
+   * All hooks must run before any conditional return.
+   */
+
   // Queries
   const profileQ = useBuyerProfile(buyerId);
   const ordersQ = useBuyerOrders(buyerId, 1, 20);
   const activityQ = useBuyerActivity(buyerId, 1, 20);
 
   // Mutations
-  const suspend = useSuspendBuyer();
-  const reactivate = useReactivateBuyer();
+  const suspendM = useSuspendBuyer();
+  const reactivateM = useReactivateBuyer();
+  const updateUserM = useUpdateBuyerUser();
 
   // UI state
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
@@ -130,9 +137,29 @@ export default function BuyerDetailsView() {
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [reason, setReason] = useState("");
 
-  // Order quick-view (no backend order-details endpoint)
+  // Order quick-view
   const [orderOpen, setOrderOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<BuyerOrder | null>(null);
+
+  // Settings form state
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const buyer = profileQ.data; // can be undefined
+
+  // Keep form in sync when buyer loads/changes
+  useEffect(() => {
+    if (!buyer) return;
+    setFullName(buyer.fullName ?? "");
+    setEmail(buyer.email ?? "");
+    setPhoneNumber(buyer.phoneNumber ?? "");
+  }, [buyer?.fullName, buyer?.email, buyer?.phoneNumber]);
+
+  const userIdForUpdate = useMemo(() => {
+    // PATCH is /api/Users/{id}. Prefer userId if backend includes it.
+    return (buyer as any)?.userId ?? buyer?.id ?? buyerId;
+  }, [buyer, buyerId]);
 
   const orderColumns = useMemo(
     () =>
@@ -145,6 +172,35 @@ export default function BuyerDetailsView() {
     [],
   );
 
+  const allOrders = ordersQ.data ?? [];
+
+  const filteredOrders = useMemo(() => {
+    return (allOrders ?? []).filter((o) => {
+      const statusOk =
+        orderStatusFilter === "all" || String(o.status) === orderStatusFilter;
+
+      const dateOk = (() => {
+        if (!orderDateRange?.from) return true;
+        const d = new Date(o.date).getTime();
+        const from = orderDateRange.from.getTime();
+        const to = orderDateRange.to ? orderDateRange.to.getTime() : from;
+        return d >= from && d <= to;
+      })();
+
+      return statusOk && dateOk;
+    });
+  }, [allOrders, orderStatusFilter, orderDateRange]);
+
+  const isDirty = useMemo(() => {
+    if (!buyer) return false;
+    return (
+      fullName.trim() !== (buyer.fullName ?? "").trim() ||
+      email.trim() !== (buyer.email ?? "").trim() ||
+      phoneNumber.trim() !== (buyer.phoneNumber ?? "").trim()
+    );
+  }, [buyer, fullName, email, phoneNumber]);
+
+  // ---- Conditional returns AFTER hooks ----
   if (!buyerId) {
     return (
       <div className="min-h-screen bg-zinc-50 p-10 text-sm text-rose-600">
@@ -155,13 +211,11 @@ export default function BuyerDetailsView() {
 
   if (profileQ.isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-50 p-10 text-sm text-zinc-500">
-        Loading buyer…
-      </div>
+      <DetailsPageSkeleton/>
     );
   }
 
-  if (profileQ.isError || !profileQ.data) {
+  if (profileQ.isError || !buyer) {
     return (
       <div className="min-h-screen bg-zinc-50 p-10">
         <p className="text-sm text-rose-600 font-semibold">
@@ -177,30 +231,14 @@ export default function BuyerDetailsView() {
     );
   }
 
-  const buyer = profileQ.data;
-
-  const allOrders = ordersQ.data ?? [];
-
-  const filteredOrders = (allOrders ?? []).filter((o) => {
-    const statusOk =
-      orderStatusFilter === "all" || String(o.status) === orderStatusFilter;
-
-    const dateOk = (() => {
-      if (!orderDateRange?.from) return true;
-      const d = new Date(o.date).getTime();
-      const from = orderDateRange.from.getTime();
-      const to = orderDateRange.to ? orderDateRange.to.getTime() : from;
-      return d >= from && d <= to;
-    })();
-
-    return statusOk && dateOk;
-  });
-
   const locationLabel =
     [buyer.city, buyer.country].filter(Boolean).join(", ") || "—";
   const joinedLabel = buyer.joinedDate
     ? new Date(buyer.joinedDate).toLocaleDateString()
     : "—";
+
+  // profile endpoint currently may not include status
+  const uiStatus = (buyer as any)?.status ?? "—";
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans pb-10">
@@ -217,12 +255,8 @@ export default function BuyerDetailsView() {
               <ArrowLeft size={14} /> BUYERS
             </Link>
             <span>/</span>
-            <span className="text-zinc-900 font-mono">
-              {buyer.customerCode}
-            </span>
-
-            {/* NOTE: profile endpoint doesn’t include status */}
-            <StatusBadge status={"—"} />
+            <span className="text-zinc-900 font-mono">{buyer.customerCode}</span>
+            <StatusBadge status={uiStatus} />
           </div>
         </div>
 
@@ -235,7 +269,7 @@ export default function BuyerDetailsView() {
               setReason("");
               setSuspendOpen(true);
             }}
-            disabled={suspend.isPending}
+            disabled={suspendM.isPending}
           >
             Suspend
           </Button>
@@ -244,8 +278,8 @@ export default function BuyerDetailsView() {
             variant="outline"
             size="sm"
             className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg border-zinc-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200"
-            onClick={() => reactivate.mutate(buyerId)}
-            disabled={reactivate.isPending}
+            onClick={() => reactivateM.mutate(buyerId)}
+            disabled={reactivateM.isPending}
           >
             Reactivate
           </Button>
@@ -253,51 +287,58 @@ export default function BuyerDetailsView() {
       </header>
 
       {/* Suspend dialog */}
-      <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle className="uppercase tracking-widest font-display">
-              Suspend Buyer
-            </DialogTitle>
-            <DialogDescription>
-              Provide a reason. This will suspend the buyer account.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold">
-              Reason <span className="text-rose-600">*</span>
-            </Label>
-            <Input
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Fraudulent activity"
-            />
-          </div>
-
-          <DialogFooter>
+      <AppDialog
+        open={suspendOpen}
+        onOpenChange={setSuspendOpen}
+        title="Suspend Buyer"
+        description="Provide a reason. This will suspend the buyer account."
+        icon={<Ban size={16} />}
+        size="custom"
+        maxWidthClassName="sm:max-w-[560px]"
+        footer={
+          <>
             <Button
+              type="submit"
+              form="suspendForm"
+              className="bg-zinc-900 text-white px-8 h-11"
+              disabled={!reason.trim() || suspendM.isPending}
+            >
+              {suspendM.isPending ? "Suspending..." : "Confirm Suspend"}
+            </Button>
+
+            <Button
+              type="button"
               variant="outline"
               onClick={() => setSuspendOpen(false)}
-              disabled={suspend.isPending}
+              className="px-6 h-11"
+              disabled={suspendM.isPending}
             >
               Cancel
             </Button>
-            <Button
-              className="bg-zinc-900 text-white"
-              disabled={!reason.trim() || suspend.isPending}
-              onClick={() => {
-                suspend.mutate(
-                  { customerId: buyerId, reason: reason.trim() },
-                  { onSuccess: () => setSuspendOpen(false) },
-                );
-              }}
-            >
-              {suspend.isPending ? "Suspending..." : "Confirm Suspend"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <form
+          id="suspendForm"
+          className="space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            suspendM.mutate(
+              { customerId: buyerId, reason: reason.trim() },
+              { onSuccess: () => setSuspendOpen(false) },
+            );
+          }}
+        >
+          <Label className="text-xs font-semibold">
+            Reason <span className="text-rose-600">*</span>
+          </Label>
+          <Input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Fraudulent activity"
+          />
+        </form>
+      </AppDialog>
 
       {/* Order quick-view dialog */}
       <AppDialog
@@ -409,11 +450,12 @@ export default function BuyerDetailsView() {
 
       {/* ─── MAIN CONTENT ─── */}
       <main className="p-6 max-w-7xl mx-auto space-y-8">
-        {/* ─── CARDS ROW ─── */}
+        {/* Cards row */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Profile card */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
+
             <div className="flex items-center gap-5">
               <div className="h-20 w-20 rounded-full bg-zinc-900 flex items-center justify-center text-2xl font-bold text-[#D4AF37] border-4 border-zinc-50 shrink-0 shadow-sm">
                 {initials(buyer.fullName)}
@@ -426,17 +468,13 @@ export default function BuyerDetailsView() {
                   {buyer.email}
                 </p>
                 <div className="mt-1">
-                  <StatusBadge status={"—"} />
+                  <StatusBadge status={uiStatus} />
                 </div>
               </div>
             </div>
 
             <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
-              <InfoRow
-                icon={Phone}
-                label="Phone"
-                value={buyer.phoneNumber || "—"}
-              />
+              <InfoRow icon={Phone} label="Phone" value={buyer.phoneNumber || "—"} />
               <InfoRow icon={MapPin} label="Location" value={locationLabel} />
               <InfoRow icon={Calendar} label="Joined" value={joinedLabel} />
             </div>
@@ -462,7 +500,6 @@ export default function BuyerDetailsView() {
                 variant="outline"
                 className="flex-1 bg-transparent text-white border-zinc-700 h-10 text-xs font-bold uppercase tracking-widest rounded-xl"
                 disabled
-                title=""
               >
                 Credit Wallet
               </Button>
@@ -476,7 +513,7 @@ export default function BuyerDetailsView() {
             </div>
           </div>
 
-          {/* Metrics stack */}
+          {/* Metrics */}
           <div className="lg:col-span-4 flex flex-col gap-4 h-full">
             <MetricCard
               icon={Wallet}
@@ -499,7 +536,7 @@ export default function BuyerDetailsView() {
           </div>
         </div>
 
-        {/* ─── TABS ─── */}
+        {/* Tabs */}
         <div className="space-y-6">
           <Tabs defaultValue="orders" className="w-full flex flex-col">
             <div className="flex justify-center mb-6">
@@ -511,10 +548,7 @@ export default function BuyerDetailsView() {
             </div>
 
             {/* Orders tab */}
-            <TabsContent
-              value="orders"
-              className="m-0 animate-in fade-in duration-500"
-            >
+            <TabsContent value="orders" className="m-0 animate-in fade-in duration-500">
               <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-zinc-100 bg-zinc-50/50 flex flex-wrap gap-4 justify-between items-center">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-900">
@@ -540,6 +574,7 @@ export default function BuyerDetailsView() {
                             : "Filter Date"}
                         </Button>
                       </PopoverTrigger>
+
                       <PopoverContent
                         className="w-auto p-0 rounded-2xl overflow-hidden shadow-xl border-zinc-200"
                         align="end"
@@ -553,11 +588,8 @@ export default function BuyerDetailsView() {
                       </PopoverContent>
                     </Popover>
 
-                    <Select
-                      value={orderStatusFilter}
-                      onValueChange={setOrderStatusFilter}
-                    >
-                      <SelectTrigger className="w-[140px] h-9 text-xs font-bold uppercase tracking-wider bg-white rounded-lg">
+                    <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
+                      <SelectTrigger className="w-35 h-9 text-xs font-bold uppercase tracking-wider bg-white rounded-lg">
                         <Filter className="mr-2 h-3.5 w-3.5 text-zinc-500" />
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
@@ -573,27 +605,17 @@ export default function BuyerDetailsView() {
                       </SelectContent>
                     </Select>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg"
-                      disabled
-                    >
-                      <Download className="mr-2 h-3.5 w-3.5 text-zinc-500" />{" "}
-                      Export CSV
+                    <Button variant="outline" size="sm" className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg" disabled>
+                      <Download className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Export CSV
                     </Button>
                   </div>
                 </div>
 
                 <div className="p-0">
                   {ordersQ.isLoading ? (
-                    <div className="p-6 text-sm text-zinc-500">
-                      Loading orders…
-                    </div>
+                    <div className="p-6 text-sm text-zinc-500">Loading orders…</div>
                   ) : ordersQ.isError ? (
-                    <div className="p-6 text-sm text-rose-600">
-                      Failed to load orders.
-                    </div>
+                    <div className="p-6 text-sm text-rose-600">Failed to load orders.</div>
                   ) : (
                     <DataTable columns={orderColumns} data={filteredOrders} />
                   )}
@@ -612,33 +634,24 @@ export default function BuyerDetailsView() {
 
                 <div className="p-0">
                   {activityQ.isLoading ? (
-                    <div className="p-6 text-sm text-zinc-500">
-                      Loading activity…
-                    </div>
+                    <div className="p-6 text-sm text-zinc-500">Loading activity…</div>
                   ) : activityQ.isError ? (
-                    <div className="p-6 text-sm text-rose-600">
-                      Failed to load activity.
-                    </div>
+                    <div className="p-6 text-sm text-rose-600">Failed to load activity.</div>
                   ) : (
-                    <DataTable
-                      columns={activityColumns}
-                      data={activityQ.data ?? []}
-                    />
+                    <DataTable columns={activityColumns} data={activityQ.data ?? []} />
                   )}
                 </div>
               </div>
             </TabsContent>
 
-            {/* Settings tab */}
+            {/* Settings tab (Profile update) */}
             <TabsContent value="settings" className="m-0">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-8">
                 <div className="bg-white border border-zinc-200 rounded-lg shadow-sm p-6">
                   <div className="mb-6 border-b border-zinc-100 pb-4">
-                    <h3 className="font-bold text-zinc-900 mb-1">
-                      Profile Information
-                    </h3>
+                    <h3 className="font-bold text-zinc-900 mb-1">Profile Information</h3>
                     <p className="text-xs text-zinc-500">
-                    
+                      Update user fields via <span className="font-mono">PATCH /api/Users/{`{id}`}</span>.
                     </p>
                   </div>
 
@@ -646,82 +659,52 @@ export default function BuyerDetailsView() {
                     <div className="space-y-2">
                       <Label className="text-xs text-zinc-600">Full Name</Label>
                       <Input
-                        defaultValue={buyer.fullName}
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         className="h-9"
-                        disabled
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">
-                        Email Address
-                      </Label>
+                      <Label className="text-xs text-zinc-600">Email Address</Label>
                       <Input
-                        defaultValue={buyer.email}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         type="email"
                         className="h-9"
-                        disabled
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">
-                        Phone Number
-                      </Label>
+                      <Label className="text-xs text-zinc-600">Phone Number</Label>
                       <Input
-                        defaultValue={buyer.phoneNumber}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
                         type="tel"
                         className="h-9 font-mono"
-                        disabled
                       />
                     </div>
 
-                    <Button className="w-full mt-4 bg-zinc-900" disabled>
-                      <Save className="mr-2 h-4 w-4" /> Save Profile Changes
+                    <Button
+                      className="w-full mt-4 bg-zinc-900"
+                      disabled={!isDirty || updateUserM.isPending}
+                      onClick={() => {
+                        const { firstName, lastName } = splitName(fullName);
+
+                        updateUserM.mutate({
+                          userId: userIdForUpdate,
+                          payload: {
+                            firstName: firstName || undefined,
+                            lastName: lastName || undefined,
+                            email: email || undefined,
+                            phoneNumber: phoneNumber || undefined,
+                          },
+                        });
+                      }}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      {updateUserM.isPending ? "Saving..." : "Save Profile Changes"}
                     </Button>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-zinc-200 rounded-lg shadow-sm p-6">
-                  <div className="mb-6 border-b border-zinc-100 pb-4">
-                    <h3 className="font-bold text-zinc-900 mb-1">
-                      Change Password
-                    </h3>
-                    <p className="text-xs text-zinc-500">
-                     
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">
-                        New Password
-                      </Label>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        className="h-9"
-                        disabled
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">
-                        Confirm New Password
-                      </Label>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        className="h-9"
-                        disabled
-                      />
-                    </div>
-
-                    <div className="pt-4">
-                      <Button variant="destructive" className="w-full" disabled>
-                        <Key className="mr-2 h-4 w-4" /> Update Password
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </div>

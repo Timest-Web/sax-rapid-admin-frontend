@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/preserve-manual-memoization */
 "use client";
 
 import { useMemo, useState } from "react";
@@ -21,6 +20,7 @@ import {
   useSubscriptionPlans,
   useUpdateSubscriptionPlan,
 } from "@/src/features/subscriptions/hooks";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 function convertFromNGN(amount: number, to: string) {
   // your mock rates
@@ -197,7 +197,7 @@ export default function SubscriptionsView() {
 
         <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
           {plansQ.isLoading ? (
-            <div className="p-6 text-sm text-zinc-500">Loading plans…</div>
+            <TableSkeleton columns={columns.length} rows={10} withToolbar={false} />
           ) : plansQ.isError ? (
             <div className="p-6 text-sm text-rose-600">Failed to load plans.</div>
           ) : (

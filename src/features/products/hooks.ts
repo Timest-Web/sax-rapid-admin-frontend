@@ -9,8 +9,10 @@ import {
     deleteProduct,
   getAdminProducts,
   getProductById,
+  getProductsByVendor,
   updateProduct,
   UpdateProductInput,
+  VendorProductsQuery,
   type AdminProductsQuery,
 } from "./api";
 import { productKeys } from "./key";
@@ -229,5 +231,23 @@ export function useAdminProductCount(statusFilter?: "Pending" | "Rejected" | "Ac
     },
     staleTime: 60_000,
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useVendorProducts(userId?: string, query?: VendorProductsQuery) {
+  const { data: session, status } = useSession();
+  const accessToken = (session as any)?.accessToken as string | undefined;
+  const role = (session as any)?.role as string | undefined;
+
+  return useQuery({
+    queryKey:
+      userId && query
+        ? productKeys.vendorProducts(userId, query)
+        : ["admin-products", "vendor-products", "missing"],
+    enabled: status === "authenticated" && !!accessToken && role === "Admin" && !!userId && !!query,
+    queryFn: () => getProductsByVendor(userId!, query!),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 }

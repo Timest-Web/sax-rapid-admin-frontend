@@ -170,3 +170,65 @@ export async function updateProduct(productId: string, payload: UpdateProductInp
 export async function deleteProduct(productId: string) {
   await apiClient.delete(`/api/Products/${productId}`);
 }
+
+
+type MaybeWrapped<T> = T | { success: boolean; message: string; data: T };
+function unwrap<T>(payload: MaybeWrapped<T>): T {
+  return (payload as any)?.data ?? (payload as T);
+}
+
+export type VendorProductImage = {
+  id: string;
+  imageUrl: string;
+  isPrimary: boolean;
+};
+
+export type VendorProductListItem = {
+  id: string;
+  name: string;
+  description: string;
+  currency: string;
+
+  vendorProfileId: string;
+  vendorId: string;
+  vendorName: string;
+
+  categoryId: number;
+  categoryName: string;
+
+  brandId: number;
+  brandName: string;
+
+  productType: string;
+  basePrice: number;
+  salePrice: number;
+  effectivePrice: number;
+
+  sku: string;
+  stockQuantity: number;
+
+  isActive: boolean;
+  isFeatured: boolean;
+  status: string;
+
+  averageRating: number;
+  reviewCount: number;
+
+  images: VendorProductImage[];
+
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type VendorProductsQuery = {
+  pageIndex: number; // backend uses pageIndex
+  pageSize: number;
+};
+
+export async function getProductsByVendor(userId: string, query: VendorProductsQuery) {
+  const res = await apiClient.get<MaybeWrapped<Paginated<VendorProductListItem>>>(
+    `/api/Products/vendor/${userId}`,
+    { params: query },
+  );
+  return unwrap(res.data);
+}
