@@ -1,84 +1,40 @@
 "use client";
 
+import { useMemo } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Scale, AlertTriangle, ShieldAlert, History } from "lucide-react";
 import { FilterTabs } from "@/components/tabs/filter-tab";
-import { disputeColumns, Dispute } from "./column";
+import { disputeColumns, type Dispute } from "./column";
 import { StatCard } from "@/components/cards/stat-card";
 
-// --- DUMMY DATA ---
-const ACTIVE_DISPUTES: Dispute[] = [
-  {
-    id: "1",
-    ticketId: "DSP-2024-001",
-    type: "fraud",
-    priority: "high",
-    buyerName: "Michael Scott",
-    vendorName: "Dunder Mifflin Paper",
-    amount: "₦450,000",
-    orderId: "ORD-9921",
-    date: "2 hrs ago",
-    status: "open",
-  },
-  {
-    id: "2",
-    ticketId: "DSP-2024-002",
-    type: "delivery",
-    priority: "medium",
-    buyerName: "Pam Beesly",
-    vendorName: "Art Supplies Co",
-    amount: "₦12,500",
-    orderId: "ORD-8821",
-    date: "5 hrs ago",
-    status: "open",
-  },
-  {
-    id: "3",
-    ticketId: "DSP-2024-003",
-    type: "refund",
-    priority: "low",
-    buyerName: "Jim Halpert",
-    vendorName: "Sports Gear Hub",
-    amount: "₦45,000",
-    orderId: "ORD-7721",
-    date: "1 day ago",
-    status: "review",
-  },
-  {
-    id: "4",
-    ticketId: "DSP-2024-004",
-    type: "refund",
-    priority: "low",
-    buyerName: "Stanley Hudson",
-    vendorName: "Pretzel Day Inc",
-    amount: "₦5,000",
-    orderId: "ORD-6621",
-    date: "1 day ago",
-    status: "review",
-  },
-];
-
-const RESOLVED_HISTORY: Dispute[] = [
-  {
-    id: "5",
-    ticketId: "DSP-2023-882",
-    type: "delivery",
-    priority: "medium",
-    buyerName: "Dwight Schrute",
-    vendorName: "Beet Farms",
-    amount: "₦22,000",
-    orderId: "ORD-1120",
-    date: "Oct 20",
-    status: "resolved",
-  },
-];
+import { useDisputes, useDisputeStats } from "@/src/features/disputes/hooks";
+import { toDisputeRow } from "@/src/features/disputes/mapper";
 
 export default function DisputeResolutionView() {
+  const { data: stats } = useDisputeStats();
+
+  const { data: list = [], isLoading } = useDisputes({
+    currency: "NGN",
+    pageNumber: 1,
+    pageSize: 20,
+  });
+
+  const rows: Dispute[] = useMemo(() => list.map(toDisputeRow), [list]);
+
+  const openRows = useMemo(
+    () => rows.filter((r) => r.status === "open" || r.status === "review"),
+    [rows],
+  );
+
+  const resolvedRows = useMemo(
+    () => rows.filter((r) => r.status === "resolved" || r.status === "closed"),
+    [rows],
+  );
+
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
-      {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
@@ -90,29 +46,31 @@ export default function DisputeResolutionView() {
       </header>
 
       <main className="p-6 max-w-400 mx-auto space-y-8">
-        {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             label="Active Cases"
-            value="4"
+            value={`${stats?.activeCases ?? openRows.length}`}
             icon={Scale}
             variant="default"
           />
           <StatCard
             label="Funds in Escrow"
-            value="₦512,500"
+            value={
+              stats?.fundsInEscrow != null
+                ? `${stats.currency ?? "NGN"} ${stats.fundsInEscrow.toLocaleString()}`
+                : "—"
+            }
             icon={AlertTriangle}
             variant="gold"
           />
           <StatCard
             label="Fraud Alerts"
-            value="1"
+            value={`${stats?.fraudAlerts ?? 0}`}
             icon={ShieldAlert}
-            variant="rose" // Urgent color
+            variant="rose"
           />
         </div>
 
-        {/* TABS */}
         <Tabs defaultValue="open" className="w-full flex flex-col">
           <div className="flex items-center justify-between border-b border-zinc-200">
             <FilterTabs
@@ -120,36 +78,33 @@ export default function DisputeResolutionView() {
                 {
                   value: "open",
                   label: "Open Disputes",
-                  count: 4,
+                  count: openRows.length,
                   variant: "rose",
                 },
                 {
                   value: "history",
                   label: "Resolution History",
-                  count: 128,
+                  count: resolvedRows.length,
                   variant: "indigo",
                 },
               ]}
             />
           </div>
 
-          {/* TAB 1: OPEN DISPUTES */}
           <TabsContent value="open">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
               <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
                 <h3 className="font-bold text-sm text-zinc-700">
                   Priority Queue
                 </h3>
-                <div className="text-xs text-zinc-500 flex gap-2 items-center">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span>1 High Priority Case requires attention</span>
+                <div className="text-xs text-zinc-500">
+                  {isLoading ? "Loading..." : `${openRows.length} open cases`}
                 </div>
               </div>
-              <DataTable columns={disputeColumns} data={ACTIVE_DISPUTES} />
+              <DataTable columns={disputeColumns} data={openRows} />
             </div>
           </TabsContent>
 
-          {/* TAB 2: HISTORY */}
           <TabsContent value="history">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
               <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
@@ -158,10 +113,10 @@ export default function DisputeResolutionView() {
                 </h3>
                 <div className="text-xs text-zinc-500 flex gap-2 items-center">
                   <History size={14} />
-                  <span>Showing last 30 days</span>
+                  <span>Showing current page</span>
                 </div>
               </div>
-              <DataTable columns={disputeColumns} data={RESOLVED_HISTORY} />
+              <DataTable columns={disputeColumns} data={resolvedRows} />
             </div>
           </TabsContent>
         </Tabs>

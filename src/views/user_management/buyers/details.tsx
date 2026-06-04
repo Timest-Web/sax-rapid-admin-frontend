@@ -644,71 +644,108 @@ export default function BuyerDetailsView() {
               </div>
             </TabsContent>
 
-            {/* Settings tab (Profile update) */}
-            <TabsContent value="settings" className="m-0">
-              <div className="grid grid-cols-1 gap-8">
-                <div className="bg-white border border-zinc-200 rounded-lg shadow-sm p-6">
-                  <div className="mb-6 border-b border-zinc-100 pb-4">
-                    <h3 className="font-bold text-zinc-900 mb-1">Profile Information</h3>
-                    <p className="text-xs text-zinc-500">
-                      Update user fields via <span className="font-mono">PATCH /api/Users/{`{id}`}</span>.
-                    </p>
-                  </div>
+<TabsContent value="settings" className="m-0">
+  <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+    {/* Header */}
+    <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
+      <div className="flex items-center gap-4">
+        <div className="h-14 w-14 rounded-full bg-zinc-900 flex items-center justify-center text-lg font-bold text-[#D4AF37]">
+          {initials(fullName)}
+        </div>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">Full Name</Label>
-                      <Input
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="h-9"
-                      />
-                    </div>
+        <div>
+          <h3 className="text-lg font-bold text-zinc-900">
+            Profile Settings
+          </h3>
 
-                    <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">Email Address</Label>
-                      <Input
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        type="email"
-                        className="h-9"
-                      />
-                    </div>
+          <p className="text-sm text-zinc-500">
+            Update buyer account information and contact details.
+          </p>
+        </div>
+      </div>
+    </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-xs text-zinc-600">Phone Number</Label>
-                      <Input
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        type="tel"
-                        className="h-9 font-mono"
-                      />
-                    </div>
+    <div className="p-6 space-y-8">
+      {/* Personal Information */}
+      <div>
+        <div className="mb-5">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+            Personal Information
+          </h4>
+        </div>
 
-                    <Button
-                      className="w-full mt-4 bg-zinc-900"
-                      disabled={!isDirty || updateUserM.isPending}
-                      onClick={() => {
-                        const { firstName, lastName } = splitName(fullName);
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              Full Name
+            </Label>
 
-                        updateUserM.mutate({
-                          userId: userIdForUpdate,
-                          payload: {
-                            firstName: firstName || undefined,
-                            lastName: lastName || undefined,
-                            email: email || undefined,
-                            phoneNumber: phoneNumber || undefined,
-                          },
-                        });
-                      }}
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      {updateUserM.isPending ? "Saving..." : "Save Profile Changes"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              Email Address
+            </Label>
+
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+              Phone Number
+            </Label>
+
+            <Input
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              type="tel"
+              className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+            />
+          </div>
+        </div>
+      </div>
+
+   
+      {/* Footer */}
+      <div className="border-t border-zinc-100 pt-6 flex items-center justify-between">
+    
+
+        <Button
+          disabled={!isDirty || updateUserM.isPending}
+          className="h-11 px-8 bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl font-bold uppercase tracking-widest"
+          onClick={() => {
+            const { firstName, lastName } = splitName(fullName);
+
+            updateUserM.mutate({
+              userId: userIdForUpdate,
+              payload: {
+                firstName: firstName || undefined,
+                lastName: lastName || undefined,
+                email: email || undefined,
+                phoneNumber: phoneNumber || undefined,
+              },
+            });
+          }}
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {updateUserM.isPending
+            ? "Saving..."
+            : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+  </div>
+</TabsContent>
           </Tabs>
         </div>
       </main>

@@ -841,131 +841,182 @@ export default function VendorDetailsView() {
               </div>
             </TabsContent>
 
-            {/* SETTINGS (PATCH /api/Vendor/{id}) */}
-            <TabsContent
-              value="settings"
-              className="m-0 animate-in fade-in duration-500"
-            >
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden max-w-3xl">
-                <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 relative">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
-                  <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-900 font-display">
-                    Vendor Configuration
-                  </h3>
+            {/* SETTINGS */}
+            <TabsContent value="settings" className="m-0">
+              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-zinc-900 flex items-center justify-center text-lg font-bold text-[#D4AF37]">
+                      {initials(shopName)}
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-bold text-zinc-900">
+                        Vendor Settings
+                      </h3>
+
+                      <p className="text-sm text-zinc-500">
+                        Update store information, branding, and business
+                        details.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="p-6 space-y-5">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      Store Name
-                    </Label>
-                    <Input
-                      value={shopName}
-                      onChange={(e) => setShopName(e.target.value)}
-                      className="h-11 bg-zinc-50/50 border-zinc-200"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        Company Name
-                      </Label>
-                      <Input
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        className="h-11 bg-zinc-50/50 border-zinc-200"
-                      />
+                <div className="p-6 space-y-8">
+                  {/* BUSINESS INFORMATION */}
+                  <div>
+                    <div className="mb-5">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                        Business Information
+                      </h4>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        Business Reg. Number
-                      </Label>
-                      <Input
-                        value={businessRegNo}
-                        onChange={(e) => setBusinessRegNo(e.target.value)}
-                        className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
-                      />
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Store Name
+                        </Label>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      Store Address
-                    </Label>
-                    <Input
-                      value={storeAddress}
-                      onChange={(e) => setStoreAddress(e.target.value)}
-                      className="h-11 bg-zinc-50/50 border-zinc-200"
-                    />
-                  </div>
+                        <Input
+                          value={shopName}
+                          onChange={(e) => setShopName(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        City
-                      </Label>
-                      <Input
-                        value={storeCity}
-                        onChange={(e) => setStoreCity(e.target.value)}
-                        className="h-11 bg-zinc-50/50 border-zinc-200"
-                      />
-                    </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Company Name
+                        </Label>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        State
-                      </Label>
-                      <Input
-                        value={storeState}
-                        onChange={(e) => setStoreState(e.target.value)}
-                        className="h-11 bg-zinc-50/50 border-zinc-200"
-                      />
+                        <Input
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Business Registration Number
+                        </Label>
+
+                        <Input
+                          value={businessRegNo}
+                          onChange={(e) => setBusinessRegNo(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        Logo URL
-                      </Label>
-                      <Input
-                        value={logoUrl}
-                        onChange={(e) => setLogoUrl(e.target.value)}
-                        className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
-                        placeholder=""
-                      />
+                  {/* STORE LOCATION */}
+                  <div>
+                    <div className="mb-5">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                        Store Location
+                      </h4>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                        Banner URL
-                      </Label>
-                      <Input
-                        value={bannerUrl}
-                        onChange={(e) => setBannerUrl(e.target.value)}
-                        className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
-                        placeholder=""
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Store Address
+                        </Label>
+
+                        <Input
+                          value={storeAddress}
+                          onChange={(e) => setStoreAddress(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          City
+                        </Label>
+
+                        <Input
+                          value={storeCity}
+                          onChange={(e) => setStoreCity(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          State
+                        </Label>
+
+                        <Input
+                          value={storeState}
+                          onChange={(e) => setStoreState(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      Description
-                    </Label>
+                  {/* BRANDING */}
+                  <div>
+                    <div className="mb-5">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                        Branding
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Logo URL
+                        </Label>
+
+                        <Input
+                          value={logoUrl}
+                          onChange={(e) => setLogoUrl(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                          placeholder="https://..."
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Banner URL
+                        </Label>
+
+                        <Input
+                          value={bannerUrl}
+                          onChange={(e) => setBannerUrl(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                          placeholder="https://..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* DESCRIPTION */}
+                  <div>
+                    <div className="mb-5">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                        Store Description
+                      </h4>
+                    </div>
+
                     <Textarea
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="min-h-27.5 bg-zinc-50/50 border-zinc-200"
+                      className="min-h-32 bg-zinc-50 border-zinc-200 rounded-xl resize-none"
+                      placeholder="Enter a description about this store..."
                     />
                   </div>
 
-                  <div className="pt-4 mt-2 border-t border-zinc-100 flex justify-end">
+                  {/* FOOTER */}
+                  <div className="border-t border-zinc-100 pt-6 flex items-center justify-end">
                     <Button
-                      className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl shadow-md transition-all"
                       disabled={!isDirty || updateVendorM.isPending}
+                      className="h-11 px-8 bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl font-bold uppercase tracking-widest"
                       onClick={() => {
                         updateVendorM.mutate({
                           vendorId: vendor.userId,
@@ -981,12 +1032,15 @@ export default function VendorDetailsView() {
                             bannerUrl: bannerUrl.trim()
                               ? bannerUrl.trim()
                               : null,
-                            description: description.trim() || null,
+                            description: description.trim()
+                              ? description.trim()
+                              : null,
                           },
                         });
                       }}
                     >
                       <Save className="mr-2 h-4 w-4" />
+
                       {updateVendorM.isPending ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>

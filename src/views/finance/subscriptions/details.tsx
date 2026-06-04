@@ -14,6 +14,7 @@ import {
   useDeactivateSubscriptionPlan,
   useSubscriptionPlan,
 } from "@/src/features/subscriptions/hooks";
+import { DetailsPageSkeleton } from "@/components/skeletons/details";
 
 function money(amount: number, currency = "NGN") {
   const symbol = currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
@@ -58,7 +59,7 @@ export default function SubscriptionPlanDetailsView() {
   }
 
   if (planQ.isLoading) {
-    return <div className="p-6 text-sm text-zinc-500">Loading plan…</div>;
+    return <DetailsPageSkeleton/>;
   }
 
   if (planQ.isError || !plan) {

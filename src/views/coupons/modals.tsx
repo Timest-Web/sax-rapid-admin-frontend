@@ -359,3 +359,68 @@ export function AddCouponModal(props: {
     </AppDialog>
   );
 }
+
+
+
+import { Trash2 } from "lucide-react";
+
+
+type DeleteCouponModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  isDeleting?: boolean;
+  onConfirm: () => void;
+};
+
+export function DeleteCouponModal({
+  open,
+  onOpenChange,
+  isDeleting,
+  onConfirm,
+}: DeleteCouponModalProps) {
+  return (
+    <AppDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Delete Coupon"
+      description="This action cannot be undone."
+      icon={<Trash2 size={16} />}
+      size="sm"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+            className="h-11 px-6 rounded-xl text-xs font-bold uppercase tracking-widest"
+          >
+            Cancel
+          </Button>
+
+          <Button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="h-11 px-6 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-widest"
+          >
+            {isDeleting ? "Deleting..." : "Delete Coupon"}
+          </Button>
+        </>
+      }
+    >
+      <div className="py-6">
+        <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+          <p className="text-sm text-zinc-700">
+            Are you sure you want to permanently delete this coupon?
+          </p>
+
+          <p className="mt-2 text-xs text-zinc-500">
+            This action cannot be reversed and the coupon will no longer be
+            available for use.
+          </p>
+        </div>
+      </div>
+    </AppDialog>
+  );
+}

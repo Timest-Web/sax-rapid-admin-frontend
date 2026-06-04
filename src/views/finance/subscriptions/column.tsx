@@ -35,7 +35,7 @@ function isActive(plan: SubscriptionPlan) {
 function StatusPill({ active }: { active: boolean }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
+      className={`inline-flex items-center rounded-sm border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
         active
           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
           : "border-zinc-200 bg-zinc-100 text-zinc-600"

@@ -63,7 +63,7 @@ function ProductStatusPill({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${cls}`}
+      className={`inline-flex items-center px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest border ${cls}`}
     >
       {status}
     </span>
