@@ -16,7 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -210,9 +214,7 @@ export default function BuyerDetailsView() {
   }
 
   if (profileQ.isLoading) {
-    return (
-      <DetailsPageSkeleton/>
-    );
+    return <DetailsPageSkeleton />;
   }
 
   if (profileQ.isError || !buyer) {
@@ -255,7 +257,9 @@ export default function BuyerDetailsView() {
               <ArrowLeft size={14} /> BUYERS
             </Link>
             <span>/</span>
-            <span className="text-zinc-900 font-mono">{buyer.customerCode}</span>
+            <span className="text-zinc-900 font-mono">
+              {buyer.customerCode}
+            </span>
             <StatusBadge status={uiStatus} />
           </div>
         </div>
@@ -474,7 +478,11 @@ export default function BuyerDetailsView() {
             </div>
 
             <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
-              <InfoRow icon={Phone} label="Phone" value={buyer.phoneNumber || "—"} />
+              <InfoRow
+                icon={Phone}
+                label="Phone"
+                value={buyer.phoneNumber || "—"}
+              />
               <InfoRow icon={MapPin} label="Location" value={locationLabel} />
               <InfoRow icon={Calendar} label="Joined" value={joinedLabel} />
             </div>
@@ -548,204 +556,200 @@ export default function BuyerDetailsView() {
             </div>
 
             {/* Orders tab */}
-            <TabsContent value="orders" className="m-0 animate-in fade-in duration-500">
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-5 border-b border-zinc-100 bg-zinc-50/50 flex flex-wrap gap-4 justify-between items-center">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-900">
-                    Transaction History
-                  </h3>
-
-                  <div className="flex items-center gap-3">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "h-9 text-xs justify-start text-left font-bold uppercase tracking-wider bg-white rounded-lg",
-                            !orderDateRange && "text-zinc-500",
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-3.5 w-3.5 text-zinc-500" />
-                          {orderDateRange?.from
-                            ? orderDateRange.to
-                              ? `${format(orderDateRange.from, "LLL dd")} - ${format(orderDateRange.to, "LLL dd")}`
-                              : format(orderDateRange.from, "LLL dd, y")
-                            : "Filter Date"}
-                        </Button>
-                      </PopoverTrigger>
-
-                      <PopoverContent
-                        className="w-auto p-0 rounded-2xl overflow-hidden shadow-xl border-zinc-200"
-                        align="end"
-                      >
-                        <CalendarComponent
-                          mode="range"
-                          selected={orderDateRange}
-                          onSelect={setOrderDateRange}
-                          numberOfMonths={2}
-                        />
-                      </PopoverContent>
-                    </Popover>
-
-                    <Select value={orderStatusFilter} onValueChange={setOrderStatusFilter}>
-                      <SelectTrigger className="w-35 h-9 text-xs font-bold uppercase tracking-wider bg-white rounded-lg">
-                        <Filter className="mr-2 h-3.5 w-3.5 text-zinc-500" />
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="Pending">Pending</SelectItem>
-                        <SelectItem value="Confirmed">Confirmed</SelectItem>
-                        <SelectItem value="Processing">Processing</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="Delivered">Delivered</SelectItem>
-                        <SelectItem value="Failed">Failed</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Button variant="outline" size="sm" className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg" disabled>
-                      <Download className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Export CSV
+            <TabsContent
+              value="orders"
+              className="m-0 animate-in fade-in duration-500"
+            >
+              <div className="flex items-center gap-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-9 text-xs justify-start text-left font-bold uppercase tracking-wider bg-white rounded-lg",
+                        !orderDateRange && "text-zinc-500",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-zinc-500" />
+                      {orderDateRange?.from
+                        ? orderDateRange.to
+                          ? `${format(orderDateRange.from, "LLL dd")} - ${format(orderDateRange.to, "LLL dd")}`
+                          : format(orderDateRange.from, "LLL dd, y")
+                        : "Filter Date"}
                     </Button>
-                  </div>
-                </div>
+                  </PopoverTrigger>
 
-                <div className="p-0">
-                  {ordersQ.isLoading ? (
-                    <div className="p-6 text-sm text-zinc-500">Loading orders…</div>
-                  ) : ordersQ.isError ? (
-                    <div className="p-6 text-sm text-rose-600">Failed to load orders.</div>
-                  ) : (
-                    <DataTable columns={orderColumns} data={filteredOrders} />
-                  )}
-                </div>
+                  <PopoverContent
+                    className="w-auto p-0 rounded-2xl overflow-hidden shadow-xl border-zinc-200"
+                    align="end"
+                  >
+                    <CalendarComponent
+                      mode="range"
+                      selected={orderDateRange}
+                      onSelect={setOrderDateRange}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Select
+                  value={orderStatusFilter}
+                  onValueChange={setOrderStatusFilter}
+                >
+                  <SelectTrigger className="w-35 h-9 text-xs font-bold uppercase tracking-wider bg-white rounded-lg">
+                    <Filter className="mr-2 h-3.5 w-3.5 text-zinc-500" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Confirmed">Confirmed</SelectItem>
+                    <SelectItem value="Processing">Processing</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Delivered">Delivered</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 text-xs font-bold uppercase tracking-wider rounded-lg"
+                  disabled
+                >
+                  <Download className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Export
+                  CSV
+                </Button>
               </div>
+
+              {ordersQ.isLoading ? (
+                <div className="p-6 text-sm text-zinc-500">Loading orders…</div>
+              ) : ordersQ.isError ? (
+                <div className="p-6 text-sm text-rose-600">
+                  Failed to load orders.
+                </div>
+              ) : (
+                <DataTable columns={orderColumns} data={filteredOrders} />
+              )}
             </TabsContent>
 
             {/* Activity tab */}
             <TabsContent value="activity" className="m-0">
-              <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50/30">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                    Recent Account Activity
-                  </h3>
+              {activityQ.isLoading ? (
+                <div className="p-6 text-sm text-zinc-500">
+                  Loading activity…
+                </div>
+              ) : activityQ.isError ? (
+                <div className="p-6 text-sm text-rose-600">
+                  Failed to load activity.
+                </div>
+              ) : (
+                <DataTable
+                  columns={activityColumns}
+                  data={activityQ.data ?? []}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="settings" className="m-0">
+              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-full bg-zinc-900 flex items-center justify-center text-lg font-bold text-[#D4AF37]">
+                      {initials(fullName)}
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-bold text-zinc-900">
+                        Profile Settings
+                      </h3>
+
+                      <p className="text-sm text-zinc-500">
+                        Update buyer account information and contact details.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="p-0">
-                  {activityQ.isLoading ? (
-                    <div className="p-6 text-sm text-zinc-500">Loading activity…</div>
-                  ) : activityQ.isError ? (
-                    <div className="p-6 text-sm text-rose-600">Failed to load activity.</div>
-                  ) : (
-                    <DataTable columns={activityColumns} data={activityQ.data ?? []} />
-                  )}
+                <div className="p-6 space-y-8">
+                  {/* Personal Information */}
+                  <div>
+                    <div className="mb-5">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                        Personal Information
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Full Name
+                        </Label>
+
+                        <Input
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Email Address
+                        </Label>
+
+                        <Input
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          type="email"
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Phone Number
+                        </Label>
+
+                        <Input
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          type="tel"
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="border-t border-zinc-100 pt-6 flex items-center justify-between">
+                    <Button
+                      disabled={!isDirty || updateUserM.isPending}
+                      className="h-11 px-8 bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl font-bold uppercase tracking-widest"
+                      onClick={() => {
+                        const { firstName, lastName } = splitName(fullName);
+
+                        updateUserM.mutate({
+                          userId: userIdForUpdate,
+                          payload: {
+                            firstName: firstName || undefined,
+                            lastName: lastName || undefined,
+                            email: email || undefined,
+                            phoneNumber: phoneNumber || undefined,
+                          },
+                        });
+                      }}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      {updateUserM.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </TabsContent>
-
-<TabsContent value="settings" className="m-0">
-  <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-    {/* Header */}
-    <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
-      <div className="flex items-center gap-4">
-        <div className="h-14 w-14 rounded-full bg-zinc-900 flex items-center justify-center text-lg font-bold text-[#D4AF37]">
-          {initials(fullName)}
-        </div>
-
-        <div>
-          <h3 className="text-lg font-bold text-zinc-900">
-            Profile Settings
-          </h3>
-
-          <p className="text-sm text-zinc-500">
-            Update buyer account information and contact details.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div className="p-6 space-y-8">
-      {/* Personal Information */}
-      <div>
-        <div className="mb-5">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-            Personal Information
-          </h4>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-              Full Name
-            </Label>
-
-            <Input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-              Email Address
-            </Label>
-
-            <Input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
-            />
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-              Phone Number
-            </Label>
-
-            <Input
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              type="tel"
-              className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
-            />
-          </div>
-        </div>
-      </div>
-
-   
-      {/* Footer */}
-      <div className="border-t border-zinc-100 pt-6 flex items-center justify-between">
-    
-
-        <Button
-          disabled={!isDirty || updateUserM.isPending}
-          className="h-11 px-8 bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl font-bold uppercase tracking-widest"
-          onClick={() => {
-            const { firstName, lastName } = splitName(fullName);
-
-            updateUserM.mutate({
-              userId: userIdForUpdate,
-              payload: {
-                firstName: firstName || undefined,
-                lastName: lastName || undefined,
-                email: email || undefined,
-                phoneNumber: phoneNumber || undefined,
-              },
-            });
-          }}
-        >
-          <Save className="mr-2 h-4 w-4" />
-          {updateUserM.isPending
-            ? "Saving..."
-            : "Save Changes"}
-        </Button>
-      </div>
-    </div>
-  </div>
-</TabsContent>
           </Tabs>
         </div>
       </main>

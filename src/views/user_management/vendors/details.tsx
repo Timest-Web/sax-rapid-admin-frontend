@@ -652,15 +652,7 @@ export default function VendorDetailsView() {
               value="products"
               className="m-0 animate-in fade-in duration-500"
             >
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-600">
-                    <Package size={14} /> Vendor Products
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-200 text-zinc-700 px-2 py-1 rounded">
-                    {vendorProductsQ.data?.totalCount ?? 0} total
-                  </span>
-                </div>
+             
 
                 {vendorProductsQ.isLoading ? (
                   <div className="p-6 text-sm text-zinc-500">
@@ -676,7 +668,7 @@ export default function VendorDetailsView() {
                     data={vendorProductsQ.data?.items ?? []}
                   />
                 )}
-              </div>
+             
             </TabsContent>
 
             {/* ORDERS */}
@@ -684,16 +676,7 @@ export default function VendorDetailsView() {
               value="orders"
               className="m-0 animate-in fade-in duration-500"
             >
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-600">
-                    <Receipt size={14} /> Vendor Orders
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-200 text-zinc-700 px-2 py-1 rounded">
-                    {ordersQ.data?.totalCount ?? 0} total
-                  </span>
-                </div>
-
+             
                 {ordersQ.isLoading ? (
                   <div className="p-6 text-sm text-zinc-500">
                     Loading orders…
@@ -708,7 +691,7 @@ export default function VendorDetailsView() {
                     data={ordersQ.data?.items ?? []}
                   />
                 )}
-              </div>
+         
             </TabsContent>
 
             {/* KYC */}
@@ -716,15 +699,7 @@ export default function VendorDetailsView() {
               value="kyc"
               className="m-0 animate-in fade-in duration-500"
             >
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                    Submitted Documents
-                  </h3>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 bg-white px-3 py-1.5 rounded-lg border border-zinc-200 shadow-sm">
-                    {verifiedKycCount} / {kycDocs.length} Verified
-                  </span>
-                </div>
+             
 
                 <div className="p-6">
                   {kycQ.isLoading ? (
@@ -737,7 +712,7 @@ export default function VendorDetailsView() {
                     <KycViewer documents={kycDocs} />
                   )}
                 </div>
-              </div>
+             
             </TabsContent>
 
             {/* PAYOUTS */}
@@ -745,16 +720,7 @@ export default function VendorDetailsView() {
               value="payouts"
               className="m-0 animate-in fade-in duration-500"
             >
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-600">
-                    <BadgeDollarSign size={14} /> Payout History
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-200 text-zinc-700 px-2 py-1 rounded">
-                    {payoutsQ.data?.totalCount ?? 0} total
-                  </span>
-                </div>
-
+              
                 {payoutsQ.isLoading ? (
                   <div className="p-6 text-sm text-zinc-500">
                     Loading payouts…
@@ -769,7 +735,7 @@ export default function VendorDetailsView() {
                     data={payoutsQ.data?.items ?? []}
                   />
                 )}
-              </div>
+         
             </TabsContent>
 
             {/* REVIEWS */}
@@ -813,16 +779,7 @@ export default function VendorDetailsView() {
                   )}
                 </div>
 
-                <div className="lg:col-span-8 bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-600">
-                      Recent Reviews
-                    </h3>
-                    <span className="text-[10px] font-bold uppercase tracking-widest bg-zinc-200 text-zinc-700 px-2 py-1 rounded">
-                      {reviewsQ.data?.totalCount ?? 0} total
-                    </span>
-                  </div>
-
+                <div className="lg:col-span-8">
                   {reviewsQ.isLoading ? (
                     <div className="p-6 text-sm text-zinc-500">
                       Loading reviews…

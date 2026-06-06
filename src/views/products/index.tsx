@@ -276,7 +276,7 @@ export default function ProductsView() {
               </SelectContent>
             </Select> */}
           </div>
-          <div className="mt-4 bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+          <div >
             {isLoading ? (
               <TableSkeleton columns={6} rows={10} withToolbar />
             ) : isError ? (

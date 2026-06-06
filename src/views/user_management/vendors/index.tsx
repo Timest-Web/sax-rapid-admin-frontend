@@ -145,7 +145,7 @@ export default function VendorsView() {
               />
             </div>
 
-            <div className="mt-4 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
+            <div >
               {isLoading ? (
                   <TableSkeleton columns={vendorColumns.length} rows={12} withToolbar={false} />
               ) : isError ? (

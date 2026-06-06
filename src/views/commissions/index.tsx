@@ -180,17 +180,19 @@ export default function CommissionView() {
           </div>
 
           <TabsContent value="active">
-            <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden mt-6">
-              {categoriesQ.isLoading ? (
-               <TableSkeleton columns={columns.length} rows={10} withToolbar={false} />
-              ) : categoriesQ.isError ? (
-                <div className="p-6 text-sm text-rose-600">
-                  Failed to load categories.
-                </div>
-              ) : (
-                <DataTable columns={columns} data={rows} />
-              )}
-            </div>
+            {categoriesQ.isLoading ? (
+              <TableSkeleton
+                columns={columns.length}
+                rows={10}
+                withToolbar={false}
+              />
+            ) : categoriesQ.isError ? (
+              <div className="p-6 text-sm text-rose-600">
+                Failed to load categories.
+              </div>
+            ) : (
+              <DataTable columns={columns} data={rows} />
+            )}
           </TabsContent>
         </Tabs>
       </main>

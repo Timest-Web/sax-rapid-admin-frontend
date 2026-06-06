@@ -213,7 +213,7 @@ export default function OrdersView() {
             />
           </div>
 
-          <div className="mt-4 bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+          <div >
             <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex flex-wrap gap-3 items-center">
               <div className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest mr-2">
                 <Filter className="mr-2 h-3.5 w-3.5" />

@@ -5,7 +5,13 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Crown, Database, Activity, Filter, X } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
 
@@ -61,7 +67,9 @@ export default function SubscriptionsView() {
       const matchPlan = filterPlan === "all" || p.name === filterPlan;
 
       // only works if API returns createdAt
-      const matchDate = !filterDate || (p.createdAt ? p.createdAt.slice(0, 10) === filterDate : true);
+      const matchDate =
+        !filterDate ||
+        (p.createdAt ? p.createdAt.slice(0, 10) === filterDate : true);
 
       return matchStatus && matchPlan && matchDate;
     });
@@ -135,9 +143,24 @@ export default function SubscriptionsView() {
 
       <main className="p-6 max-w-7xl mx-auto space-y-6 mt-2">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard label="Total Plans" value={plansQ.isLoading ? "—" : String(totalPlans)} icon={Database} variant="default" />
-          <StatCard label="Active Plans" value={plansQ.isLoading ? "—" : String(activePlans)} icon={Activity} variant="emerald" />
-          <StatCard label="Total Subscribers" value="—" icon={Crown} variant="gold" />
+          <StatCard
+            label="Total Plans"
+            value={plansQ.isLoading ? "—" : String(totalPlans)}
+            icon={Database}
+            variant="default"
+          />
+          <StatCard
+            label="Active Plans"
+            value={plansQ.isLoading ? "—" : String(activePlans)}
+            icon={Activity}
+            variant="emerald"
+          />
+          <StatCard
+            label="Total Subscribers"
+            value="—"
+            icon={Crown}
+            variant="gold"
+          />
         </div>
 
         <div className="bg-white p-4 rounded-3xl shadow-sm border border-zinc-200 flex flex-wrap gap-3 items-center">
@@ -180,7 +203,9 @@ export default function SubscriptionsView() {
             />
           </div>
 
-          {(filterPlan !== "all" || filterStatus !== "all" || filterDate !== "") && (
+          {(filterPlan !== "all" ||
+            filterStatus !== "all" ||
+            filterDate !== "") && (
             <Button
               variant="ghost"
               onClick={() => {
@@ -195,15 +220,17 @@ export default function SubscriptionsView() {
           )}
         </div>
 
-        <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-          {plansQ.isLoading ? (
-            <TableSkeleton columns={columns.length} rows={10} withToolbar={false} />
-          ) : plansQ.isError ? (
-            <div className="p-6 text-sm text-rose-600">Failed to load plans.</div>
-          ) : (
-            <DataTable columns={columns} data={displayPlans} />
-          )}
-        </div>
+        {plansQ.isLoading ? (
+          <TableSkeleton
+            columns={columns.length}
+            rows={10}
+            withToolbar={false}
+          />
+        ) : plansQ.isError ? (
+          <div className="p-6 text-sm text-rose-600">Failed to load plans.</div>
+        ) : (
+          <DataTable columns={columns} data={displayPlans} />
+        )}
       </main>
 
       <SubscriptionModal
@@ -213,9 +240,14 @@ export default function SubscriptionsView() {
         isSubmitting={createPlan.isPending || updatePlan.isPending}
         onSubmit={(payload) => {
           if (editingPlan) {
-            updatePlan.mutate({ planId: editingPlan.id, payload }, { onSuccess: () => setIsModalOpen(false) });
+            updatePlan.mutate(
+              { planId: editingPlan.id, payload },
+              { onSuccess: () => setIsModalOpen(false) },
+            );
           } else {
-            createPlan.mutate(payload, { onSuccess: () => setIsModalOpen(false) });
+            createPlan.mutate(payload, {
+              onSuccess: () => setIsModalOpen(false),
+            });
           }
         }}
       />

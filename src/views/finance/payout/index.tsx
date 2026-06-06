@@ -224,7 +224,7 @@ export default function PayoutsView() {
             </div>
           </div>
 
-          <div className="mt-4 bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
+          
             <TabsContent value="pending" className="m-0">
               {pendingQ.isLoading ? (
                 <TableSkeleton columns={payoutColumns.length} rows={12} withToolbar={false} />
@@ -272,7 +272,6 @@ export default function PayoutsView() {
                 </div>
               )}
             </TabsContent>
-          </div>
         </Tabs>
       </main>
     </div>

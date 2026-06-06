@@ -92,32 +92,28 @@ export default function DisputeResolutionView() {
           </div>
 
           <TabsContent value="open">
-            <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
-              <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-                <h3 className="font-bold text-sm text-zinc-700">
-                  Priority Queue
-                </h3>
-                <div className="text-xs text-zinc-500">
-                  {isLoading ? "Loading..." : `${openRows.length} open cases`}
-                </div>
+            <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="font-bold text-sm text-zinc-700">
+                Priority Queue
+              </h3>
+              <div className="text-xs text-zinc-500">
+                {isLoading ? "Loading..." : `${openRows.length} open cases`}
               </div>
-              <DataTable columns={disputeColumns} data={openRows} />
             </div>
+            <DataTable columns={disputeColumns} data={openRows} />
           </TabsContent>
 
           <TabsContent value="history">
-            <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
-              <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-                <h3 className="font-bold text-sm text-zinc-700">
-                  Past Resolutions
-                </h3>
-                <div className="text-xs text-zinc-500 flex gap-2 items-center">
-                  <History size={14} />
-                  <span>Showing current page</span>
-                </div>
+            <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="font-bold text-sm text-zinc-700">
+                Past Resolutions
+              </h3>
+              <div className="text-xs text-zinc-500 flex gap-2 items-center">
+                <History size={14} />
+                <span>Showing current page</span>
               </div>
-              <DataTable columns={disputeColumns} data={resolvedRows} />
             </div>
+            <DataTable columns={disputeColumns} data={resolvedRows} />
           </TabsContent>
         </Tabs>
       </main>

@@ -56,7 +56,7 @@ export default function BuyersView() {
           />
         </div>
 
-        <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-4">
+        <div>
           {listQ.isLoading ? (
              <TableSkeleton />
           ) : listQ.isError ? (

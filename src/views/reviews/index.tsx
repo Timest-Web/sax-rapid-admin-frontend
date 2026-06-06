@@ -121,7 +121,7 @@ export default function ReviewsView() {
           </div>
 
           <TabsContent value="reviews">
-            <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
+            
               <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
                 <h3 className="font-bold text-sm text-zinc-700">
                   Moderation Queue
@@ -139,11 +139,11 @@ export default function ReviewsView() {
               ) : (
                 <DataTable columns={reviewColumns} data={reviews} />
               )}
-            </div>
+
           </TabsContent>
 
           <TabsContent value="vendors">
-            <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
+           
               {vendorsQ.isLoading ? (
                 <div className="p-6 text-sm text-zinc-500">Loading vendor ratings…</div>
               ) : vendorsQ.isError ? (
@@ -151,7 +151,6 @@ export default function ReviewsView() {
               ) : (
                 <DataTable columns={vendorRatingColumns} data={vendorRows} />
               )}
-            </div>
           </TabsContent>
         </Tabs>
       </main>

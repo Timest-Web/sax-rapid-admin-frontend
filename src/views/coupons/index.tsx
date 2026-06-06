@@ -143,28 +143,19 @@ export default function CouponsView() {
           />
         </div>
 
-        <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              <Ticket className="mr-2 h-4 w-4" />
-              Manage Listing
-            </div>
+        {listQ.isLoading ? (
+          <TableSkeleton
+            columns={columns.length}
+            rows={10}
+            withToolbar={false}
+          />
+        ) : listQ.isError ? (
+          <div className="p-6 text-sm text-rose-600">
+            Failed to load coupons.
           </div>
-
-          {listQ.isLoading ? (
-            <TableSkeleton
-              columns={columns.length}
-              rows={10}
-              withToolbar={false}
-            />
-          ) : listQ.isError ? (
-            <div className="p-6 text-sm text-rose-600">
-              Failed to load coupons.
-            </div>
-          ) : (
-            <DataTable columns={columns} data={filtered} />
-          )}
-        </div>
+        ) : (
+          <DataTable columns={columns} data={filtered} />
+        )}
       </main>
 
       <AddCouponModal
