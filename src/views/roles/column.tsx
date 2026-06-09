@@ -36,9 +36,9 @@ export function getRoleColumns(opts: {
           </div>
           <div className="flex flex-col">
             <span className="font-bold text-zinc-900">{row.original.name}</span>
-            <span className="text-[10px] text-zinc-500">
+            {/* <span className="text-[10px] text-zinc-500">
               {row.original.description ?? "—"}
-            </span>
+            </span> */}
           </div>
         </div>
       ),
