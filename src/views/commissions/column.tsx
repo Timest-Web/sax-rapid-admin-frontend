@@ -42,20 +42,29 @@ function CommissionActionsCell({
   isUpdating?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [rate, setRate] = useState<number>(row.original.commissionRate);
 
-  // keep local input in sync if row updates (after optimistic update/refetch)
+  // Store as string so users can freely edit the input
+  const [rate, setRate] = useState(row.original.commissionRate.toString());
+
   useEffect(() => {
-    setRate(row.original.commissionRate);
+    setRate(row.original.commissionRate.toString());
   }, [row.original.commissionRate]);
 
   const categoryId: number = row.original.categoryId;
 
   const handleSave = () => {
-    // basic guard
-    if (Number.isNaN(rate) || rate < 0 || rate > 100) return;
+    const numericRate = Number(rate);
 
-    onUpdate(categoryId, rate); // <-- this should call your mutation (PATCH)
+    if (
+      rate.trim() === "" ||
+      Number.isNaN(numericRate) ||
+      numericRate < 0 ||
+      numericRate > 100
+    ) {
+      return;
+    }
+
+    onUpdate(categoryId, numericRate);
     setIsOpen(false);
   };
 
@@ -75,10 +84,7 @@ function CommissionActionsCell({
 
           <DropdownMenuItem
             className="text-xs cursor-pointer"
-            onSelect={() => {
-              // Radix closes the menu automatically; just open the dialog
-              setIsOpen(true);
-            }}
+            onSelect={() => setIsOpen(true)}
           >
             <Edit3 className="mr-2 h-3.5 w-3.5 text-zinc-500" />
             Edit Rate
@@ -123,6 +129,7 @@ function CommissionActionsCell({
             <Label className="text-right text-xs font-bold uppercase text-zinc-500">
               Category
             </Label>
+
             <Input
               value={row.original.categoryName}
               disabled
@@ -134,13 +141,19 @@ function CommissionActionsCell({
             <Label className="text-right text-xs font-bold uppercase text-zinc-500">
               Percentage
             </Label>
+
             <div className="col-span-3 relative">
               <Input
                 type="number"
+                min={0}
+                max={100}
+                step="0.01"
                 value={rate}
-                onChange={(e) => setRate(Number(e.target.value))}
+                onChange={(e) => setRate(e.target.value)}
                 className="pr-8 border-zinc-200 focus-visible:ring-zinc-900 font-mono"
+                placeholder="Enter commission rate"
               />
+
               <Percent
                 size={14}
                 className="absolute right-3 top-3 text-zinc-400"
@@ -150,6 +163,7 @@ function CommissionActionsCell({
 
           <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-[10px] uppercase tracking-wider font-bold text-amber-800 flex gap-2 items-start">
             <AlertCircle size={14} className="mt-0.5 shrink-0" />
+
             <p className="leading-relaxed">
               Changing this rate will apply only to new orders after the update.
             </p>
@@ -159,7 +173,6 @@ function CommissionActionsCell({
     </>
   );
 }
-
 export const getCommissionColumns = (opts: {
   onUpdate: (categoryId: number, newRate: number) => void;
   isUpdating?: boolean;

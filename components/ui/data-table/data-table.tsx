@@ -45,51 +45,74 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters, // <--- Handle changes
   });
 
-  return (
-    <div className="space-y-4">
-      {/* 1. Modular Toolbar */}
-      <DataTableToolbar
-        table={table}
-        globalFilter={globalFilter}
-        setGlobalFilter={setGlobalFilter}
-        filters={filters} // <--- Pass down config
-      />
+ return (
+  <div className="space-y-4">
+    {/* Toolbar */}
+    <DataTableToolbar
+      table={table}
+      globalFilter={globalFilter}
+      setGlobalFilter={setGlobalFilter}
+      filters={filters}
+    />
 
-      {/* 2. Main Table */}
-      <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-zinc-50/50 border-b border-zinc-200">
+    {/* Table */}
+    <div className="rounded-xl border border-zinc-200/70 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-x-auto">
+        {/* give the scroll container a max height only if you want sticky header effect */}
+        <div className="max-h-[70vh] overflow-auto">
+          <table className="w-full text-left border-separate border-spacing-0">
+            <thead className="sticky top-0 z-10 bg-white">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest text-black font-mono first:pl-6"
+                      className="
+                        border-b border-zinc-200/70
+                        px-4 py-3
+                        text-[11px] font-semibold text-zinc-500
+                        uppercase tracking-wide
+                        first:pl-6 last:pr-6
+                        whitespace-nowrap
+                        bg-white
+                      "
                     >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
-            <tbody className="text-sm">
+
+            <tbody className="divide-y divide-zinc-100">
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
+                table.getRowModel().rows.map((row, idx) => (
                   <tr
                     key={row.id}
-                    className="group border-b border-zinc-100 hover:bg-zinc-50/80 transition-colors last:border-0"
+                    className={[
+                      "transition-colors",
+                      idx % 2 === 0 ? "bg-white" : "bg-zinc-50/40",
+                      "hover:bg-zinc-50",
+                    ].join(" ")}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="py-4 px-4 first:pl-6">
+                      <td
+                        key={cell.id}
+                        className="
+                          px-4 py-3
+                          text-sm text-zinc-700
+                          first:pl-6 last:pr-6
+                          align-middle
+                        "
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </td>
                     ))}
@@ -97,21 +120,28 @@ export function DataTable<TData, TValue>({
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="h-24 text-center text-xs text-zinc-500 font-mono"
-                  >
-                    No results found.
+                  <td colSpan={columns.length} className="px-6 py-16">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-zinc-900">
+                        No results
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-500">
+                        Try adjusting your search or filters.
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* 3. Modular Pagination */}
+      {/* Pagination */}
+      <div className="border-t border-zinc-200/70 bg-white">
         <DataTablePagination table={table} />
       </div>
     </div>
-  );
+  </div>
+);
 }

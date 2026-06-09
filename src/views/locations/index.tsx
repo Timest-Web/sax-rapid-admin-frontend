@@ -1,12 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Map, Settings2, Trash2, Globe, Globe2, Percent } from "lucide-react";
-import { getCountryColumns, Country, RegionState } from "./column";
+import { Plus, Globe, Map, Percent, Settings2 } from "lucide-react";
+import { StatCard } from "@/components/cards/stat-card";
+import { StatusBadge } from "@/components/cards/status-badge";
+
+import { getLocationColumns } from "./column";
+
 import {
   Dialog,
   DialogContent,
@@ -15,8 +19,10 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+
 import {
   Select,
   SelectContent,
@@ -24,103 +30,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatusBadge } from "@/components/cards/status-badge";
-import { StatCard } from "@/components/cards/stat-card";
 
-// --- DUMMY DATA WITH STATE ARRAYS ---
-const INITIAL_COUNTRIES: Country[] = [
-  {
-    id: "LOC-NG",
-    name: "Nigeria",
-    code: "NG",
-    currency: "NGN",
-    gateway: "Paystack",
-    regions: 36,
-    status: "active",
-    statesList: [
-      { id: "1", name: "Lagos", status: "active" },
-      { id: "2", name: "Abuja (FCT)", status: "active" },
-      { id: "3", name: "Kano", status: "active" },
-    ],
-  },
-  {
-    id: "LOC-ZA",
-    name: "South Africa",
-    code: "ZA",
-    currency: "ZAR",
-    gateway: "PayFast",
-    regions: 9,
-    status: "active",
-    statesList: [
-      { id: "1", name: "Gauteng", status: "active" },
-      { id: "2", name: "Western Cape", status: "active" },
-    ],
-  },
-  {
-    id: "LOC-GH",
-    name: "Ghana",
-    code: "GH",
-    currency: "GHS",
-    gateway: "Paystack",
-    regions: 16,
-    status: "inactive",
-    statesList: [
-      { id: "1", name: "Greater Accra", status: "active" },
-      { id: "2", name: "Ashanti", status: "active" },
-    ],
-  },
-];
+import type { AdminLocation } from "@/src/features/locations/api";
+import {
+  useAdminLocations,
+  useAdminLocationStats,
+  useCountries,
+  useStatesByCountry,
+  useCreateAdminLocation,
+  useUpdateAdminLocation,
+  useToggleStateStatus,
+} from "@/src/features/locations/hooks";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+
+function parseCountryIdFromLocationId(locationId: string): number | undefined {
+  // "LOC-07" -> 7
+  const m = String(locationId ?? "").match(/(\d+)/);
+  if (!m) return undefined;
+  const n = parseInt(m[1], 10);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function percentLabel(n?: number) {
+  if (!Number.isFinite(n)) return "—";
+  return `${Math.round(Number(n))}%`;
+}
 
 export default function LocationsView() {
-  const [countries, setCountries] = useState<Country[]>(INITIAL_COUNTRIES);
+  const statsQ = useAdminLocationStats();
+  const locationsQ = useAdminLocations();
 
-  // Modal States
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [editingCountry, setEditingCountry] = useState<Country | null>(null);
-  const [managingStatesFor, setManagingStatesFor] = useState<Country | null>(
-    null
-  );
+  const createM = useCreateAdminLocation();
+  const updateM = useUpdateAdminLocation();
 
-  // Handlers
-  const handleEditConfig = (country: Country) => setEditingCountry(country);
-  const handleManageStates = (country: Country) => setManagingStatesFor(country);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editLoc, setEditLoc] = useState<AdminLocation | null>(null);
+  const [statesLoc, setStatesLoc] = useState<AdminLocation | null>(null);
 
-  // Add New Country Handler
-  const handleAddCountry = (newCountry: Country) => {
-    setCountries([newCountry, ...countries]);
-  };
-
-  // Save Config Handler
-  const handleSaveConfig = (updatedCountry: Country) => {
-    setCountries(
-      countries.map((c) => (c.id === updatedCountry.id ? updatedCountry : c))
-    );
-    setEditingCountry(null);
-  };
-
-  // Save States Handler
-  const handleSaveStates = (countryId: string, updatedStates: RegionState[]) => {
-    setCountries(
-      countries.map((c) =>
-        c.id === countryId
-          ? { ...c, statesList: updatedStates, regions: updatedStates.length }
-          : c
-      )
-    );
-  };
+  const locations = locationsQ.data ?? [];
 
   const columns = useMemo(
     () =>
-      getCountryColumns({
-        onManageStates: handleManageStates,
-        onEditConfig: handleEditConfig,
+      getLocationColumns({
+        onManageStates: (loc) => setStatesLoc(loc),
+        onEdit: (loc) => setEditLoc(loc),
       }),
-    []
+    [],
   );
+
+  const totalCountries = statsQ.data?.totalCountries;
+  const activeMarkets = statsQ.data?.activeMarkets;
+
+  const coverage =
+    totalCountries && activeMarkets != null && totalCountries > 0
+      ? (activeMarkets / totalCountries) * 100
+      : undefined;
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-20">
-      {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
@@ -129,315 +96,228 @@ export default function LocationsView() {
             Platform / Geography
           </h1>
         </div>
+
         <Button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={() => setCreateOpen(true)}
           className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs gap-2 rounded-md"
         >
-          <Plus size={14} /> Add Country
+          <Plus size={14} /> Add Location
         </Button>
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-6 mt-4">
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard
-            label="Active Countries"
-            value={countries.filter((c) => c.status === "active").length.toString()}
+            label="Total Countries"
+            value={statsQ.data ? String(statsQ.data.totalCountries) : "—"}
             icon={Globe}
             variant="amber"
           />
           <StatCard
-            label="Total Regions Mapped"
-            value={countries
-              .reduce((acc, curr) => acc + curr.statesList.length, 0)
-              .toString()}
+            label="Active Markets"
+            value={statsQ.data ? String(statsQ.data.activeMarkets) : "—"}
             icon={Map}
             variant="emerald"
           />
           <StatCard
             label="Map Coverage"
-            value="85%"
+            value={percentLabel(coverage)}
             icon={Percent}
             variant="indigo"
           />
         </div>
 
-        {/* Table */}
-        <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-          <DataTable columns={columns} data={countries} />
+        <div>
+          {locationsQ.isLoading ? (
+            <TableSkeleton columns={columns.length} rows={5} />
+          ) : locationsQ.isError ? (
+            <div className="p-6 text-sm text-rose-600">Failed to load locations.</div>
+          ) : (
+            <DataTable columns={columns} data={locations} />
+          )}
         </div>
       </main>
 
-      {/* MODALS */}
-      <AddCountryModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSave={handleAddCountry}
+      {/* Create */}
+      <CreateLocationModal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        isSaving={createM.isPending}
+        onSubmit={(payload) => {
+          createM.mutate(payload, { onSuccess: () => setCreateOpen(false) });
+        }}
       />
 
-      {editingCountry && (
-        <EditConfigModal
-          country={editingCountry}
-          isOpen={!!editingCountry}
-          onClose={() => setEditingCountry(null)}
-          onSave={handleSaveConfig}
+      {/* Edit */}
+      {editLoc && (
+        <EditLocationModal
+          location={editLoc}
+          open={!!editLoc}
+          onOpenChange={(v) => !v && setEditLoc(null)}
+          isSaving={updateM.isPending}
+          onSubmit={(payload) => {
+            updateM.mutate(
+              { locationId: editLoc.id, payload },
+              { onSuccess: () => setEditLoc(null) },
+            );
+          }}
         />
       )}
 
-      {managingStatesFor && (
+      {/* States */}
+      {statesLoc && (
         <ManageStatesModal
-          country={managingStatesFor}
-          isOpen={!!managingStatesFor}
-          onClose={() => setManagingStatesFor(null)}
-          onSave={handleSaveStates}
+          location={statesLoc}
+          open={!!statesLoc}
+          onOpenChange={(v) => !v && setStatesLoc(null)}
         />
       )}
     </div>
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-white border border-zinc-200 rounded-lg p-5 flex items-center justify-between shadow-sm">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-        {label}
-      </p>
-      <p className="text-2xl font-bold font-mono text-zinc-900">{value}</p>
-    </div>
-  );
-}
-
-// ==========================================
-// MODAL: Add New Country
-// ==========================================
-function AddCountryModal({
-  isOpen,
-  onClose,
-  onSave,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (c: Country) => void;
+/* =========================
+ * Create Location Modal
+ * POST /api/admin/locations
+ * ========================= */
+function CreateLocationModal(props: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  isSaving?: boolean;
+  onSubmit: (payload: {
+    name: string;
+    code: string;
+    currency: string;
+    marketStatus: string;
+  }) => void;
 }) {
+  const { open, onOpenChange, isSaving, onSubmit } = props;
+
+  // optional: show supported countries list
+  const countriesQ = useCountries(false, open);
+
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [currency, setCurrency] = useState("");
-  const [gateway, setGateway] = useState("");
+  const [marketStatus, setMarketStatus] = useState("Inactive");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !code || !currency || !gateway) return;
-
-    const newCountry: Country = {
-      id: `LOC-${code.toUpperCase()}`,
-      name,
-      code: code.toUpperCase(),
-      currency: currency.toUpperCase(),
-      gateway,
-      regions: 0,
-      status: "inactive",
-      statesList: [],
-    };
-
-    onSave(newCountry);
-    onClose();
-
-    // Reset Form
-    setName("");
-    setCode("");
-    setCurrency("");
-    setGateway("");
-  };
+  const canSubmit =
+    !!name.trim() && !!code.trim() && !!currency.trim() && !!marketStatus;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
-        {/* ─── HEADER ─── */}
-        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-130 max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col">
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
-              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
-                <Globe size={16} />
-              </div>
-              Expand to New Country
+            <DialogTitle className="text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              Create Location
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
-              Set up a new geographical region, assign its currency, and configure the payment gateway.
-            </DialogDescription>
           </DialogHeader>
         </div>
 
-        {/* ─── FORM ─── */}
-        <form id="addCountryForm" onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div className="space-y-1.5">
+        <div className="p-6 space-y-5 overflow-y-auto min-h-0">
+          <div className="space-y-2">
             <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Country Name <span className="text-[#D4AF37]">*</span>
+              Supported countries (optional helper)
+            </Label>
+            <Select
+              value={name}
+              onValueChange={(v) => setName(v)}
+              disabled={isSaving}
+            >
+              <SelectTrigger className="h-11 bg-zinc-50 border-zinc-200 rounded-lg">
+                <SelectValue placeholder={countriesQ.isLoading ? "Loading..." : "Select"} />
+              </SelectTrigger>
+              <SelectContent>
+                {(countriesQ.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.name}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Country Name *
             </Label>
             <Input
-              placeholder="e.g. Kenya"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
-              className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
+              disabled={isSaving}
+              className="h-11 bg-zinc-50 border-zinc-200 rounded-lg"
+              placeholder="Nigeria"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-5">
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                ISO Code (2-Letter) <span className="text-[#D4AF37]">*</span>
+                Code (ISO) *
               </Label>
               <Input
-                placeholder="e.g. KE"
-                maxLength={2}
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                required
-                className="h-11 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
+                disabled={isSaving}
+                className="h-11 bg-zinc-50 border-zinc-200 rounded-lg font-mono"
+                placeholder="NG"
+                maxLength={5}
               />
             </div>
-            <div className="space-y-1.5">
+
+            <div className="space-y-2">
               <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                Currency Code <span className="text-[#D4AF37]">*</span>
+                Currency *
               </Label>
               <Input
-                placeholder="e.g. KES"
-                maxLength={3}
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                required
-                className="h-11 font-mono bg-zinc-50/50 border-zinc-200 text-sm focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
+                disabled={isSaving}
+                className="h-11 bg-zinc-50 border-zinc-200 rounded-lg font-mono"
+                placeholder="NGN"
+                maxLength={6}
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Payment Gateway Integration <span className="text-[#D4AF37]">*</span>
+              Market Status *
             </Label>
-            <Select value={gateway} onValueChange={setGateway} required>
-              <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-bold focus:ring-[#D4AF37] transition-all rounded-lg">
-                <SelectValue placeholder="Select Gateway Provider" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Paystack">Paystack</SelectItem>
-                <SelectItem value="Flutterwave">Flutterwave</SelectItem>
-                <SelectItem value="Stripe">Stripe</SelectItem>
-                <SelectItem value="PayFast">PayFast</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-lg">
-            <p className="text-[10px] text-zinc-500 font-medium leading-relaxed">
-              New countries are added as <strong className="text-zinc-900">INACTIVE</strong> by default. 
-              Configure their states/regions before marking them active.
-            </p>
-          </div>
-        </form>
-
-        {/* ─── FOOTER ─── */}
-        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse">
-          <Button
-            type="submit"
-            form="addCountryForm"
-            disabled={!name || !code || !currency || !gateway}
-            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md disabled:opacity-50"
-          >
-            Create Country
-          </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onClose}
-            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
-          >
-            Cancel
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ==========================================
-// MODAL: Edit Country Configuration
-// ==========================================
-function EditConfigModal({
-  country,
-  isOpen,
-  onClose,
-  onSave,
-}: {
-  country: Country;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (c: Country) => void;
-}) {
-  const [status, setStatus] = useState<"active" | "inactive">(country.status);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({ ...country, status });
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[450px] max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
-        {/* ─── HEADER ─── */}
-        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
-          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
-              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
-                <Settings2 size={16} />
-              </div>
-              Edit Config: {country.name}
-            </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
-              Enable or disable trading operations for this specific market.
-            </DialogDescription>
-          </DialogHeader>
-        </div>
-
-        {/* ─── FORM ─── */}
-        <form id="editConfigForm" onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-              Market Status <span className="text-[#D4AF37]">*</span>
-            </Label>
-            <Select value={status} onValueChange={(v: any) => setStatus(v)}>
-              <SelectTrigger className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-bold focus:ring-[#D4AF37] transition-all rounded-lg">
+            <Select
+              value={marketStatus}
+              onValueChange={setMarketStatus}
+              disabled={isSaving}
+            >
+              <SelectTrigger className="h-11 bg-zinc-50 border-zinc-200 rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active (Trading Enabled)</SelectItem>
-                <SelectItem value="inactive">Inactive (Trading Disabled)</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-zinc-500 mt-2 pl-1 leading-relaxed">
-              Marking as inactive hides this country from the user onboarding
-              and checkout flows entirely.
-            </p>
           </div>
-        </form>
+        </div>
 
-        {/* ─── FOOTER ─── */}
-        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse">
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse shrink-0">
           <Button
-            type="submit"
-            form="editConfigForm"
-            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
+            disabled={!canSubmit || isSaving}
+            onClick={() =>
+              onSubmit({
+                name: name.trim(),
+                code: code.trim(),
+                currency: currency.trim(),
+                marketStatus,
+              })
+            }
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black text-xs font-bold uppercase tracking-widest rounded-xl px-8 h-11"
           >
-            Save Changes
+            {isSaving ? "Creating..." : "Create"}
           </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onClose}
-            className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
         </DialogFooter>
@@ -446,118 +326,165 @@ function EditConfigModal({
   );
 }
 
-// ==========================================
-// MODAL: Manage Regions / States
-// ==========================================
-function ManageStatesModal({
-  country,
-  isOpen,
-  onClose,
-  onSave,
-}: {
-  country: Country;
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (countryId: string, states: RegionState[]) => void;
+/* =========================
+ * Edit Location Modal
+ * PATCH /api/admin/locations/{locationId}
+ * ========================= */
+function EditLocationModal(props: {
+  location: AdminLocation;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  isSaving?: boolean;
+  onSubmit: (payload: { name?: string; currency?: string; marketStatus?: string }) => void;
 }) {
-  const [states, setStates] = useState<RegionState[]>(country.statesList);
-  const [newStateName, setNewStateName] = useState("");
+  const { location, open, onOpenChange, isSaving, onSubmit } = props;
 
-  const handleAddState = () => {
-    if (!newStateName.trim()) return;
-    const newState: RegionState = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: newStateName.trim(),
-      status: "active",
-    };
-    setStates([...states, newState]);
-    setNewStateName("");
-  };
-
-  const handleRemoveState = (id: string) => {
-    setStates(states.filter((s) => s.id !== id));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(country.id, states);
-    onClose();
-  };
+  const [countryName, setCountryName] = useState(location.countryName ?? "");
+  const [currency, setCurrency] = useState(location.currency ?? "");
+  const [marketStatus, setMarketStatus] = useState(location.marketStatus ?? "Inactive");
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px] h-[85vh] flex flex-col bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
-        {/* ─── HEADER ─── */}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-130 max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col">
         <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
           <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
-              <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
-                <Map size={16} />
-              </div>
-              Territories: {country.name}
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              <Settings2 size={16} /> Edit Location
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500 mt-2 pl-11 leading-relaxed">
-              Manage configured states or regions. Total active territories: <strong className="text-zinc-900 font-bold">{states.length}</strong>.
+            <DialogDescription className="text-xs text-zinc-500 mt-2 leading-relaxed">
+              <div className="mt-2">
+                Current status: <StatusBadge status={location.marketStatus} />
+              </div>
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        {/* ─── INPUT AREA ─── */}
-        <div className="p-6 pb-2 shrink-0 space-y-4">
-          <div className="flex items-end gap-3">
-            <div className="space-y-1.5 flex-1">
-              <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                Add New Region / State
-              </Label>
-              <Input
-                placeholder="e.g. Rivers State"
-                value={newStateName}
-                onChange={(e) => setNewStateName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddState()}
-                className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
-              />
-            </div>
-            <Button
-              onClick={handleAddState}
-              disabled={!newStateName.trim()}
-              className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-6 rounded-xl transition-all shadow-md disabled:opacity-50"
-            >
-              Add
-            </Button>
+        <div className="p-6 space-y-5 overflow-y-auto min-h-0">
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Country Name
+            </Label>
+            <Input
+              value={countryName}
+              onChange={(e) => setCountryName(e.target.value)}
+              disabled={isSaving}
+              className="h-11 bg-zinc-50 border-zinc-200 rounded-lg"
+            />
           </div>
-          <div className="h-px w-full bg-zinc-100 mt-4" />
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Currency
+            </Label>
+            <Input
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+              disabled={isSaving}
+              className="h-11 bg-zinc-50 border-zinc-200 rounded-lg font-mono"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              Market Status
+            </Label>
+            <Select value={marketStatus} onValueChange={setMarketStatus} disabled={isSaving}>
+              <SelectTrigger className="h-11 bg-zinc-50 border-zinc-200 rounded-lg">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* ─── SCROLLABLE STATES LIST ─── */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-2 custom-scrollbar">
-          {states.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 bg-zinc-50/50 rounded-xl border border-dashed border-zinc-200">
-              <Map size={24} className="text-zinc-300 mb-2" />
-              <p className="text-sm font-medium text-zinc-500 text-center">
-                No states configured yet.
-              </p>
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse shrink-0">
+          <Button
+            onClick={() =>
+              onSubmit({
+                name: countryName.trim() ? countryName.trim() : undefined,
+                currency: currency.trim() ? currency.trim() : undefined,
+                marketStatus,
+              })
+            }
+            disabled={isSaving}
+            className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black text-xs font-bold uppercase tracking-widest rounded-xl px-8 h-11"
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* =========================
+ * Manage States Modal
+ * GET /api/Location/countries/{countryId}/states
+ * PATCH /api/admin/locations/states/{id}/toggle
+ * ========================= */
+function ManageStatesModal(props: {
+  location: AdminLocation;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const { location, open, onOpenChange } = props;
+
+  // countryId is derived from admin response id e.g. "LOC-07" -> 7
+  const countryId = parseCountryIdFromLocationId(location.id);
+
+  const statesQ = useStatesByCountry(countryId, open && !!countryId);
+  const toggleM = useToggleStateStatus();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-175 max-h-[90vh] bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl flex flex-col">
+        <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+          <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
+              States: {location.countryName}
+            </DialogTitle>
+          </DialogHeader>
+        </div>
+
+        <div className="p-6 overflow-y-auto min-h-0 space-y-3">
+          {!countryId ? (
+            <div className="text-sm text-rose-600">
+              Could not derive countryId from location.id: <span className="font-mono">{location.id}</span>
             </div>
+          ) : statesQ.isLoading ? (
+            <div className="text-sm text-zinc-500">Loading states…</div>
+          ) : statesQ.isError ? (
+            <div className="text-sm text-rose-600">Failed to load states.</div>
+          ) : (statesQ.data ?? []).length === 0 ? (
+            <div className="text-sm text-zinc-500">No states returned.</div>
           ) : (
-            states.map((state) => (
+            (statesQ.data ?? []).map((s) => (
               <div
-                key={state.id}
-                className="flex items-center justify-between px-4 py-3 border border-zinc-200 bg-white rounded-xl shadow-sm group hover:border-zinc-300 transition-colors"
+                key={s.id}
+                className="flex items-center justify-between px-4 py-3 border border-zinc-200 rounded-xl bg-white"
               >
                 <div>
-                  <p className="text-sm font-bold text-zinc-900">
-                    {state.name}
-                  </p>
+                  <div className="font-bold text-zinc-900">{s.name}</div>
+                  
                 </div>
-                <div className="flex items-center gap-4">
-                  <StatusBadge status={state.status} />
+
+                <div className="flex items-center gap-3">
+                  <StatusBadge status={s.isActive ? "Active" : "Inactive"} />
                   <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveState(state.id)}
-                    className="h-8 w-8 text-zinc-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
+                    variant="outline"
+                    className="h-9 text-xs"
+                    disabled={toggleM.isPending}
+                    onClick={() => toggleM.mutate({ stateId: s.id, countryId })}
                   >
-                    <Trash2 size={16} />
+                    Toggle
                   </Button>
                 </div>
               </div>
@@ -565,25 +492,11 @@ function ManageStatesModal({
           )}
         </div>
 
-        {/* ─── FOOTER ─── */}
-        <form id="saveStatesForm" onSubmit={handleSubmit} className="shrink-0">
-          <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse bg-white">
-            <Button
-              type="submit"
-              className="bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold uppercase tracking-widest text-xs h-11 px-8 rounded-xl transition-all shadow-md"
-            >
-              Save Regions
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              className="bg-white border-zinc-200 text-zinc-600 hover:border-zinc-900 hover:text-zinc-900 text-xs font-bold uppercase tracking-widest rounded-xl px-6 h-11 transition-all"
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter className="p-6 pt-4 border-t border-zinc-100 sm:justify-between flex-row-reverse shrink-0">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
