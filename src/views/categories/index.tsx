@@ -352,19 +352,14 @@ export default function CategoriesPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-zinc-500 font-mono">
-                          displayOrder
+                          Display Order
                         </span>
                         <span className="font-mono">
                           {selectedCat.displayOrder}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-zinc-500 font-mono">
-                          createdAt
-                        </span>
-                        <span className="font-mono">
-                          {new Date(selectedCat.createdAt).toLocaleString()}
-                        </span>
+                       
                       </div>
 
                       <div className="pt-2 border-t border-zinc-200">
