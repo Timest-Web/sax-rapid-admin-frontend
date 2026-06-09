@@ -554,12 +554,12 @@ export default function ProductDetailsView() {
                     </pre>
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">
+                    {/* <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">
                       variations
-                    </div>
-                    <pre className="text-xs font-mono bg-zinc-50 border border-zinc-200 rounded-lg p-3 overflow-auto">
+                    </div> */}
+                    {/* <pre className="text-xs font-mono bg-zinc-50 border border-zinc-200 rounded-lg p-3 overflow-auto">
                       {JSON.stringify(product.variations ?? [], null, 2)}
-                    </pre>
+                    </pre> */}
                   </div>
                 </div>
               </div>
