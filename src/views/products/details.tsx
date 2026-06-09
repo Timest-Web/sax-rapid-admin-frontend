@@ -554,13 +554,115 @@ export default function ProductDetailsView() {
                     </pre>
                   </div>
                   <div>
-                    {/* <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">
-                      variations
-                    </div> */}
-                    {/* <pre className="text-xs font-mono bg-zinc-50 border border-zinc-200 rounded-lg p-3 overflow-auto">
-                      {JSON.stringify(product.variations ?? [], null, 2)}
-                    </pre> */}
-                  </div>
+  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-4">
+    Variations
+  </div>
+
+  {!product.variations || product.variations.length === 0 ? (
+    <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-6 text-center text-sm text-zinc-500">
+      No variations available.
+    </div>
+  ) : (
+    <div className="space-y-4">
+      {product.variations.map((variation) => (
+        <div
+          key={variation.id}
+          className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+        >
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                SKU
+              </p>
+              <p className="font-mono text-sm">{variation.sku}</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs uppercase text-zinc-400">Price</p>
+                <p className="font-semibold">
+                  ₦{variation.price.toLocaleString()}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-zinc-400">
+                  Effective Price
+                </p>
+                <p className="font-semibold">
+                  ₦{variation.effectivePrice.toLocaleString()}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-zinc-400">Stock</p>
+                <p>{variation.stockQuantity}</p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-zinc-400">Status</p>
+                <span
+                  className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                    variation.isInStock
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-rose-100 text-rose-700"
+                  }`}
+                >
+                  {variation.isInStock ? "In Stock" : "Out of Stock"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {variation.attributes &&
+            Object.keys(variation.attributes).length > 0 && (
+              <div className="mt-4 border-t border-zinc-200 pt-4 flex flex-wrap gap-2">
+                {Object.entries(variation.attributes).map(([key, value]) => (
+                  <span
+                    key={key}
+                    className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium"
+                  >
+                    <strong>{key}:</strong> {String(value)}
+                  </span>
+                ))}
+              </div>
+            )}
+
+          {(variation.salePrice ||
+            variation.salePriceStartDate ||
+            variation.salePriceEndDate) && (
+            <div className="mt-4 border-t border-zinc-200 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs uppercase text-zinc-400">
+                  Sale Price
+                </p>
+                <p>
+                  {variation.salePrice
+                    ? `₦${variation.salePrice.toLocaleString()}`
+                    : "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-zinc-400">
+                  Sale Starts
+                </p>
+                <p>{variation.salePriceStartDate ?? "—"}</p>
+              </div>
+
+              <div>
+                <p className="text-xs uppercase text-zinc-400">
+                  Sale Ends
+                </p>
+                <p>{variation.salePriceEndDate ?? "—"}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
                 </div>
               </div>
             </div>
