@@ -76,7 +76,7 @@ export default function VendorsView() {
             Marketplace / Vendors
           </h1>
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" className="h-9 text-xs">
             Export Report
           </Button>
@@ -87,7 +87,7 @@ export default function VendorsView() {
           >
             <Plus className="mr-2 h-3.5 w-3.5" /> Add Vendor
           </Button>
-        </div>
+        </div> */}
       </header>
 
       <main className="p-6 space-y-6 max-w-7xl mx-auto">
