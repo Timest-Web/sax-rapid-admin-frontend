@@ -73,9 +73,7 @@ export const vendorColumns: ColumnDef<VendorProfile>[] = [
             <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-mono">
               <Store size={10} /> {v.ownerName}
             </div>
-            <p className="text-[10px] text-zinc-400 font-mono">
-              {v.ownerEmail}
-            </p>
+            <p className="text-[10px] text-zinc-400 font-mono">{v.ownerEmail}</p>
           </div>
         </div>
       );
@@ -88,9 +86,7 @@ export const vendorColumns: ColumnDef<VendorProfile>[] = [
       const v = row.original;
       return (
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold text-zinc-900">
-            {v.companyName || "—"}
-          </p>
+          <p className="text-xs font-semibold text-zinc-900">{v.companyName || "—"}</p>
           <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">
             {v.accountType} • {v.businessRegistrationNumber || "—"}
           </p>
@@ -132,9 +128,7 @@ export const vendorColumns: ColumnDef<VendorProfile>[] = [
     accessorKey: "productLimit",
     cell: ({ row }) => (
       <div className="text-right">
-        <p className="font-bold text-zinc-900 font-mono">
-          {row.original.productLimit}
-        </p>
+        <p className="font-bold text-zinc-900 font-mono">{row.original.productLimit}</p>
         <p className="text-[10px] text-zinc-400 font-mono">Product Limit</p>
       </div>
     ),
@@ -164,17 +158,19 @@ export const vendorColumns: ColumnDef<VendorProfile>[] = [
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent
-            align="end"
-            className="w-48 bg-white border-zinc-200"
-          >
+          <DropdownMenuContent align="end" className="w-48 bg-white border-zinc-200">
             <DropdownMenuLabel className="text-xs font-bold text-black uppercase tracking-wider">
               Manage Store
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-zinc-100" />
             <DropdownMenuItem asChild>
+              {/*
+               * Navigate by userId so the detail page can call
+               * GET /api/Vendor/{userId} directly from the URL param
+               * on any load, including hard reloads.
+               */}
               <Link
-                href={`/admin/vendors/${row.original.id}`}
+                href={`/admin/vendors/${row.original.userId}`}
                 className="text-xs text-black cursor-pointer flex items-center w-full focus:bg-zinc-50"
               >
                 <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" /> View Details

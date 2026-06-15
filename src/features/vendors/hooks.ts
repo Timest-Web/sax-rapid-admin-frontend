@@ -109,28 +109,27 @@ export function useVendor(vendorId?: string) {
     refetchOnWindowFocus: false,
 
     // seed detail from any cached list query
-    initialData: () => {
-      if (!vendorId) return undefined;
+ initialData: () => {
+  if (!vendorId) return undefined;
+  const listQueries = qc.getQueriesData<any>({ queryKey: vendorKeys.lists() });
 
-      const listQueries = qc.getQueriesData<any>({ queryKey: vendorKeys.lists() });
+  for (const [, cached] of listQueries) {
+    if (!cached) continue;
 
-      for (const [, cached] of listQueries) {
-        if (!cached) continue;
+    if (Array.isArray(cached)) {
+      const found = cached.find((v: VendorProfile) => v?.userId === vendorId); // ← changed
+      if (found) return found;
+    }
 
-        if (Array.isArray(cached)) {
-          const found = cached.find((v: VendorProfile) => v?.id === vendorId);
-          if (found) return found;
-        }
+    const arr = cached?.items ?? cached?.data;
+    if (Array.isArray(arr)) {
+      const found = arr.find((v: VendorProfile) => v?.userId === vendorId); // ← changed
+      if (found) return found;
+    }
+  }
 
-        const arr = cached?.items ?? cached?.data;
-        if (Array.isArray(arr)) {
-          const found = arr.find((v: VendorProfile) => v?.id === vendorId);
-          if (found) return found;
-        }
-      }
-
-      return undefined;
-    },
+  return undefined;
+},
   });
 }
 

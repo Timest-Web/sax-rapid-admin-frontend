@@ -37,17 +37,17 @@ export type BuyerListItem = {
 export type BuyerProfile = {
   id: string;
   customerCode: string;
-  fullName: string;
+  fullName: string | undefined;
   email: string;
   phoneNumber: string;
   city: string;
   country: string;
   joinedDate: string;
   totalSpent: number;
-  currency: string;
-  totalOrders: number;
-  averageOrderValue: number;
-  walletBalance: number;
+  currency: string | undefined;
+  totalOrders: number | undefined;
+  averageOrderValue: number | undefined;
+  walletBalance: number | undefined;
 };
 
 export type BuyerOrder = {
@@ -152,3 +152,4 @@ export async function updateUser(userId: string, payload: UpdateUserInput) {
   );
   return unwrap(res.data);
 }
+

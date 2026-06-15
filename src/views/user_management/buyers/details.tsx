@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -86,7 +86,7 @@ function TabTrigger({
   );
 }
 
-function initials(name: string) {
+function initials(name: string | undefined) {
   const parts = String(name || "")
     .trim()
     .split(/\s+/)
@@ -96,12 +96,12 @@ function initials(name: string) {
   return (a + b).toUpperCase();
 }
 
-function money(amount: number, currency: string) {
+function money(amount: number | undefined, currency: string | undefined) {
   const symbol = currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : "";
   return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
 }
 
-function splitName(fullName: string) {
+function splitName(fullName: string | undefined) {
   const parts = String(fullName ?? "")
     .trim()
     .split(/\s+/)
@@ -217,26 +217,35 @@ export default function BuyerDetailsView() {
     return <DetailsPageSkeleton />;
   }
 
-  if (profileQ.isError || !buyer) {
-    return (
-      <div className="min-h-screen bg-zinc-50 p-10">
-        <p className="text-sm text-rose-600 font-semibold">
-          Buyer not found or failed to load.
-        </p>
-        <Link
-          href="/admin/buyers"
-          className="text-xs underline text-zinc-700 mt-3 inline-block"
-        >
-          Back to Buyers
-        </Link>
-      </div>
-    );
-  }
+const isInitialLoading =
+  profileQ.isPending ||
+  (profileQ.isFetching && buyer === undefined);
+
+if (isInitialLoading) {
+  return <DetailsPageSkeleton />;
+}
+
+if (profileQ.isError || (!profileQ.isFetching && !buyer)) {
+  return (
+    <div className="min-h-screen bg-zinc-50 p-10">
+      <p className="text-sm text-rose-600 font-semibold">
+        Buyer not found or failed to load.
+      </p>
+
+      <Link
+        href="/admin/buyers"
+        className="text-xs underline text-zinc-700 mt-3 inline-block"
+      >
+        Back to Buyers
+      </Link>
+    </div>
+  );
+}
 
   const locationLabel =
-    [buyer.city, buyer.country].filter(Boolean).join(", ") || "—";
-  const joinedLabel = buyer.joinedDate
-    ? new Date(buyer.joinedDate).toLocaleDateString()
+    [buyer?.city, buyer?.country].filter(Boolean).join(", ") || "—";
+  const joinedLabel = buyer?.joinedDate
+    ? new Date(buyer?.joinedDate).toLocaleDateString()
     : "—";
 
   // profile endpoint currently may not include status
@@ -258,7 +267,7 @@ export default function BuyerDetailsView() {
             </Link>
             <span>/</span>
             <span className="text-zinc-900 font-mono">
-              {buyer.customerCode}
+              {buyer?.customerCode}
             </span>
             <StatusBadge status={uiStatus} />
           </div>
@@ -458,18 +467,18 @@ export default function BuyerDetailsView() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Profile card */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
 
             <div className="flex items-center gap-5">
               <div className="h-20 w-20 rounded-full bg-zinc-900 flex items-center justify-center text-2xl font-bold text-[#D4AF37] border-4 border-zinc-50 shrink-0 shadow-sm">
-                {initials(buyer.fullName)}
+                {initials(buyer?.fullName)}
               </div>
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 font-display">
-                  {buyer.fullName}
+                  {buyer?.fullName}
                 </h2>
                 <p className="text-xs text-zinc-500 font-mono mt-1 mb-2">
-                  {buyer.email}
+                  {buyer?.email}
                 </p>
                 <div className="mt-1">
                   <StatusBadge status={uiStatus} />
@@ -481,7 +490,7 @@ export default function BuyerDetailsView() {
               <InfoRow
                 icon={Phone}
                 label="Phone"
-                value={buyer.phoneNumber || "—"}
+                value={buyer?.phoneNumber || "—"}
               />
               <InfoRow icon={MapPin} label="Location" value={locationLabel} />
               <InfoRow icon={Calendar} label="Joined" value={joinedLabel} />
@@ -490,7 +499,7 @@ export default function BuyerDetailsView() {
 
           {/* Wallet card */}
           <div className="lg:col-span-4 bg-zinc-900 text-white border border-zinc-800 rounded-2xl p-6 shadow-md flex flex-col justify-between h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-800 via-[#D4AF37] to-zinc-800" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-800 via-[#D4AF37] to-zinc-800" />
             <div>
               <div className="flex items-center gap-2 mb-4 text-[#D4AF37]">
                 <Wallet size={18} />
@@ -499,7 +508,7 @@ export default function BuyerDetailsView() {
                 </span>
               </div>
               <p className="text-4xl font-bold font-mono tracking-tight">
-                {money(buyer.walletBalance, buyer.currency)}
+                {money(buyer?.walletBalance, buyer?.currency)}
               </p>
             </div>
 
@@ -526,19 +535,19 @@ export default function BuyerDetailsView() {
             <MetricCard
               icon={Wallet}
               label="Total Spent"
-              value={money(buyer.totalSpent, buyer.currency)}
+              value={money(buyer?.totalSpent, buyer?.currency)}
               variant="gold"
             />
             <MetricCard
               icon={ShoppingCart}
               label="Total Orders"
-              value={String(buyer.totalOrders)}
+              value={String(buyer?.totalOrders)}
               variant="indigo"
             />
             <MetricCard
               icon={TrendingUp}
               label="Avg. Order Value"
-              value={money(buyer.averageOrderValue, buyer.currency)}
+              value={money(buyer?.averageOrderValue, buyer?.currency)}
               variant="emerald"
             />
           </div>
