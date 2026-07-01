@@ -43,7 +43,7 @@ export function CreateCampaignModal(props: {
 
   // Vendors dropdown for Promotions page create
   const vendorsQ = useVendors({ page: 1, pageSize: 50 }); // adjust page size if you want
-  const vendors = vendorsQ.data?.items ?? (vendorsQ.data as any)?.data ?? (vendorsQ.data as any) ?? [];
+  const vendors = Array.isArray(vendorsQ.data) ? vendorsQ.data : vendorsQ.data?.items ?? (vendorsQ.data as any)?.data ?? [];
 
   const [vendorId, setVendorId] = useState<string>(defaultVendorId ?? "");
 

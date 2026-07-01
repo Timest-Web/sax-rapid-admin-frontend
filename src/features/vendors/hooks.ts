@@ -74,27 +74,21 @@ function patchVendorInLists(
   );
 }
 
-/* ============================================================================
- * Vendors list
- * ==========================================================================*/
-export function useVendors({ page, pageSize }: { page: number; pageSize: number }) {
+
+export function useVendors(query: { page: number; pageSize: number }) {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
   const role = (session as any)?.role as string | undefined;
 
-  return useQuery({
-    queryKey: vendorKeys.list({ page, pageSize }),
+  return useQuery<Paginated<VendorProfile>>({
+    queryKey: ["vendors", query],
     enabled: enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendors(page, pageSize),
-    staleTime: 60_000,
+    queryFn: () => getVendors(query.page, query.pageSize),
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
-    placeholderData: keepPreviousData,
   });
 }
 
-/* ============================================================================
- * Vendor detail
- * ==========================================================================*/
 export function useVendor(vendorId?: string) {
   const qc = useQueryClient();
   const { data: session, status } = useSession();

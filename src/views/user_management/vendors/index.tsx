@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
-import { Store, UserCheck, FileText, UserMinus, Plus } from "lucide-react";
+import { Store, UserCheck, FileText, UserMinus } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { vendorColumns } from "./column";
 import { StatCard } from "@/components/cards/stat-card";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import { useVendors } from "@/src/features/vendors/hooks";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
@@ -30,30 +31,20 @@ export default function VendorsView() {
   const [page] = useState(1);
   const pageSize = 20;
 
-  const {
-    data: vendors = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-    isFetching,
-  } = useVendors({ page, pageSize });
+  const vendorsQ = useVendors({ page, pageSize });
 
-  // Until backend provides vendor "status", we can segment by verificationStatus
+  // ✅ Paginated shape
+  const vendors = vendorsQ.data?.items ?? [];
+  const totalCount = vendorsQ.data?.totalCount ?? vendors.length;
+
+  // Until backend provides vendor "status", we segment by verificationStatus
   const verifiedVendors = useMemo(
-    () =>
-      vendors.filter(
-        (v: { verificationStatus: string }) =>
-          v.verificationStatus === "Verified",
-      ),
+    () => vendors.filter((v) => v.verificationStatus === "Verified"),
     [vendors],
   );
+
   const pendingVendors = useMemo(
-    () =>
-      vendors.filter(
-        (v: { verificationStatus: string }) =>
-          v.verificationStatus === "NotVerified",
-      ),
+    () => vendors.filter((v) => v.verificationStatus === "NotVerified"),
     [vendors],
   );
 
@@ -76,37 +67,25 @@ export default function VendorsView() {
             Marketplace / Vendors
           </h1>
         </div>
-        {/* <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="h-9 text-xs">
-            Export Report
-          </Button>
-          <Button
-            size="sm"
-            className="h-9 text-xs bg-zinc-900 text-white hover:bg-[#D4AF37] hover:text-black transition-colors"
-            onClick={() => setIsAddVendorModalOpen(true)}
-          >
-            <Plus className="mr-2 h-3.5 w-3.5" /> Add Vendor
-          </Button>
-        </div> */}
       </header>
 
       <main className="p-6 space-y-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Total Stores"
-            value={isLoading ? "—" : String(vendors.length)}
+            value={vendorsQ.isLoading ? "—" : String(totalCount)}
             icon={Store}
             variant="default"
           />
           <StatCard
             label="Verified Vendors"
-            value={isLoading ? "—" : String(verifiedVendors.length)}
+            value={vendorsQ.isLoading ? "—" : String(verifiedVendors.length)}
             icon={UserCheck}
             variant="emerald"
           />
           <StatCard
             label="KYC Pending"
-            value={isLoading ? "—" : String(pendingVendors.length)}
+            value={vendorsQ.isLoading ? "—" : String(pendingVendors.length)}
             icon={FileText}
             variant="amber"
           />
@@ -126,7 +105,7 @@ export default function VendorsView() {
                   {
                     value: "all",
                     label: "All Stores",
-                    count: vendors.length,
+                    count: totalCount, // ✅ show total
                     variant: "default",
                   },
                   {
@@ -145,19 +124,19 @@ export default function VendorsView() {
               />
             </div>
 
-            <div >
-              {isLoading ? (
-                  <TableSkeleton columns={vendorColumns.length} rows={12} withToolbar={false} />
-              ) : isError ? (
+            <div>
+              {vendorsQ.isLoading ? (
+                <TableSkeleton columns={vendorColumns.length} rows={12} withToolbar={false} />
+              ) : vendorsQ.isError ? (
                 <div className="p-6 text-sm">
                   <p className="text-red-600">
                     Failed to load vendors:{" "}
-                    {(error as any)?.response?.data?.message ??
-                      (error as any)?.message ??
+                    {(vendorsQ.error as any)?.response?.data?.message ??
+                      (vendorsQ.error as any)?.message ??
                       "Unknown error"}
                   </p>
                   <button
-                    onClick={() => refetch()}
+                    onClick={() => vendorsQ.refetch()}
                     className="mt-3 text-xs font-semibold underline text-zinc-700"
                   >
                     Try again
@@ -165,7 +144,7 @@ export default function VendorsView() {
                 </div>
               ) : (
                 <>
-                  {isFetching && (
+                  {vendorsQ.isFetching && (
                     <div className="px-6 py-2 text-[11px] text-zinc-500 border-b border-zinc-100">
                       Refreshing…
                     </div>
@@ -190,10 +169,7 @@ export default function VendorsView() {
       </main>
 
       {/* Modal stays the same */}
-      <Dialog
-        open={isAddVendorModalOpen}
-        onOpenChange={setIsAddVendorModalOpen}
-      >
+      <Dialog open={isAddVendorModalOpen} onOpenChange={setIsAddVendorModalOpen}>
         <DialogContent className="sm:max-w-125 bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
           <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
             <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
@@ -211,7 +187,6 @@ export default function VendorsView() {
           </div>
 
           <form onSubmit={handleSaveVendor} className="p-6 space-y-5">
-            {/* keep your form fields */}
             <div className="space-y-1.5">
               <Label
                 htmlFor="storeName"
@@ -228,10 +203,7 @@ export default function VendorsView() {
             </div>
 
             <DialogFooter className="pt-6 mt-2 border-t border-zinc-100 sm:justify-between flex-row-reverse">
-              <Button
-                type="submit"
-                className="bg-zinc-900 text-[#D4AF37] px-8 h-11"
-              >
+              <Button type="submit" className="bg-zinc-900 text-[#D4AF37] px-8 h-11">
                 Create Vendor
               </Button>
               <Button
