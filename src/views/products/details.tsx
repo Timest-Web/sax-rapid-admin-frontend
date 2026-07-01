@@ -46,7 +46,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { useProduct, useUpdateProduct, useDeleteProduct } from "@/src/features/products/hooks";
+import {
+  useProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+} from "@/src/features/products/hooks";
 import type { UpdateProductInput } from "@/src/features/products/api";
 
 import {
@@ -75,7 +79,7 @@ function toDateTimeLocal(iso: string | null | undefined) {
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
+    d.getHours(),
   )}:${pad(d.getMinutes())}`;
 }
 
@@ -162,9 +166,7 @@ export default function ProductDetailsView() {
   }
 
   if (isLoading) {
-    return (
-      <DetailsPageSkeleton/>
-    );
+    return <DetailsPageSkeleton />;
   }
 
   if (isError || !product) {
@@ -329,10 +331,18 @@ export default function ProductDetailsView() {
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpenDelete(false)} disabled={del.isPending}>
+              <Button
+                variant="outline"
+                onClick={() => setOpenDelete(false)}
+                disabled={del.isPending}
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={onDelete} disabled={del.isPending}>
+              <Button
+                variant="destructive"
+                onClick={onDelete}
+                disabled={del.isPending}
+              >
                 {del.isPending ? "Deleting..." : "Confirm Delete"}
               </Button>
             </DialogFooter>
@@ -360,7 +370,9 @@ export default function ProductDetailsView() {
                   </Label>
                   <Input
                     value={edit.name}
-                    onChange={(e) => setEdit((s) => ({ ...s, name: e.target.value }))}
+                    onChange={(e) =>
+                      setEdit((s) => ({ ...s, name: e.target.value }))
+                    }
                     className="h-11 bg-zinc-50/50 border-zinc-200 text-sm font-medium focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg"
                   />
                 </div>
@@ -371,7 +383,9 @@ export default function ProductDetailsView() {
                   </Label>
                   <Textarea
                     value={edit.description}
-                    onChange={(e) => setEdit((s) => ({ ...s, description: e.target.value }))}
+                    onChange={(e) =>
+                      setEdit((s) => ({ ...s, description: e.target.value }))
+                    }
                     className="min-h-[120px] bg-zinc-50/50 border-zinc-200 text-sm leading-relaxed focus-visible:ring-1 focus-visible:ring-[#D4AF37] focus-visible:border-[#D4AF37] transition-all rounded-lg resize-none"
                   />
                 </div>
@@ -382,7 +396,11 @@ export default function ProductDetailsView() {
                     <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                       Category (read-only)
                     </Label>
-                    <Input value={product.categoryName} readOnly className="h-11 bg-zinc-50/50 border-zinc-200" />
+                    <Input
+                      value={product.categoryName}
+                      readOnly
+                      className="h-11 bg-zinc-50/50 border-zinc-200"
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -392,7 +410,12 @@ export default function ProductDetailsView() {
                     <Input
                       type="number"
                       value={edit.brandId}
-                      onChange={(e) => setEdit((s) => ({ ...s, brandId: Number(e.target.value) }))}
+                      onChange={(e) =>
+                        setEdit((s) => ({
+                          ...s,
+                          brandId: Number(e.target.value),
+                        }))
+                      }
                       className="h-11 bg-zinc-50/50 border-zinc-200 font-mono"
                     />
                   </div>
@@ -418,7 +441,12 @@ export default function ProductDetailsView() {
                     <Input
                       type="number"
                       value={edit.basePrice}
-                      onChange={(e) => setEdit((s) => ({ ...s, basePrice: Number(e.target.value) }))}
+                      onChange={(e) =>
+                        setEdit((s) => ({
+                          ...s,
+                          basePrice: Number(e.target.value),
+                        }))
+                      }
                       className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
                     />
                   </div>
@@ -430,7 +458,12 @@ export default function ProductDetailsView() {
                     <Input
                       type="number"
                       value={edit.salePrice}
-                      onChange={(e) => setEdit((s) => ({ ...s, salePrice: Number(e.target.value) }))}
+                      onChange={(e) =>
+                        setEdit((s) => ({
+                          ...s,
+                          salePrice: Number(e.target.value),
+                        }))
+                      }
                       className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
                     />
                   </div>
@@ -445,7 +478,10 @@ export default function ProductDetailsView() {
                       type="datetime-local"
                       value={toDateTimeLocal(edit.salePriceStartDate)}
                       onChange={(e) =>
-                        setEdit((s) => ({ ...s, salePriceStartDate: fromDateTimeLocal(e.target.value) }))
+                        setEdit((s) => ({
+                          ...s,
+                          salePriceStartDate: fromDateTimeLocal(e.target.value),
+                        }))
                       }
                       className="h-11 bg-zinc-50/50 border-zinc-200"
                     />
@@ -459,7 +495,10 @@ export default function ProductDetailsView() {
                       type="datetime-local"
                       value={toDateTimeLocal(edit.salePriceEndDate)}
                       onChange={(e) =>
-                        setEdit((s) => ({ ...s, salePriceEndDate: fromDateTimeLocal(e.target.value) }))
+                        setEdit((s) => ({
+                          ...s,
+                          salePriceEndDate: fromDateTimeLocal(e.target.value),
+                        }))
                       }
                       className="h-11 bg-zinc-50/50 border-zinc-200"
                     />
@@ -467,7 +506,10 @@ export default function ProductDetailsView() {
                 </div>
 
                 <div className="pt-6 border-t border-zinc-100">
-                  <DetailRow label="Effective Price (computed)" value={fmtMoney(product.effectivePrice)} />
+                  <DetailRow
+                    label="Effective Price (computed)"
+                    value={fmtMoney(product.effectivePrice)}
+                  />
                 </div>
               </div>
             </div>
@@ -489,7 +531,9 @@ export default function ProductDetailsView() {
                     </Label>
                     <Input
                       value={edit.sku}
-                      onChange={(e) => setEdit((s) => ({ ...s, sku: e.target.value }))}
+                      onChange={(e) =>
+                        setEdit((s) => ({ ...s, sku: e.target.value }))
+                      }
                       className="h-11 font-mono text-xs uppercase bg-zinc-50/50 border-zinc-200"
                     />
                   </div>
@@ -498,7 +542,11 @@ export default function ProductDetailsView() {
                     <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                       Stock Quantity (read-only)
                     </Label>
-                    <Input value={String(product.stockQuantity)} readOnly className="h-11 font-mono bg-zinc-50/50 border-zinc-200" />
+                    <Input
+                      value={String(product.stockQuantity)}
+                      readOnly
+                      className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
+                    />
                   </div>
                 </div>
 
@@ -507,19 +555,31 @@ export default function ProductDetailsView() {
                     <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                       Length (read-only)
                     </Label>
-                    <Input value={String(product.dimensionLength)} readOnly className="h-11 font-mono bg-zinc-50/50 border-zinc-200" />
+                    <Input
+                      value={String(product.dimensionLength)}
+                      readOnly
+                      className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                       Width (read-only)
                     </Label>
-                    <Input value={String(product.dimensionWidth)} readOnly className="h-11 font-mono bg-zinc-50/50 border-zinc-200" />
+                    <Input
+                      value={String(product.dimensionWidth)}
+                      readOnly
+                      className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                       Height (read-only)
                     </Label>
-                    <Input value={String(product.dimensionHeight)} readOnly className="h-11 font-mono bg-zinc-50/50 border-zinc-200" />
+                    <Input
+                      value={String(product.dimensionHeight)}
+                      readOnly
+                      className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
+                    />
                   </div>
                 </div>
               </div>
@@ -535,134 +595,170 @@ export default function ProductDetailsView() {
               </div>
               <div className="p-6">
                 <DetailRow label="status" value={product.status} />
-                <DetailRow label="createdAt" value={fmtDate(product.createdAt)} />
-                <DetailRow label="updatedAt" value={fmtDate(product.updatedAt)} />
+                <DetailRow
+                  label="createdAt"
+                  value={fmtDate(product.createdAt)}
+                />
+                <DetailRow
+                  label="updatedAt"
+                  value={fmtDate(product.updatedAt)}
+                />
                 <DetailRow label="isActive" value={product.isActive} />
                 <DetailRow label="isFeatured" value={product.isFeatured} />
                 <DetailRow label="viewCount" value={product.viewCount} />
-                <DetailRow label="favoriteCount" value={product.favoriteCount} />
-                <DetailRow label="averageRating" value={product.averageRating} />
+                <DetailRow
+                  label="favoriteCount"
+                  value={product.favoriteCount}
+                />
+                <DetailRow
+                  label="averageRating"
+                  value={product.averageRating}
+                />
                 <DetailRow label="reviewCount" value={product.reviewCount} />
 
                 <div className="mt-6 space-y-3">
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">
-                      images
+                    <div className="mt-6 space-y-3">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2">
+                          Images
+                        </div>
+
+                        <div className="flex flex-wrap gap-4">
+                          {product.images?.map((image) => (
+                            <img
+                              key={image.id}
+                              src={image.imageUrl}
+                              alt="Product"
+                              className="w-40 h-40 object-cover rounded-lg border"
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <pre className="text-xs font-mono bg-zinc-50 border border-zinc-200 rounded-lg p-3 overflow-auto">
-                      {JSON.stringify(product.images ?? [], null, 2)}
-                    </pre>
                   </div>
                   <div>
-  <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-4">
-    Variations
-  </div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-4">
+                      Variations
+                    </div>
 
-  {!product.variations || product.variations.length === 0 ? (
-    <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-6 text-center text-sm text-zinc-500">
-      No variations available.
-    </div>
-  ) : (
-    <div className="space-y-4">
-      {product.variations.map((variation) => (
-        <div
-          key={variation.id}
-          className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
-        >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
-                SKU
-              </p>
-              <p className="font-mono text-sm">{variation.sku}</p>
-            </div>
+                    {!product.variations || product.variations.length === 0 ? (
+                      <div className="rounded-lg border border-dashed border-zinc-200 bg-zinc-50 p-6 text-center text-sm text-zinc-500">
+                        No variations available.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {product.variations.map((variation) => (
+                          <div
+                            key={variation.id}
+                            className="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+                          >
+                            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                                  SKU
+                                </p>
+                                <p className="font-mono text-sm">
+                                  {variation.sku}
+                                </p>
+                              </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs uppercase text-zinc-400">Price</p>
-                <p className="font-semibold">
-                  ₦{variation.price.toLocaleString()}
-                </p>
-              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Price
+                                  </p>
+                                  <p className="font-semibold">
+                                    ₦{variation.price.toLocaleString()}
+                                  </p>
+                                </div>
 
-              <div>
-                <p className="text-xs uppercase text-zinc-400">
-                  Effective Price
-                </p>
-                <p className="font-semibold">
-                  ₦{variation.effectivePrice.toLocaleString()}
-                </p>
-              </div>
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Effective Price
+                                  </p>
+                                  <p className="font-semibold">
+                                    ₦{variation.effectivePrice.toLocaleString()}
+                                  </p>
+                                </div>
 
-              <div>
-                <p className="text-xs uppercase text-zinc-400">Stock</p>
-                <p>{variation.stockQuantity}</p>
-              </div>
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Stock
+                                  </p>
+                                  <p>{variation.stockQuantity}</p>
+                                </div>
 
-              <div>
-                <p className="text-xs uppercase text-zinc-400">Status</p>
-                <span
-                  className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                    variation.isInStock
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-rose-100 text-rose-700"
-                  }`}
-                >
-                  {variation.isInStock ? "In Stock" : "Out of Stock"}
-                </span>
-              </div>
-            </div>
-          </div>
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Status
+                                  </p>
+                                  <span
+                                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                                      variation.isInStock
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-rose-100 text-rose-700"
+                                    }`}
+                                  >
+                                    {variation.isInStock
+                                      ? "In Stock"
+                                      : "Out of Stock"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
 
-          {variation.attributes &&
-            Object.keys(variation.attributes).length > 0 && (
-              <div className="mt-4 border-t border-zinc-200 pt-4 flex flex-wrap gap-2">
-                {Object.entries(variation.attributes).map(([key, value]) => (
-                  <span
-                    key={key}
-                    className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium"
-                  >
-                    <strong>{key}:</strong> {String(value)}
-                  </span>
-                ))}
-              </div>
-            )}
+                            {variation.attributes &&
+                              Object.keys(variation.attributes).length > 0 && (
+                                <div className="mt-4 border-t border-zinc-200 pt-4 flex flex-wrap gap-2">
+                                  {Object.entries(variation.attributes).map(
+                                    ([key, value]) => (
+                                      <span
+                                        key={key}
+                                        className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium"
+                                      >
+                                        <strong>{key}:</strong> {String(value)}
+                                      </span>
+                                    ),
+                                  )}
+                                </div>
+                              )}
 
-          {(variation.salePrice ||
-            variation.salePriceStartDate ||
-            variation.salePriceEndDate) && (
-            <div className="mt-4 border-t border-zinc-200 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs uppercase text-zinc-400">
-                  Sale Price
-                </p>
-                <p>
-                  {variation.salePrice
-                    ? `₦${variation.salePrice.toLocaleString()}`
-                    : "—"}
-                </p>
-              </div>
+                            {(variation.salePrice ||
+                              variation.salePriceStartDate ||
+                              variation.salePriceEndDate) && (
+                              <div className="mt-4 border-t border-zinc-200 pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Sale Price
+                                  </p>
+                                  <p>
+                                    {variation.salePrice
+                                      ? `₦${variation.salePrice.toLocaleString()}`
+                                      : "—"}
+                                  </p>
+                                </div>
 
-              <div>
-                <p className="text-xs uppercase text-zinc-400">
-                  Sale Starts
-                </p>
-                <p>{variation.salePriceStartDate ?? "—"}</p>
-              </div>
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Sale Starts
+                                  </p>
+                                  <p>{variation.salePriceStartDate ?? "—"}</p>
+                                </div>
 
-              <div>
-                <p className="text-xs uppercase text-zinc-400">
-                  Sale Ends
-                </p>
-                <p>{variation.salePriceEndDate ?? "—"}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+                                <div>
+                                  <p className="text-xs uppercase text-zinc-400">
+                                    Sale Ends
+                                  </p>
+                                  <p>{variation.salePriceEndDate ?? "—"}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -718,7 +814,8 @@ export default function ProductDetailsView() {
                   </p>
                 ) : (
                   <p className="text-[10px] text-zinc-400 mt-2 leading-relaxed">
-                    Use the Approve / Flag / Reject buttons in the header to moderate this listing.
+                    Use the Approve / Flag / Reject buttons in the header to
+                    moderate this listing.
                   </p>
                 )}
               </div>
@@ -741,7 +838,11 @@ export default function ProductDetailsView() {
                   <div className="relative aspect-square w-full border border-zinc-200 rounded-xl overflow-hidden group bg-zinc-100 flex items-center justify-center">
                     {primaryImageUrl ? (
                       <>
-                        <Image src={primaryImageUrl} alt={product.name} fill className="object-cover object-center" />
+                        <img
+                          src={primaryImageUrl}
+                          alt={product.name}
+                          className="object-cover object-center"
+                        />
                         <div className="absolute inset-0 bg-zinc-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                           <Button
                             variant="outline"
@@ -754,7 +855,9 @@ export default function ProductDetailsView() {
                     ) : (
                       <div className="flex flex-col items-center">
                         <ImageIcon className="h-10 w-10 text-zinc-300 mb-2" />
-                        <span className="text-xs font-bold text-zinc-400">No Image</span>
+                        <span className="text-xs font-bold text-zinc-400">
+                          No Image
+                        </span>
                       </div>
                     )}
                   </div>
@@ -775,7 +878,11 @@ export default function ProductDetailsView() {
                         key={img.id}
                         className="relative aspect-square bg-zinc-100 rounded-lg border border-zinc-200 overflow-hidden"
                       >
-                        <Image src={img.imageUrl} alt="Product image" fill className="object-cover" />
+                        <img
+                          src={img.imageUrl}
+                          alt="Product image"
+                          className="object-cover"
+                        />
                       </div>
                     ))}
 
@@ -796,7 +903,11 @@ export default function ProductDetailsView() {
                   <Label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2 block">
                     Stock Status (read-only)
                   </Label>
-                  <Input value={stockStatus} readOnly className="h-11 font-mono bg-zinc-50/50 border-zinc-200" />
+                  <Input
+                    value={stockStatus}
+                    readOnly
+                    className="h-11 font-mono bg-zinc-50/50 border-zinc-200"
+                  />
                 </div>
               </div>
             </div>

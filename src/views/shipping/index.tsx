@@ -1,76 +1,63 @@
-/* eslint-disable react-hooks/preserve-manual-memoization */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { Button } from "@/components/ui/button";
-import { Plus, Truck, Globe, Settings2, Star } from "lucide-react";
+import { Plus, Truck, Percent, CalendarDays, Settings2, Star } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
-import { getProviderColumns } from "./column";
-import { ManageProviderModal } from "./actions";
-import { DeliveryProvider } from "./types";
 
-// --- INITIAL DUMMY DATA ---
-const INITIAL_PROVIDERS: DeliveryProvider[] = [
-  {
-    id: "1",
-    name: "Uber",
-    type: "integrated",
-    rating: 4.5,
-    activeShipments: 124,
-    status: "active",
-    logo: "UB",
-  },
-  {
-    id: "2",
-    name: "Bolt",
-    type: "integrated",
-    rating: 4.8,
-    activeShipments: 45,
-    status: "active",
-    logo: "BO",
-  },
-];
+import { getProviderColumns } from "./column";
+import { ManageProviderModal, ConfirmDeleteProviderModal } from "./actions";
+
+import type { ShippingPartner } from "@/src/features/shipping/api";
+import {
+  useShippingStats,
+  useShippingPartners,
+  useCreateShippingPartner,
+  useUpdateShippingPartner,
+  useDeleteShippingPartner,
+} from "@/src/features/shipping/hooks";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 export default function ShippingView() {
-  // --- STATE FOR INTERACTIVITY ---
-  const [providers, setProviders] =
-    useState<DeliveryProvider[]>(INITIAL_PROVIDERS);
-  const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
+  const statsQ = useShippingStats();
+  const partnersQ = useShippingPartners();
 
-  // Handlers
-  const handleAddProvider = (newProvider: DeliveryProvider) => {
-    setProviders([newProvider, ...providers]);
-  };
+  const createM = useCreateShippingPartner();
+  const updateM = useUpdateShippingPartner();
+  const deleteM = useDeleteShippingPartner();
 
-  const handleDeleteProvider = (id: string) => {
-    setProviders(providers.filter((provider) => provider.id !== id));
-  };
+  const [openEditor, setOpenEditor] = useState(false);
+  const [editing, setEditing] = useState<ShippingPartner | null>(null);
 
-  // Dynamic Statistics
-  const totalShipments = providers.reduce(
-    (sum, p) => sum + p.activeShipments,
-    0,
-  );
-  const avgRating =
-    providers.length > 0
-      ? (
-          providers.reduce((sum, p) => sum + p.rating, 0) / providers.length
-        ).toFixed(1)
-      : "0.0";
+  const [openDelete, setOpenDelete] = useState(false);
+  const [deleting, setDeleting] = useState<ShippingPartner | null>(null);
 
-  // Init columns with the delete handler
+  const partners = partnersQ.data ?? [];
+
   const columns = useMemo(
-    () => getProviderColumns(handleDeleteProvider),
-    [providers],
+    () =>
+      getProviderColumns({
+        onEdit: (p) => {
+          setEditing(p);
+          setOpenEditor(true);
+        },
+        onDelete: (p) => {
+          setDeleting(p);
+          setOpenDelete(true);
+        },
+      }),
+    [],
   );
+
+  const onTimeRate = statsQ.data?.onTimeDeliveryRate;
+  const avgDays = statsQ.data?.averageDeliveryDays;
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
-      {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
@@ -79,37 +66,41 @@ export default function ShippingView() {
             Platform / Shipping & Delivery
           </h1>
         </div>
+
         <Button variant="outline" size="sm" className="gap-2 text-xs">
           <Settings2 size={14} /> Global Shipping Rules
         </Button>
       </header>
 
-      <main className="p-6 max-w-400 mx-auto space-y-8">
-        {/* STATS OVERVIEW */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <main className="p-6 max-w-6xl mx-auto space-y-8">
+        {/* STATS (backend) */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
-            label="Active Partners"
-            value={providers
-              .filter((p) => p.status === "active")
-              .length.toString()}
+            label="Active Shipments"
+            value={statsQ.data ? String(statsQ.data.activeShipments) : "—"}
             icon={Truck}
             variant="default"
           />
           <StatCard
-            label="Total Active Shipments"
-            value={totalShipments.toString()}
-            icon={Globe}
+            label="On-time Rate"
+            value={statsQ.data ? `${Number(onTimeRate ?? 0).toFixed(0)}%` : "—"}
+            icon={Percent}
+            variant="emerald"
+          />
+          <StatCard
+            label="Avg Delivery Days"
+            value={statsQ.data ? String(avgDays ?? "—") : "—"}
+            icon={CalendarDays}
             variant="indigo"
           />
           <StatCard
-            label="Avg. Partner Rating"
-            value={`${avgRating} / 5.0`}
+            label="Total Partners"
+            value={statsQ.data ? String(statsQ.data.totalPartners) : "—"}
             icon={Star}
-            variant="emerald"
+            variant="amber"
           />
         </div>
 
-        {/* TABS & ACTIONS */}
         <Tabs defaultValue="providers" className="w-full flex flex-col">
           <div className="flex items-center justify-between border-b border-zinc-200">
             <FilterTabs
@@ -117,37 +108,69 @@ export default function ShippingView() {
                 {
                   value: "providers",
                   label: "Logistics Partners",
-                  count: providers.length,
+                  count: partners.length,
                   variant: "indigo",
                 },
               ]}
             />
           </div>
 
-          {/* TAB: PROVIDERS */}
           <TabsContent value="providers">
             <div className="mt-6 space-y-4">
               <div className="flex justify-end">
                 <Button
-                  onClick={() => setIsProviderModalOpen(true)}
+                  onClick={() => {
+                    setEditing(null);
+                    setOpenEditor(true);
+                  }}
                   className="bg-indigo-600 hover:bg-indigo-700 text-xs text-white"
                 >
                   <Plus size={16} className="mr-2" /> Connect Provider
                 </Button>
               </div>
+
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <DataTable columns={columns} data={providers}  />
+                {partnersQ.isLoading ? (
+                  <TableSkeleton columns={columns.length} rows={5} />
+                ) : partnersQ.isError ? (
+                  <div className="p-6 text-sm text-rose-600">Failed to load partners.</div>
+                ) : (
+                  <DataTable columns={columns} data={partners} />
+                )}
               </div>
             </div>
           </TabsContent>
         </Tabs>
       </main>
 
-      {/* MODALS */}
+      {/* Create/Edit modal */}
       <ManageProviderModal
-        isOpen={isProviderModalOpen}
-        onClose={() => setIsProviderModalOpen(false)}
-        onSave={handleAddProvider}
+        open={openEditor}
+        onOpenChange={setOpenEditor}
+        initial={editing}
+        isSaving={createM.isPending || updateM.isPending}
+        onCreate={(payload) => {
+          createM.mutate(payload, { onSuccess: () => setOpenEditor(false) });
+        }}
+        onUpdate={(partnerId, payload) => {
+          updateM.mutate({ partnerId, payload }, { onSuccess: () => setOpenEditor(false) });
+        }}
+      />
+
+      {/* Delete confirm modal */}
+      <ConfirmDeleteProviderModal
+        open={openDelete}
+        onOpenChange={setOpenDelete}
+        partner={deleting}
+        isDeleting={deleteM.isPending}
+        onConfirm={(partnerId) => {
+          deleteM.mutate(partnerId, {
+            onSuccess: () => {
+              setOpenDelete(false);
+              setDeleting(null);
+            },
+          });
+        }}
       />
     </div>
   );

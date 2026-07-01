@@ -1,100 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { Button } from "@/components/ui/button";
-import { Download, ShieldCheck, Activity, Search } from "lucide-react";
+import { Download, ShieldCheck, Activity, User } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
 import { getAuditColumns } from "./column";
-import { LogDetailsModal, AuditLog } from "./actions";
-
-// --- DUMMY DATA ---
-const AUDIT_LOGS: AuditLog[] = [
-  {
-    id: "LOG-9921",
-    action: "Updated Commission Rate",
-    actor: {
-      name: "Admin User",
-      email: "admin@platform.com",
-      role: "Super Admin",
-      avatar: "AU",
-    },
-    category: "finance",
-    entity: "Category: Electronics",
-    timestamp: "Oct 26, 10:42 AM",
-    ipAddress: "192.168.1.45",
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-    changes: [
-      { field: "commission_rate", oldValue: "5.0%", newValue: "5.5%" },
-      { field: "min_fee", oldValue: "₦100", newValue: "₦150" },
-    ],
-  },
-  {
-    id: "LOG-9922",
-    action: "Suspended Vendor Account",
-    actor: {
-      name: "Sarah Support",
-      email: "sarah@platform.com",
-      role: "Support",
-      avatar: "SS",
-    },
-    category: "vendor",
-    entity: "Vendor: Tech Haven",
-    timestamp: "Oct 26, 09:15 AM",
-    ipAddress: "10.0.0.12",
-    userAgent: "Chrome/118.0.0.0 Safari/537.36",
-    changes: [
-      { field: "status", oldValue: "active", newValue: "suspended" },
-      {
-        field: "suspension_reason",
-        oldValue: "null",
-        newValue: "'Repeated counterfeit items'",
-      },
-    ],
-  },
-  {
-    id: "LOG-9923",
-    action: "API Key Generated",
-    actor: {
-      name: "System",
-      email: "system@bot",
-      role: "System",
-      avatar: "SY",
-    },
-    category: "security",
-    entity: "Integration: Google Maps",
-    timestamp: "Oct 25, 11:30 PM",
-    ipAddress: "127.0.0.1",
-    userAgent: "System/Internal-Worker",
-    changes: undefined, // No specific field diff for generation events often
-  },
-  {
-    id: "LOG-9924",
-    action: "Changed Payout Schedule",
-    actor: {
-      name: "Admin User",
-      email: "admin@platform.com",
-      role: "Super Admin",
-      avatar: "AU",
-    },
-    category: "system",
-    entity: "Global Settings",
-    timestamp: "Oct 25, 04:20 PM",
-    ipAddress: "192.168.1.45",
-    userAgent: "Mozilla/5.0 (Macintosh)",
-    changes: [
-      { field: "payout_frequency", oldValue: "weekly", newValue: "bi-weekly" },
-    ],
-  },
-];
+import { AuditLog, LogDetailsModal } from "./actions";
+import { useAuditLogs, useAuditLogStats } from "@/src/features/logs/hooks";
+import { mapAuditLogDtoToUi } from "@/src/features/logs/mapper";
 
 export default function AuditLogsView() {
-  const [logs] = useState<AuditLog[]>(AUDIT_LOGS);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const statsQ = useAuditLogStats();
+  const logsQ = useAuditLogs({
+    PageNumber: 1,
+    PageSize: 200,
+  });
+
+  const logs = useMemo<AuditLog[]>(() => {
+    return (logsQ.data ?? []).map(mapAuditLogDtoToUi);
+  }, [logsQ.data]);
+
+  // Tabs are normalized categories (security/finance/vendor/system)
+  const counts = useMemo(() => {
+    const c = {
+      all: logs.length,
+      security: 0,
+      finance: 0,
+      vendor: 0,
+      system: 0,
+    };
+    for (const l of logs) c[l.category] += 1;
+    return c;
+  }, [logs]);
 
   // Handlers
   const handleViewLog = (log: AuditLog) => {
@@ -102,7 +46,10 @@ export default function AuditLogsView() {
     setIsModalOpen(true);
   };
 
-  const auditColumns = getAuditColumns({ onView: handleViewLog });
+  const auditColumns = useMemo(
+    () => getAuditColumns({ onView: handleViewLog }),
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
@@ -121,29 +68,37 @@ export default function AuditLogsView() {
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-8">
-        {/* STATS */}
+        {/* STATS (from endpoint) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             label="Total Events (Today)"
-            value="1,204"
+            value={
+              statsQ.isLoading
+                ? "—"
+                : (statsQ.data?.totalLogsToday ?? 0).toLocaleString()
+            }
             icon={Activity}
             variant="default"
           />
           <StatCard
-            label="Critical Security Alerts"
-            value="0"
+            label="Critical Events"
+            value={
+              statsQ.isLoading
+                ? "—"
+                : (statsQ.data?.criticalEventsCount ?? 0).toLocaleString()
+            }
             icon={ShieldCheck}
             variant="emerald"
           />
           <StatCard
-            label="Admin Actions"
-            value="24"
-            icon={Search}
+            label="Top Actor"
+            value={statsQ.isLoading ? "—" : (statsQ.data?.topActor ?? "—")}
+            icon={User}
             variant="indigo"
           />
         </div>
 
-        {/* TABS & FILTERS */}
+        {/* TABS & TABLE */}
         <Tabs defaultValue="all" className="w-full flex flex-col">
           <div className="flex items-center justify-between border-b border-zinc-200">
             <FilterTabs
@@ -151,33 +106,45 @@ export default function AuditLogsView() {
                 {
                   value: "all",
                   label: "All Events",
-                  count: logs.length,
+                  count: counts.all,
                   variant: "default",
                 },
                 {
                   value: "security",
                   label: "Security",
-                  count: logs.filter((l) => l.category === "security").length,
+                  count: counts.security,
                   variant: "rose",
                 },
                 {
                   value: "finance",
                   label: "Finance",
-                  count: logs.filter((l) => l.category === "finance").length,
+                  count: counts.finance,
                   variant: "emerald",
+                },
+                {
+                  value: "vendor",
+                  label: "Vendor",
+                  count: counts.vendor,
+                  variant: "indigo",
+                },
+                {
+                  value: "system",
+                  label: "System",
+                  count: counts.system,
+                  variant: "default",
                 },
               ]}
             />
           </div>
 
-          {/* TAB 1: ALL LOGS */}
+          {/* ALL */}
           <TabsContent value="all">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
               <DataTable columns={auditColumns} data={logs} />
             </div>
           </TabsContent>
 
-          {/* TAB 2: SECURITY */}
+          {/* SECURITY */}
           <TabsContent value="security">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
               <DataTable
@@ -187,7 +154,7 @@ export default function AuditLogsView() {
             </div>
           </TabsContent>
 
-          {/* TAB 3: FINANCE */}
+          {/* FINANCE */}
           <TabsContent value="finance">
             <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
               <DataTable
@@ -196,10 +163,29 @@ export default function AuditLogsView() {
               />
             </div>
           </TabsContent>
+
+          {/* VENDOR */}
+          <TabsContent value="vendor">
+            <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
+              <DataTable
+                columns={auditColumns}
+                data={logs.filter((l) => l.category === "vendor")}
+              />
+            </div>
+          </TabsContent>
+
+          {/* SYSTEM */}
+          <TabsContent value="system">
+            <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden mt-6">
+              <DataTable
+                columns={auditColumns}
+                data={logs.filter((l) => l.category === "system")}
+              />
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
 
-      {/* DETAIL MODAL */}
       <LogDetailsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

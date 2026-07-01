@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -12,7 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Crown, Database, Activity, Filter, X } from "lucide-react";
+
+import { Plus, Crown, Database, Activity } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
 
 import { getPlanColumns, type SubscriptionPlanRow } from "./column";
@@ -26,22 +26,19 @@ import {
   useSubscriptionPlans,
   useUpdateSubscriptionPlan,
 } from "@/src/features/subscriptions/hooks";
+
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 function convertFromNGN(amount: number, to: string) {
-  // your mock rates
   if (to === "ZAR") return amount * 0.0117;
   if (to === "USD") return amount / 1500;
   return amount;
 }
 
-function isActive(plan: SubscriptionPlan) {
-  return plan.isActive ?? true;
-}
-
 export default function SubscriptionsView() {
-  // fetch all plans (Admin)
-  const plansQ = useSubscriptionPlans({ activeOnly: false });
+  const [activeOnly, setActiveOnly] = useState<boolean>(false);
+  const plansQ = useSubscriptionPlans({ activeOnly });
+  const allPlansQ = useSubscriptionPlans({ activeOnly: false });
 
   const createPlan = useCreateSubscriptionPlan();
   const updatePlan = useUpdateSubscriptionPlan();
@@ -50,60 +47,42 @@ export default function SubscriptionsView() {
 
   // UI state
   const [globalCurrency, setGlobalCurrency] = useState("NGN");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterPlan, setFilterPlan] = useState("all");
-  const [filterDate, setFilterDate] = useState(""); // API doesn't provide createdAt in sample
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
 
+  const allPlans = allPlansQ.data ?? [];
   const plans = plansQ.data ?? [];
 
-  // Filters
-  const filteredPlans = useMemo(() => {
-    return plans.filter((p) => {
-      const status = isActive(p) ? "active" : "inactive";
-      const matchStatus = filterStatus === "all" || status === filterStatus;
-      const matchPlan = filterPlan === "all" || p.name === filterPlan;
+  const totalPlans = allPlans.length;
+  const activePlans = allPlans.filter((p) => p.isActive === true).length;
 
-      // only works if API returns createdAt
-      const matchDate =
-        !filterDate ||
-        (p.createdAt ? p.createdAt.slice(0, 10) === filterDate : true);
-
-      return matchStatus && matchPlan && matchDate;
-    });
-  }, [plans, filterStatus, filterPlan, filterDate]);
-
-  // Display mapping (currency conversion for UI only)
   const displayPlans: SubscriptionPlanRow[] = useMemo(() => {
-    return filteredPlans.map((p) => ({
+    return plans.map((p) => ({
       ...p,
       currency: globalCurrency,
       monthlyDisplay: convertFromNGN(p.monthlyPrice, globalCurrency),
       yearlyDisplay: convertFromNGN(p.yearlyPrice, globalCurrency),
     }));
-  }, [filteredPlans, globalCurrency]);
-
-  const totalPlans = plans.length;
-  const activePlans = plans.filter((p) => isActive(p)).length;
+  }, [plans, globalCurrency]);
 
   const columns = useMemo(
     () =>
       getPlanColumns({
         onEdit: (row) => {
-          // Edit should use original values (NGN from API), not converted
-          const original = plans.find((p) => p.id === row.id) ?? row;
+          const original = allPlans.find((p) => p.id === row.id) ?? row;
           setEditingPlan(original);
           setIsModalOpen(true);
         },
         onToggleStatus: (row) => {
-          const currentlyActive = isActive(row);
-          if (currentlyActive) deactivate.mutate(row.id);
+          // Use isActive when present, otherwise assume "active" for toggle direction
+          const assumedActive =
+            typeof row.isActive === "boolean" ? row.isActive : true;
+
+          if (assumedActive) deactivate.mutate(row.id);
           else activate.mutate(row.id);
         },
       }),
-    [plans, activate, deactivate],
+    [allPlans, activate, deactivate],
   );
 
   return (
@@ -118,6 +97,7 @@ export default function SubscriptionsView() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* DISPLAY currency (UI only) */}
           <Select value={globalCurrency} onValueChange={setGlobalCurrency}>
             <SelectTrigger className="h-9 w-28 bg-zinc-50 border-zinc-200 text-xs font-bold text-zinc-700 rounded-lg">
               <SelectValue />
@@ -145,13 +125,13 @@ export default function SubscriptionsView() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             label="Total Plans"
-            value={plansQ.isLoading ? "—" : String(totalPlans)}
+            value={allPlansQ.isLoading ? "—" : String(totalPlans)}
             icon={Database}
             variant="default"
           />
           <StatCard
             label="Active Plans"
-            value={plansQ.isLoading ? "—" : String(activePlans)}
+            value={allPlansQ.isLoading ? "—" : String(activePlans)}
             icon={Activity}
             variant="emerald"
           />
@@ -163,69 +143,28 @@ export default function SubscriptionsView() {
           />
         </div>
 
-        <div className="bg-white p-4 rounded-3xl shadow-sm border border-zinc-200 flex flex-wrap gap-3 items-center">
-          <div className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest mr-2">
-            <Filter className="mr-2 h-3.5 w-3.5" /> Filters:
+        {/* Only filter: activeOnly param */}
+        <div className="bg-white p-4 rounded-3xl shadow-sm border border-zinc-200 flex flex-wrap gap-3 items-center justify-between">
+          <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            Filter:
           </div>
 
-          <Select value={filterPlan} onValueChange={setFilterPlan}>
-            <SelectTrigger className="w-[220px] h-10 text-xs font-bold bg-zinc-50/50 border-zinc-200 rounded-xl text-zinc-600">
-              <SelectValue placeholder="All Plans" />
+          <Select
+            value={activeOnly ? "active" : "all"}
+            onValueChange={(v) => setActiveOnly(v === "active")}
+          >
+            <SelectTrigger className="w-55 h-10 text-xs font-bold bg-zinc-50/50 border-zinc-200 rounded-xl text-zinc-700">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Plans</SelectItem>
-              {plans.map((p) => (
-                <SelectItem key={p.id} value={p.name}>
-                  {p.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="active">Active Only</SelectItem>
             </SelectContent>
           </Select>
-
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[160px] h-10 text-xs font-bold uppercase tracking-wider bg-zinc-50/50 border-zinc-200 rounded-xl text-zinc-600">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Only meaningful if API returns createdAt */}
-          <div className="relative">
-            <Input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="h-10 w-[170px] text-xs font-mono bg-zinc-50/50 border-zinc-200 rounded-xl text-zinc-600"
-            />
-          </div>
-
-          {(filterPlan !== "all" ||
-            filterStatus !== "all" ||
-            filterDate !== "") && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setFilterPlan("all");
-                setFilterStatus("all");
-                setFilterDate("");
-              }}
-              className="h-10 text-xs font-bold uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl px-4 ml-auto"
-            >
-              <X size={14} className="mr-2" /> Clear
-            </Button>
-          )}
         </div>
 
         {plansQ.isLoading ? (
-          <TableSkeleton
-            columns={columns.length}
-            rows={10}
-            withToolbar={false}
-          />
+          <TableSkeleton columns={columns.length} rows={10} withToolbar={false} />
         ) : plansQ.isError ? (
           <div className="p-6 text-sm text-rose-600">Failed to load plans.</div>
         ) : (

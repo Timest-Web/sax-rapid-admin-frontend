@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { CurrencyFormModal } from "./actions";
+import type { ColumnDef } from "@tanstack/react-table";
 import { BadgeCheck } from "lucide-react";
+import { CurrencyFormModal } from "./actions";
+import type { CurrencyRow } from "./mapper";
 
-export const currencyColumns: ColumnDef<any>[] = [
+export const currencyColumns: ColumnDef<CurrencyRow>[] = [
   {
     header: "Currency",
     accessorKey: "code",
@@ -33,8 +33,15 @@ export const currencyColumns: ColumnDef<any>[] = [
     accessorKey: "rate",
     cell: ({ row }) => (
       <span className="font-mono font-bold text-zinc-900">
-        {row.original.rate.toFixed(2)}
+        {Number(row.original.rate ?? 0).toFixed(2)}
       </span>
+    ),
+  },
+  {
+    header: "Region",
+    accessorKey: "region",
+    cell: ({ row }) => (
+      <span className="text-xs text-zinc-600">{row.original.region || "—"}</span>
     ),
   },
   {
@@ -42,9 +49,13 @@ export const currencyColumns: ColumnDef<any>[] = [
     accessorKey: "status",
     cell: ({ row }) => (
       <span
-        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${row.original.status === "Active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-zinc-50 text-zinc-500 border-zinc-200"}`}
+        className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${
+          row.original.isActive
+            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+            : "bg-zinc-50 text-zinc-500 border-zinc-200"
+        }`}
       >
-        {row.original.status}
+        {row.original.isActive ? "Active" : "Inactive"}
       </span>
     ),
   },

@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/preserve-manual-memoization */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
@@ -22,76 +25,148 @@ import {
   Activity,
   Calendar,
 } from "lucide-react";
-import { GatewayConfigModal } from "./actions"; // Assuming this exists in your project
+
 import { StatCard } from "@/components/cards/stat-card";
-import { walletColumns, transactionColumns } from "./column";
+import { walletColumns, transactionColumns, VendorWalletRow, FinanceTransactionRow } from "./column";
+import { GatewayConfigModal } from "./actions";
 
-// ─── RAW DATA (Base NGN) ───
-// We use raw numbers here so we can multiply by the exchange rate dynamically.
-const RAW_FINANCE_STATS = {
-  totalRevenue: 45000000,
-  platformCommission: 4500000,
-  pendingPayouts: 1200000,
-  netProfit: 11025000,
-};
+import {
+  useFinanceStats,
+  useFinanceTransactions,
+  useVendorWallets,
+  usePaymentGateways,
+} from "@/src/features/finance/hooks";
+import { VendorWalletDto } from "@/src/features/finance/api";
 
-const RAW_VENDOR_WALLETS = [
-  { id: "1", vendor: "TechHub Store", rawBalance: 2500000, status: "active", lastActive: "2024-10-24" },
-  { id: "2", vendor: "Fashion Nova", rawBalance: 850000, status: "active", lastActive: "2024-10-23" },
-  { id: "3", vendor: "GameStop NG", rawBalance: 120000, status: "frozen", lastActive: "2024-10-20" },
-  { id: "4", vendor: "Home Essentials", rawBalance: 3400000, status: "active", lastActive: "2024-10-24" },
-];
+function toIsoDayRange(date: string) {
+  const from = new Date(`${date}T00:00:00.000Z`).toISOString();
+  const to = new Date(`${date}T23:59:59.999Z`).toISOString();
+  return { from, to };
+}
 
-const RAW_TRANSACTIONS = [
-  { id: "TXN-001", vendor: "TechHub Store", type: "Sale", rawAmount: 120000, status: "completed", date: "2024-10-24" },
-  { id: "TXN-002", vendor: "Fashion Nova", type: "Payout", rawAmount: 500000, status: "pending", date: "2024-10-24" },
-  { id: "TXN-003", vendor: "GameStop NG", type: "Refund", rawAmount: 45000, status: "completed", date: "2024-10-23" },
-  { id: "TXN-004", vendor: "Home Essentials", type: "Sale", rawAmount: 850000, status: "completed", date: "2024-10-23" },
-  { id: "TXN-005", vendor: "TechHub Store", type: "Sale", rawAmount: 250000, status: "failed", date: "2024-10-22" },
-];
+function mapUiToTxnStatus(ui: string) {
+  // backend examples: Paid | Pending | Refunded
+  if (ui === "completed") return "Paid";
+  if (ui === "pending") return "Pending";
+  if (ui === "failed") return "Refunded";
+  return undefined;
+}
+
+function mapUiToWalletStatus(ui: string) {
+  // backend examples: Active | Frozen
+  if (ui === "failed") return "Frozen";
+  return undefined;
+}
+
+function humanizeType(s: string) {
+  return String(s || "").replace(/([a-z])([A-Z])/g, "$1 $2"); // OrderPayment -> Order Payment
+}
+
+function isCredit(type: string) {
+  const t = String(type || "").toLowerCase();
+  if (t.includes("orderpayment")) return true;
+  if (t.includes("commission")) return true;
+  if (t.includes("payout")) return false;
+  if (t.includes("refund")) return false;
+  return true;
+}
 
 export default function FinancePage() {
-  // --- CURRENCY STATE ---
+  // Currency here is what we request from backend + how we format
   const [currency, setCurrency] = useState("NGN");
-  const isNGN = currency === "NGN";
-  const symbol = isNGN ? "₦" : "R";
-  const exchangeRate = isNGN ? 1 : 0.011; // 1 NGN = ~0.011 ZAR
 
-  // --- FILTER STATE ---
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterDate, setFilterDate] = useState("");
+  const symbol = currency === "NGN" ? "₦" : "R";
 
-  // --- HELPERS ---
   const formatCurrency = (val: number) => {
-    return `${symbol}${(val * exchangeRate).toLocaleString(undefined, {
+    return `${symbol}${val.toLocaleString(undefined, {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     })}`;
   };
 
-  // --- DYNAMIC DATA COMPUTATION ---
-  // 1. Wallets (Filtered & Formatted)
-  const displayWallets = useMemo(() => {
-    return RAW_VENDOR_WALLETS.filter((w) => {
-      const matchStatus = filterStatus === "all" || w.status === filterStatus;
-      return matchStatus;
-    }).map((w) => ({
-      ...w,
-      balance: formatCurrency(w.rawBalance), // Replaces raw amount with formatted string for the table
-    }));
-  }, [filterStatus, exchangeRate, currency]);
+  // Filters (shared UI)
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDate, setFilterDate] = useState("");
 
-  // 2. Transactions (Filtered & Formatted)
-  const displayTransactions = useMemo(() => {
-    return RAW_TRANSACTIONS.filter((t) => {
-      const matchStatus = filterStatus === "all" || t.status === filterStatus;
-      const matchDate = !filterDate || t.date === filterDate;
-      return matchStatus && matchDate;
-    }).map((t) => ({
-      ...t,
-      amount: formatCurrency(t.rawAmount), // Replaces raw amount with formatted string for the table
+  const dayRange = filterDate ? toIsoDayRange(filterDate) : null;
+
+  // ---- Queries ----
+  const statsQuery = useFinanceStats({
+    currency,
+    dateFrom: dayRange?.from,
+    dateTo: dayRange?.to,
+  });
+
+  const transactionsQuery = useFinanceTransactions({
+    currency,
+    pageNumber: 1,
+    pageSize: 50,
+    status: filterStatus === "all" ? undefined : mapUiToTxnStatus(filterStatus),
+    dateFrom: dayRange?.from,
+    dateTo: dayRange?.to,
+  });
+
+  const walletsQuery = useVendorWallets({
+    currency,
+    pageNumber: 1,
+    pageSize: 50,
+    status:
+      filterStatus === "all" ? undefined : mapUiToWalletStatus(filterStatus),
+    startDate: dayRange?.from,
+    endDate: dayRange?.to,
+  });
+
+  const gatewaysQuery = usePaymentGateways({
+    currency,
+    dateFrom: dayRange?.from,
+    dateTo: dayRange?.to,
+  });
+
+  // ---- Map backend -> table rows ----
+const displayWallets = useMemo<VendorWalletRow[]>(() => {
+  const data = walletsQuery.data ?? [];
+  return data.map((w) => ({
+    vendorId: w.vendorId,
+    vendorName: w.vendorName,
+    rawBalance: w.walletBalance,
+    balance: formatCurrency(w.walletBalance),
+    pending: formatCurrency(w.pendingBalance),
+    lastPayout: w.lastPayoutDate ? w.lastPayoutDate.substring(0, 10) : "—",
+    status: String(w.status ?? "").toLowerCase(),
+    currency: w.currency,
+  }));
+}, [walletsQuery.data, currency]);
+
+const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
+  const data = transactionsQuery.data ?? [];
+
+  return data.map((t) => {
+    const credit = String(t.type).toLowerCase().includes("orderpayment");
+    const signedAmount = `${credit ? "+" : "-"}${formatCurrency(t.amount)}`;
+
+    return {
+      id: t.transactionId,
+      type: String(t.type ?? ""),
+      amount: signedAmount,
+      from: credit ? (t.userName || "Customer") : "Platform",
+      to: credit ? "Platform" : (t.userName || "Customer"),
+      date: t.date ? t.date.substring(0, 10) : "—", // ✅ always string
+      status: t.status === "Paid" ? "Completed" : String(t.status ?? ""),
+    };
+  });
+}, [transactionsQuery.data, currency]);
+
+  const gatewayCards = useMemo(() => {
+    const data = gatewaysQuery.data ?? [];
+    return data.map((g: { gatewayName: any; status: any; transactionCount: { toLocaleString: () => any; }; monthlyVolume: number; }) => ({
+      name: g.gatewayName,
+      status: g.status,
+      transactions: g.transactionCount.toLocaleString(),
+      volume: formatCurrency(g.monthlyVolume),
     }));
-  }, [filterStatus, filterDate, exchangeRate, currency]);
+  }, [gatewaysQuery.data, currency]);
+
+  const stats = statsQuery.data;
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
@@ -108,7 +183,7 @@ export default function FinancePage() {
         <div className="flex items-center gap-3">
           {/* CURRENCY SWITCHER */}
           <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger className="h-9 w-24 bg-zinc-50 border-zinc-200 text-xs font-bold text-zinc-700 shadow-sm focus:ring-[#EAB308]">
+            <SelectTrigger className="h-9 w-24 bg-zinc-50 border-zinc-200 text-xs font-bold text-zinc-700 shadow-sm focus:ring-sax-gold">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -123,40 +198,48 @@ export default function FinancePage() {
         </div>
       </header>
 
-      <main className="p-6 max-w-[1600px] mx-auto space-y-6">
-        {/* TOP METRICS (PLATFORM WALLET) */}
+      <main className="p-6 max-w-400 mx-auto space-y-6">
+        {/* TOP METRICS */}
         <section className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
             Platform Overview
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StatCard
               label="Total Revenue"
-              value={formatCurrency(RAW_FINANCE_STATS.totalRevenue)}
+              value={formatCurrency(stats?.totalRevenue ?? 0)}
               icon={TrendingUp}
               variant="emerald"
             />
             <StatCard
               label="Commission Earned"
-              value={formatCurrency(RAW_FINANCE_STATS.platformCommission)}
+              value={formatCurrency(stats?.commissionEarned ?? 0)}
               icon={Wallet}
               variant="cyan"
             />
             <StatCard
               label="Pending Payouts"
-              value={formatCurrency(RAW_FINANCE_STATS.pendingPayouts)}
+              value={formatCurrency(stats?.pendingPayouts ?? 0)}
               icon={Activity}
               variant="gold"
             />
+
             <div className="bg-zinc-900 text-white p-5 rounded-xl shadow-sm flex flex-col justify-center gap-2 border border-zinc-800">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#EAB308]">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-sax-gold">
                 Net Profit
               </p>
               <p className="text-2xl font-bold font-mono tracking-tight">
-                {formatCurrency(RAW_FINANCE_STATS.netProfit)}
+                {formatCurrency(stats?.netProfit ?? 0)}
               </p>
             </div>
           </div>
+
+          {statsQuery.isError && (
+            <p className="text-xs text-red-600">
+              Failed to load finance stats.
+            </p>
+          )}
         </section>
 
         {/* MAIN TABS */}
@@ -169,7 +252,7 @@ export default function FinancePage() {
                 <TabTrigger value="gateways" label="Payment Gateways" />
               </TabsList>
 
-              {/* GLOBAL FILTERS (Date & Status) */}
+              {/* GLOBAL FILTERS */}
               <div className="flex items-center gap-2 pb-2 md:pb-0">
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
                   <SelectTrigger className="h-9 w-35 text-xs bg-white shadow-sm border-zinc-200">
@@ -189,7 +272,7 @@ export default function FinancePage() {
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="h-9 pl-9 text-xs w-[150px] bg-white shadow-sm border-zinc-200 text-zinc-600 font-mono"
+                    className="h-9 pl-9 text-xs w-37.5 bg-white shadow-sm border-zinc-200 text-zinc-600 font-mono"
                   />
                 </div>
 
@@ -212,6 +295,17 @@ export default function FinancePage() {
             {/* TAB 1: TRANSACTIONS */}
             <TabsContent value="transactions" className="mt-6">
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
+                {(transactionsQuery.isLoading ||
+                  transactionsQuery.isFetching) && (
+                  <div className="p-4 text-xs text-zinc-500">
+                    Loading transactions…
+                  </div>
+                )}
+                {transactionsQuery.isError && (
+                  <div className="p-4 text-xs text-red-600">
+                    Failed to load transactions.
+                  </div>
+                )}
                 <DataTable
                   columns={transactionColumns}
                   data={displayTransactions}
@@ -222,34 +316,46 @@ export default function FinancePage() {
             {/* TAB 2: VENDOR WALLETS */}
             <TabsContent value="wallets" className="mt-6">
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <DataTable
-                  columns={walletColumns}
-                  data={displayWallets}
-                />
+                {(walletsQuery.isLoading || walletsQuery.isFetching) && (
+                  <div className="p-4 text-xs text-zinc-500">
+                    Loading vendor wallets…
+                  </div>
+                )}
+                {walletsQuery.isError && (
+                  <div className="p-4 text-xs text-red-600">
+                    Failed to load vendor wallets.
+                  </div>
+                )}
+                <DataTable columns={walletColumns} data={displayWallets} />
               </div>
             </TabsContent>
 
-            {/* TAB 3: GATEWAY SETTINGS */}
+            {/* TAB 3: GATEWAYS */}
             <TabsContent value="gateways" className="mt-6">
+              {(gatewaysQuery.isLoading || gatewaysQuery.isFetching) && (
+                <div className="p-4 text-xs text-zinc-500">
+                  Loading gateways…
+                </div>
+              )}
+              {gatewaysQuery.isError && (
+                <div className="p-4 text-xs text-red-600">
+                  Failed to load gateways.
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Paystack Card */}
-                <GatewayCard
-                  name="Paystack"
-                  status="Active"
-                  transactions="4,200"
-                  volume={formatCurrency(85000000)}
-                />
+                {gatewayCards.map((g: { name: any; status: any; transactions: any; volume: any; }) => (
+                  <GatewayCard
+                    key={g.name}
+                    name={g.name}
+                    status={g.status}
+                    transactions={g.transactions}
+                    volume={g.volume}
+                  />
+                ))}
 
-                {/* PayFast Card */}
-                <GatewayCard
-                  name="PayFast"
-                  status="Active"
-                  transactions="1,150"
-                  volume={formatCurrency(4500000)}
-                />
-
-                {/* Stripe (Disabled) */}
-                <div className="bg-zinc-50 border border-dashed border-zinc-300 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-70 min-h-[14rem]">
+                {/* Stripe placeholder */}
+                <div className="bg-zinc-50 border border-dashed border-zinc-300 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-70 min-h-56">
                   <CreditCard className="h-10 w-10 text-zinc-300 mb-3" />
                   <h3 className="font-bold text-zinc-900">Stripe</h3>
                   <p className="text-xs text-zinc-500 mb-4">
@@ -270,25 +376,35 @@ export default function FinancePage() {
 
 // ─── LOCAL COMPONENTS ───
 
-function TabTrigger({ value, label, hasPulse = false }: { value: string; label: string; hasPulse?: boolean }) {
+function TabTrigger({
+  value,
+  label,
+  hasPulse = false,
+}: {
+  value: string;
+  label: string;
+  hasPulse?: boolean;
+}) {
   return (
     <TabsTrigger
       value={value}
       className="rounded-full px-6 py-2 text-xs font-bold uppercase tracking-widest text-zinc-500 data-[state=active]:bg-zinc-900 data-[state=active]:text-[#D4AF37] transition-all hover:text-zinc-900 data-[state=active]:hover:text-[#D4AF37] flex items-center gap-2"
     >
       {label}
-      {hasPulse && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
+      {hasPulse && (
+        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+      )}
     </TabsTrigger>
   );
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function GatewayCard({ name, status, transactions, volume }: any) {
   return (
-    <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[14rem]">
+    <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-56">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 bg-zinc-100 rounded-lg flex items-center justify-center font-black text-sm text-zinc-600">
-            {name[0]}
+            {name?.[0] ?? "G"}
           </div>
           <div>
             <h3 className="font-bold text-lg text-zinc-900">{name}</h3>
@@ -302,11 +418,17 @@ function GatewayCard({ name, status, transactions, volume }: any) {
 
       <div className="space-y-3 mt-6">
         <div className="flex justify-between text-xs items-center">
-          <span className="text-zinc-500 font-bold uppercase tracking-wider">Monthly Volume</span>
-          <span className="font-mono font-bold text-zinc-900 text-sm">{volume}</span>
+          <span className="text-zinc-500 font-bold uppercase tracking-wider">
+            Monthly Volume
+          </span>
+          <span className="font-mono font-bold text-zinc-900 text-sm">
+            {volume}
+          </span>
         </div>
         <div className="flex justify-between text-xs items-center">
-          <span className="text-zinc-500 font-bold uppercase tracking-wider">Transactions</span>
+          <span className="text-zinc-500 font-bold uppercase tracking-wider">
+            Transactions
+          </span>
           <span className="font-mono font-bold text-zinc-900 text-sm">
             {transactions}
           </span>

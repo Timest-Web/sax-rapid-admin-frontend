@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -60,9 +61,9 @@ import {
   useReactivateBuyer,
   useUpdateBuyerUser,
 } from "@/src/features/buyers/hooks";
-
 import { AppDialog } from "@/components/custom-dialog";
 import { DetailsPageSkeleton } from "@/components/skeletons/details";
+import { useResetUserPassword } from "@/src/features/users/hooks/useAdminActions";
 
 function TabTrigger({
   value,
@@ -133,6 +134,14 @@ export default function BuyerDetailsView() {
   const suspendM = useSuspendBuyer();
   const reactivateM = useReactivateBuyer();
   const updateUserM = useUpdateBuyerUser();
+  const resetPassM = useResetUserPassword();
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const canResetPassword =
+    newPassword.trim().length >= 6 &&
+    newPassword.trim() === confirmPassword.trim();
 
   // UI state
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
@@ -159,6 +168,11 @@ export default function BuyerDetailsView() {
     setEmail(buyer.email ?? "");
     setPhoneNumber(buyer.phoneNumber ?? "");
   }, [buyer?.fullName, buyer?.email, buyer?.phoneNumber]);
+
+  useEffect(() => {
+    setNewPassword("");
+    setConfirmPassword("");
+  }, [buyer?.id]);
 
   const userIdForUpdate = useMemo(() => {
     // PATCH is /api/Users/{id}. Prefer userId if backend includes it.
@@ -217,30 +231,29 @@ export default function BuyerDetailsView() {
     return <DetailsPageSkeleton />;
   }
 
-const isInitialLoading =
-  profileQ.isPending ||
-  (profileQ.isFetching && buyer === undefined);
+  const isInitialLoading =
+    profileQ.isPending || (profileQ.isFetching && buyer === undefined);
 
-if (isInitialLoading) {
-  return <DetailsPageSkeleton />;
-}
+  if (isInitialLoading) {
+    return <DetailsPageSkeleton />;
+  }
 
-if (profileQ.isError || (!profileQ.isFetching && !buyer)) {
-  return (
-    <div className="min-h-screen bg-zinc-50 p-10">
-      <p className="text-sm text-rose-600 font-semibold">
-        Buyer not found or failed to load.
-      </p>
+  if (profileQ.isError || (!profileQ.isFetching && !buyer)) {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10">
+        <p className="text-sm text-rose-600 font-semibold">
+          Buyer not found or failed to load.
+        </p>
 
-      <Link
-        href="/admin/buyers"
-        className="text-xs underline text-zinc-700 mt-3 inline-block"
-      >
-        Back to Buyers
-      </Link>
-    </div>
-  );
-}
+        <Link
+          href="/admin/buyers"
+          className="text-xs underline text-zinc-700 mt-3 inline-block"
+        >
+          Back to Buyers
+        </Link>
+      </div>
+    );
+  }
 
   const locationLabel =
     [buyer?.city, buyer?.country].filter(Boolean).join(", ") || "—";
@@ -248,7 +261,6 @@ if (profileQ.isError || (!profileQ.isFetching && !buyer)) {
     ? new Date(buyer?.joinedDate).toLocaleDateString()
     : "—";
 
-  // profile endpoint currently may not include status
   const uiStatus = (buyer as any)?.status ?? "—";
 
   return (
@@ -471,7 +483,13 @@ if (profileQ.isError || (!profileQ.isFetching && !buyer)) {
 
             <div className="flex items-center gap-5">
               <div className="h-20 w-20 rounded-full bg-zinc-900 flex items-center justify-center text-2xl font-bold text-[#D4AF37] border-4 border-zinc-50 shrink-0 shadow-sm">
-                {initials(buyer?.fullName)}
+                {/* {initials(buyer?.fullName)} */}
+                <img
+                  src={buyer?.profileImageUrl}
+                  alt="Buyer Avatar"
+                  width={64}
+                  height={64}
+                />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 font-display">
@@ -663,99 +681,182 @@ if (profileQ.isError || (!profileQ.isFetching && !buyer)) {
             </TabsContent>
 
             <TabsContent value="settings" className="m-0">
-              <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
-                {/* Header */}
-                <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-zinc-900 flex items-center justify-center text-lg font-bold text-[#D4AF37]">
-                      {initials(fullName)}
+              <div className="space-y-6">
+                {/* PROFILE SETTINGS */}
+                <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                  {/* Header */}
+                  <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
+                    <div className="flex items-center gap-4">
+                      <div className="h-14 w-14 rounded-full bg-zinc-900 flex items-center justify-center text-lg font-bold text-[#D4AF37]">
+                        {initials(fullName)}
+                      </div>
+
+                      <div>
+                        <h3 className="text-lg font-bold text-zinc-900">
+                          Profile Settings
+                        </h3>
+                        <p className="text-sm text-zinc-500">
+                          Update buyer account information and contact details.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-8">
+                    {/* Personal Information */}
+                    <div>
+                      <div className="mb-5">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                          Personal Information
+                        </h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                            Full Name
+                          </Label>
+                          <Input
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                            Email Address
+                          </Label>
+                          <Input
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            type="email"
+                            className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                          />
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                          <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                            Phone Number
+                          </Label>
+                          <Input
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            type="tel"
+                            className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    <div>
-                      <h3 className="text-lg font-bold text-zinc-900">
-                        Profile Settings
-                      </h3>
+                    {/* Footer */}
+                    <div className="border-t border-zinc-100 pt-6 flex items-center justify-end">
+                      <Button
+                        disabled={!isDirty || updateUserM.isPending}
+                        className="h-11 px-8 bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl font-bold uppercase tracking-widest"
+                        onClick={() => {
+                          const { firstName, lastName } = splitName(fullName);
 
-                      <p className="text-sm text-zinc-500">
-                        Update buyer account information and contact details.
-                      </p>
+                          updateUserM.mutate({
+                            userId: userIdForUpdate, // ✅ same ID you already use
+                            payload: {
+                              firstName: firstName || undefined,
+                              lastName: lastName || undefined,
+                              email: email || undefined,
+                              phoneNumber: phoneNumber || undefined,
+                            },
+                          });
+                        }}
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        {updateUserM.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-8">
-                  {/* Personal Information */}
-                  <div>
-                    <div className="mb-5">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-                        Personal Information
-                      </h4>
-                    </div>
+                {/* SECURITY SETTINGS (RESET PASSWORD FORM) */}
+                <div className="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                  <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
+                    <h3 className="text-lg font-bold text-zinc-900">
+                      Security
+                    </h3>
+                    <p className="text-sm text-zinc-500">
+                      Reset this user’s password immediately.
+                    </p>
+                  </div>
 
+                  <form
+                    className="p-6 space-y-6"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (!canResetPassword) return;
+
+                      resetPassM.mutate(
+                        {
+                          userId: userIdForUpdate,
+                          newPassword: newPassword.trim(),
+                        }, // ✅ same ID
+                        {
+                          onSuccess: () => {
+                            setNewPassword("");
+                            setConfirmPassword("");
+                          },
+                        },
+                      );
+                    }}
+                  >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                          Full Name
+                          New Password <span className="text-rose-600">*</span>
                         </Label>
-
                         <Input
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                          placeholder="Minimum 6 characters"
+                          disabled={resetPassM.isPending}
                         />
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                          Email Address
+                          Confirm Password{" "}
+                          <span className="text-rose-600">*</span>
                         </Label>
-
                         <Input
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          type="email"
-                          className="h-11 bg-zinc-50 border-zinc-200 rounded-xl"
-                        />
-                      </div>
-
-                      <div className="space-y-2 md:col-span-2">
-                        <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                          Phone Number
-                        </Label>
-
-                        <Input
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          type="tel"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
                           className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                          placeholder="Re-type password"
+                          disabled={resetPassM.isPending}
                         />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Footer */}
-                  <div className="border-t border-zinc-100 pt-6 flex items-center justify-between">
-                    <Button
-                      disabled={!isDirty || updateUserM.isPending}
-                      className="h-11 px-8 bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-xl font-bold uppercase tracking-widest"
-                      onClick={() => {
-                        const { firstName, lastName } = splitName(fullName);
+                    {newPassword.trim() &&
+                    confirmPassword.trim() &&
+                    newPassword.trim() !== confirmPassword.trim() ? (
+                      <p className="text-xs text-rose-600 font-semibold">
+                        Passwords do not match.
+                      </p>
+                    ) : null}
 
-                        updateUserM.mutate({
-                          userId: userIdForUpdate,
-                          payload: {
-                            firstName: firstName || undefined,
-                            lastName: lastName || undefined,
-                            email: email || undefined,
-                            phoneNumber: phoneNumber || undefined,
-                          },
-                        });
-                      }}
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      {updateUserM.isPending ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </div>
+                    <div className="border-t border-zinc-100 pt-6 flex items-center justify-end">
+                      <Button
+                        type="submit"
+                        disabled={!canResetPassword || resetPassM.isPending}
+                        className="h-11 px-8 bg-rose-600 text-white hover:bg-rose-700 rounded-xl font-bold uppercase tracking-widest"
+                      >
+                        {resetPassM.isPending
+                          ? "Resetting..."
+                          : "Reset Password"}
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               </div>
             </TabsContent>

@@ -8,7 +8,6 @@ import {
   Users,
   Store,
   ClipboardList,
-  Shield,
   ShoppingBag,
   Tag,
   Star,
@@ -40,9 +39,7 @@ import {
 import Image from "next/image";
 import logo from "@/public/images/sax_logo.png";
 
-
 const NAV = [
- 
   {
     label: "Overview",
     items: [
@@ -60,7 +57,7 @@ const NAV = [
       //   icon: ClipboardList,
       //   href: "/admin/vendor-applications",
       // },
-      { title: "Roles & Perms", icon: Shield, href: "/admin/roles" },
+      // { title: "Roles & Perms", icon: Shield, href: "/admin/roles" },
     ],
   },
   {
@@ -108,7 +105,9 @@ export function AppSidebar() {
     >
       {/* HEADER */}
       <SidebarHeader className="h-16 flex items-center justify-center border-b border-white/10">
-        <div className="px-4"><Image src={logo} alt="SAX Admin" className="h-10 w-full" /></div>
+        <div className="px-4">
+          <Image src={logo} alt="SAX Admin" className="h-10 w-full" />
+        </div>
         <div className="hidden group-data-[collapsible=icon]:block text-sax-gold font-bold text-xl">
           S
         </div>

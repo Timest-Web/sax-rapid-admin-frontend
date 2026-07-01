@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 const variants = {
   default: {
@@ -59,6 +60,7 @@ interface StatCardProps {
   icon: LucideIcon;
   color?: string;
   variant?: StatCardVariant;
+  link?: string;
 }
 
 export function StatCard({
@@ -67,31 +69,34 @@ export function StatCard({
   icon: Icon,
   color,
   variant = "default",
+  link,
 }: StatCardProps) {
   const theme = variants[variant];
 
   return (
-    <div
-      className={`bg-gradient-to-br ${theme.gradient} border ${theme.border} p-6 rounded-xl flex items-center justify-between hover:shadow-md transition-all duration-200`}
-    >
-      {/* Left Side: Label & Value */}
-      <div className="flex flex-col gap-1">
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 font-mono">
-          {label}
-        </h3>
-        <p
-          className={`${color ?? theme.iconColor} text-2xl font-bold tracking-tight mt-1 font-mono`}
-        >
-          {value}
-        </p>
-      </div>
-
-      {/* Right Side: Icon Box */}
+    <Link href={link ?? "#"}>
       <div
-        className={`h-10 w-10 rounded-lg ${theme.iconBg} border flex items-center justify-center ${theme.iconColor}`}
+        className={`bg-linear-to-br ${theme.gradient} border ${theme.border} p-6 rounded-xl flex items-center justify-between hover:shadow-md transition-all duration-200`}
       >
-        <Icon size={20} />
+        {/* Left Side: Label & Value */}
+        <div className="flex flex-col gap-1">
+          <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 font-mono">
+            {label}
+          </h3>
+          <p
+            className={`${color ?? theme.iconColor} text-2xl font-bold tracking-tight mt-1 font-mono`}
+          >
+            {value}
+          </p>
+        </div>
+
+        {/* Right Side: Icon Box */}
+        <div
+          className={`h-10 w-10 rounded-lg ${theme.iconBg} border flex items-center justify-center ${theme.iconColor}`}
+        >
+          <Icon size={20} />
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

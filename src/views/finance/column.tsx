@@ -1,21 +1,73 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/cards/status-badge";
-import { PayoutModal } from "./actions";
+import { PayoutModal, ToggleFreezeButton } from "./actions";
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
 
-// ─── 1. VENDOR WALLET COLUMNS ───
-export const walletColumns: ColumnDef<any>[] = [
+export type VendorWalletRow = {
+  vendorId: string;
+  vendorName: string;
+  balance: string;
+  pending: string;
+  lastPayout: string; // always string
+  status: string;     // e.g. "Active" | "Frozen" | "Inactive"
+  rawBalance: number;
+  currency: string;
+};
+
+export type FinanceTransactionRow = {
+  id: string;
+  type: string;
+  amount: string; // includes + or -
+  from: string;
+  to: string;
+  date: string;
+  status: string; // e.g. "Paid" | "Pending" | "Refunded" | "Completed"
+};
+
+/** Local (manual) status badge so you don't depend on shared StatusBadge */
+function StatusPill({ status }: { status: string }) {
+  const raw = String(status ?? "");
+  const s = raw.trim();
+
+  // Map various backend strings to consistent style keys
+  const key = s.toLowerCase();
+
+  const style =
+    key === "active" || key === "paid" || key === "completed" || key === "success"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      : key === "pending"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : key === "refunded" || key === "cancelled" || key === "canceled" || key === "failed"
+          ? "bg-rose-50 text-rose-700 border-rose-200"
+          : key === "frozen" || key === "suspended"
+            ? "bg-rose-50 text-rose-700 border-rose-200"
+            : "bg-zinc-100 text-zinc-600 border-zinc-200";
+
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${style}`}
+      title={raw}
+    >
+      {s || "—"}
+    </span>
+  );
+}
+
+function isFrozen(status: string) {
+  return String(status ?? "").trim().toLowerCase() === "frozen";
+}
+
+// ─── 1) VENDOR WALLET COLUMNS ───
+export const walletColumns: ColumnDef<VendorWalletRow>[] = [
   {
     header: "Vendor",
-    accessorKey: "vendor",
+    accessorKey: "vendorName",
     cell: ({ row }) => (
       <div>
-        <p className="font-bold text-zinc-900">{row.original.vendor}</p>
+        <p className="font-bold text-zinc-900">{row.original.vendorName}</p>
         <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider">
-          {row.original.id}
+          {row.original.vendorId}
         </p>
       </div>
     ),
@@ -50,23 +102,32 @@ export const walletColumns: ColumnDef<any>[] = [
   {
     header: "Status",
     accessorKey: "status",
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <StatusPill status={row.original.status} />,
   },
   {
     id: "actions",
     cell: ({ row }) => (
-      <div className="text-right">
+      <div className="flex items-center justify-end gap-2">
+        <ToggleFreezeButton
+          vendorId={row.original.vendorId}
+          currentStatus={row.original.status}
+        />
+
         <PayoutModal
-          vendorName={row.original.vendor}
-          balance={row.original.balance}
+          vendorId={row.original.vendorId}
+          vendorName={row.original.vendorName}
+          balanceText={row.original.balance}
+          maxAmount={row.original.rawBalance}
+          currency={row.original.currency}
+          disabled={isFrozen(row.original.status)}
         />
       </div>
     ),
   },
 ];
 
-// ─── 2. TRANSACTION LOG COLUMNS ───
-export const transactionColumns: ColumnDef<any>[] = [
+// ─── 2) TRANSACTION LOG COLUMNS ───
+export const transactionColumns: ColumnDef<FinanceTransactionRow>[] = [
   {
     header: "Transaction ID",
     accessorKey: "id",
@@ -82,7 +143,11 @@ export const transactionColumns: ColumnDef<any>[] = [
       return (
         <div className="flex items-center gap-2">
           <div
-            className={`h-6 w-6 rounded-full flex items-center justify-center ${isIn ? "bg-emerald-100 text-emerald-600" : "bg-zinc-100 text-zinc-600"}`}
+            className={`h-6 w-6 rounded-full flex items-center justify-center ${
+              isIn
+                ? "bg-emerald-100 text-emerald-600"
+                : "bg-zinc-100 text-zinc-600"
+            }`}
           >
             {isIn ? <ArrowDownLeft size={12} /> : <ArrowUpRight size={12} />}
           </div>
@@ -98,7 +163,9 @@ export const transactionColumns: ColumnDef<any>[] = [
       const isIn = row.original.amount.includes("+");
       return (
         <span
-          className={`font-mono font-bold ${isIn ? "text-emerald-600" : "text-zinc-900"}`}
+          className={`font-mono font-bold ${
+            isIn ? "text-emerald-600" : "text-zinc-900"
+          }`}
         >
           {row.original.amount}
         </span>
@@ -110,8 +177,7 @@ export const transactionColumns: ColumnDef<any>[] = [
     accessorKey: "from",
     cell: ({ row }) => (
       <div className="text-xs text-zinc-600">
-        <span className="font-bold">{row.original.from}</span> →{" "}
-        {row.original.to}
+        <span className="font-bold">{row.original.from}</span> → {row.original.to}
       </div>
     ),
   },
@@ -127,19 +193,6 @@ export const transactionColumns: ColumnDef<any>[] = [
   {
     header: "Status",
     accessorKey: "status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const color =
-        status === "Success" || status === "Completed"
-          ? "text-emerald-600 bg-emerald-50"
-          : "text-amber-600 bg-amber-50";
-      return (
-        <span
-          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-transparent ${color}`}
-        >
-          {status}
-        </span>
-      );
-    },
+    cell: ({ row }) => <StatusPill status={row.original.status} />,
   },
 ];

@@ -1,162 +1,80 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { Button } from "@/components/ui/button";
-import {
-  Plus,
-  Layout,
-  FileText,
-  Globe,
-  ExternalLink,
-  Trash2,
-} from "lucide-react";
+import { Plus, Layout, FileText, Globe, ExternalLink } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
-import { getPageColumns, getBlogColumns } from "./column";
-import { PageEditorModal, BlogEditorModal, ContentPage, BlogPost } from "./actions";
 
-// --- DUMMY DATA ---
-const INITIAL_PAGES: ContentPage[] = [
-  {
-    id: "1",
-    title: "Terms & Conditions",
-    slug: "/terms",
-    lastUpdated: "2 days ago",
-    status: "published",
-    author: "Admin",
-    content: "Terms...",
-  },
-  {
-    id: "2",
-    title: "Privacy Policy",
-    slug: "/privacy",
-    lastUpdated: "1 week ago",
-    status: "published",
-    author: "Legal",
-    content: "Privacy...",
-  },
-  {
-    id: "3",
-    title: "About Us",
-    slug: "/about",
-    lastUpdated: "1 month ago",
-    status: "published",
-    author: "Admin",
-    content: "About...",
-  },
-];
+import { getPageColumns } from "./column";
+import { PageEditorModal, ConfirmDeletePageModal } from "./actions";
 
-const INITIAL_BLOGS: BlogPost[] = [
-  {
-    id: "1",
-    title: "Top 10 Gadgets for 2024",
-    description: "Discover the most anticipated tech of the year.",
-    category: "Tech",
-    author: "Sarah J.",
-    date: "Oct 20",
-    status: "published",
-    views: 1240,
-  },
-  {
-    id: "2",
-    title: "Summer Fashion Trends",
-    description: "What to wear when the heat turns up.",
-    category: "Fashion",
-    author: "Mike R.",
-    date: "Oct 18",
-    status: "published",
-    views: 850,
-  },
-];
+import type { CmsPageListItem } from "@/src/features/cms/api";
+import {
+  useCmsStats,
+  useCmsPages,
+  useCreateCmsPage,
+  useUpdateCmsPage,
+  useDeleteCmsPage,
+} from "@/src/features/cms/hooks";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+
+function dateLabel(iso?: string) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
+}
 
 export default function CMSView() {
-  // --- STATE MANAGEMENT ---
-  const [activeTab, setActiveTab] = useState("pages");
+  const [activeTab, setActiveTab] = useState<"pages" | "blog" | "home">(
+    "pages",
+  );
 
-  // Data States
-  const [pages, setPages] = useState<ContentPage[]>(INITIAL_PAGES);
-  const [blogs, setBlogs] = useState<BlogPost[]>(INITIAL_BLOGS);
+  const statsQ = useCmsStats();
+  const pagesQ = useCmsPages({ PageNumber: 1, PageSize: 50 });
 
-  // Editor States (Pages)
-  const [isPageEditorOpen, setIsPageEditorOpen] = useState(false);
-  const [editingPage, setEditingPage] = useState<ContentPage | null>(null);
+  const pages = pagesQ.data ?? [];
 
-  // Editor States (Blogs)
-  const [isBlogEditorOpen, setIsBlogEditorOpen] = useState(false);
-  const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
+  // Modals + mutations
+  const createM = useCreateCmsPage();
+  const updateM = useUpdateCmsPage();
+  const deleteM = useDeleteCmsPage();
 
-  // --- HANDLERS FOR PAGES ---
-  const handleDeletePage = (item: ContentPage) => {
-    if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      setPages(pages.filter((p) => p.id !== item.id));
-    }
-  };
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editing, setEditing] = useState<CmsPageListItem | null>(null);
 
-  const handleEditPage = (item: ContentPage) => {
-    setEditingPage(item);
-    setIsPageEditorOpen(true);
-  };
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState<CmsPageListItem | null>(null);
 
-  const handleCreatePage = () => {
-    setEditingPage(null);
-    setIsPageEditorOpen(true);
-  };
-
-  const handleSavePage = (savedPage: ContentPage) => {
-    const exists = pages.find((p) => p.id === savedPage.id);
-    if (exists) {
-      setPages(pages.map((p) => (p.id === savedPage.id ? savedPage : p)));
-    } else {
-      setPages([savedPage, ...pages]);
-    }
-  };
-
-  // --- HANDLERS FOR BLOGS ---
-  const handleDeleteBlog = (item: BlogPost) => {
-    if (confirm(`Delete article "${item.title}"?`)) {
-      setBlogs(blogs.filter((b) => b.id !== item.id));
-    }
-  };
-
-  const handleEditBlog = (item: BlogPost) => {
-    setEditingBlog(item);
-    setIsBlogEditorOpen(true);
-  };
-
-  const handleCreateBlog = () => {
-    setEditingBlog(null);
-    setIsBlogEditorOpen(true);
-  };
-
-  const handleSaveBlog = (savedBlog: BlogPost) => {
-    const exists = blogs.find((b) => b.id === savedBlog.id);
-    if (exists) {
-      setBlogs(blogs.map((b) => (b.id === savedBlog.id ? savedBlog : b)));
-    } else {
-      setBlogs([savedBlog, ...blogs]);
-    }
-  };
-
-  // --- COLUMN CONFIGURATION ---
-  const pageColumns = getPageColumns({
-    onEdit: handleEditPage,
-    onDelete: handleDeletePage,
-    onView: (item) => alert(`Simulating preview for: ${item.slug}`),
-  });
-
-  const blogColumns = getBlogColumns({
-    onEdit: handleEditBlog,
-    onDelete: handleDeleteBlog,
-    onView: (item) => alert(`Reading: ${item.title}`),
-  });
+  const columns = useMemo(
+    () =>
+      getPageColumns({
+        onEdit: (p) => {
+          setEditing(p);
+          setEditorOpen(true);
+        },
+        onDelete: (p) => {
+          setDeleting(p);
+          setDeleteOpen(true);
+        },
+        onView: (p) => {
+          // If you have a public site URL, adjust here
+          window.open(p.slug, "_blank");
+        },
+      }),
+    [],
+  );
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
-      {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
@@ -165,38 +83,38 @@ export default function CMSView() {
             Platform / Content Management
           </h1>
         </div>
+
         <Button variant="outline" size="sm" className="gap-2 text-xs">
           <ExternalLink size={14} /> View Live Site
         </Button>
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-8">
-        {/* STATS */}
+        {/* STATS from backend */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
-            label="Published Pages"
-            value={pages.length.toString()}
+            label="Total Pages"
+            value={statsQ.data ? String(statsQ.data.totalPages) : "—"}
             icon={FileText}
             variant="default"
           />
           <StatCard
-            label="Blog Readers (MTD)"
-            value="45.2k"
+            label="Published Pages"
+            value={statsQ.data ? String(statsQ.data.publishedPages) : "—"}
             icon={Globe}
-            variant="indigo"
+            variant="emerald"
           />
           <StatCard
-            label="Active Promos"
-            value="2"
+            label="Draft Pages"
+            value={statsQ.data ? String(statsQ.data.draftPages) : "—"}
             icon={Layout}
-            variant="gold"
+            variant="amber"
           />
         </div>
 
-        {/* TABS */}
         <Tabs
           defaultValue="pages"
-          onValueChange={setActiveTab}
+          onValueChange={(v) => setActiveTab(v as any)}
           className="w-full flex flex-col"
         >
           <div className="flex items-center justify-between border-b border-zinc-200">
@@ -208,129 +126,90 @@ export default function CMSView() {
                   count: pages.length,
                   variant: "amber",
                 },
-                {
-                  value: "blog",
-                  label: "Blog & News",
-                  count: blogs.length,
-                  variant: "indigo",
-                },
-                {
-                  value: "home",
-                  label: "Homepage Banners",
-                  count: 3,
-                  variant: "emerald",
-                },
+                // { value: "blog", label: "Blog & News", count: 0, variant: "indigo" },
+                // { value: "home", label: "Homepage Banners", count: 0, variant: "emerald" },
               ]}
             />
           </div>
 
-          {/* TAB 1: STATIC PAGES */}
+          {/* PAGES */}
           <TabsContent value="pages">
             <div className="mt-6 space-y-4">
               <div className="flex justify-end">
                 <Button
-                  onClick={handleCreatePage}
+                  onClick={() => {
+                    setEditing(null);
+                    setEditorOpen(true);
+                  }}
                   className="bg-zinc-900 hover:bg-zinc-800 text-xs"
                 >
                   <Plus size={16} className="mr-2" /> Create New Page
                 </Button>
               </div>
+
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <DataTable columns={pageColumns} data={pages} />
+                {pagesQ.isLoading ? (
+                  <TableSkeleton rows={5} columns={6} />
+                ) : pagesQ.isError ? (
+                  <div className="p-6 text-sm text-rose-600">
+                    Failed to load CMS pages.
+                  </div>
+                ) : (
+                  <DataTable columns={columns} data={pages} />
+                )}
               </div>
             </div>
           </TabsContent>
 
-          {/* TAB 2: BLOG */}
+          {/* BLOG (placeholder) */}
           <TabsContent value="blog">
-            <div className="mt-6 space-y-4">
-              <div className="flex justify-end">
-                <Button 
-                  onClick={handleCreateBlog}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-xs text-white"
-                >
-                  <Plus size={16} className="mr-2" /> Write Article
-                </Button>
-              </div>
-              <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                <DataTable columns={blogColumns} data={blogs} />
-              </div>
+            <div className="mt-6 bg-white border border-zinc-200 rounded-lg p-6 text-sm text-zinc-500">
+              No blog endpoints wired yet.
             </div>
           </TabsContent>
 
-          {/* TAB 3: HOMEPAGE (Visual Grid) */}
+          {/* HOME (placeholder) */}
           <TabsContent value="home">
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="border-2 border-dashed border-zinc-200 rounded-xl flex flex-col items-center justify-center p-6 h-48 cursor-pointer hover:border-zinc-400 hover:bg-zinc-50 transition-all group">
-                <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-white group-hover:shadow-sm">
-                  <Plus size={20} />
-                </div>
-                <p className="mt-3 text-sm font-bold text-zinc-500">
-                  Add Hero Banner
-                </p>
-              </div>
-              <BannerCard
-                title="Black Friday Sale"
-                color="bg-zinc-900"
-                status="active"
-              />
-              <BannerCard
-                title="New Arrivals"
-                color="bg-indigo-600"
-                status="active"
-              />
+            <div className="mt-6 bg-white border border-zinc-200 rounded-lg p-6 text-sm text-zinc-500">
+              No homepage banner endpoints wired yet.
             </div>
           </TabsContent>
         </Tabs>
       </main>
 
-      {/* MODALS */}
+      {/* Editor modal */}
       <PageEditorModal
-        isOpen={isPageEditorOpen}
-        onClose={() => setIsPageEditorOpen(false)}
-        initialData={editingPage}
-        onSave={handleSavePage}
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        initial={editing}
+        isSaving={createM.isPending || updateM.isPending}
+        onSave={(payload) => {
+          if (editing?.id) {
+            updateM.mutate(
+              { pageId: editing.id, payload },
+              { onSuccess: () => setEditorOpen(false) },
+            );
+          } else {
+            createM.mutate(payload, { onSuccess: () => setEditorOpen(false) });
+          }
+        }}
       />
 
-      <BlogEditorModal
-        isOpen={isBlogEditorOpen}
-        onClose={() => setIsBlogEditorOpen(false)}
-        initialData={editingBlog}
-        onSave={handleSaveBlog}
+      {/* Delete confirm */}
+      <ConfirmDeletePageModal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        page={deleting}
+        isDeleting={deleteM.isPending}
+        onConfirm={(pageId) => {
+          deleteM.mutate(pageId, {
+            onSuccess: () => {
+              setDeleteOpen(false);
+              setDeleting(null);
+            },
+          });
+        }}
       />
-    </div>
-  );
-}
-
-// Simple helper for the banner grid
-function BannerCard({ title, color, status }: any) {
-  return (
-    <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm flex flex-col h-48 relative group">
-      <div
-        className={`h-28 w-full ${color} flex items-center justify-center relative`}
-      >
-        <p className="text-white font-display font-bold text-lg tracking-wider opacity-90">
-          {title}
-        </p>
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <Button size="sm" variant="secondary" className="h-8 text-xs">
-            Edit
-          </Button>
-          <Button size="sm" variant="destructive" className="h-8 w-8 p-0">
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      </div>
-      <div className="p-4 flex items-center justify-between flex-1">
-        <div>
-          <p className="text-xs font-bold text-zinc-900 uppercase">
-            Hero Section
-          </p>
-        </div>
-        <div
-          className={`w-2 h-2 rounded-full ${status === "active" ? "bg-emerald-500" : "bg-zinc-300"}`}
-        />
-      </div>
     </div>
   );
 }

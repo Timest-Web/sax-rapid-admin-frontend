@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -10,7 +11,6 @@ import { Users, UserPlus } from "lucide-react";
 
 import { useBuyers } from "@/src/features/buyers/hooks";
 import { useBuyerStats } from "@/src/features/buyers/hooks";
-import { StatsAndTableSkeleton } from "@/components/skeletons/stat-table";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 export default function BuyersView() {
@@ -28,8 +28,6 @@ export default function BuyersView() {
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
       <PageHeader
         title="User Management / Buyers"
-        actionLabel="Add New Buyer"
-        // No endpoint provided -> disable or remove
         onAction={() => setIsAddModalOpen(true)}
         icon={UserPlus}
       />

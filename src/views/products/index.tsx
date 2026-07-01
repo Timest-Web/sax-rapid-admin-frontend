@@ -51,6 +51,7 @@ import {
 
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 import { FilterTabs } from "@/components/tabs/filter-tab";
+import { CreateProductModal } from "./add_product";
 
 export default function ProductsView() {
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "rejected">(
@@ -130,13 +131,14 @@ export default function ProductsView() {
             Export List
           </Button>
 
-          <Button
+          {/* <Button
             size="sm"
             className="h-9 text-xs font-bold uppercase tracking-wider bg-zinc-900 text-white hover:bg-[#D4AF37] hover:text-black transition-colors"
           >
             <Plus className="mr-2 h-3.5 w-3.5" />
             Add New Product
-          </Button>
+          </Button> */}
+          <CreateProductModal />
         </div>
       </header>
 

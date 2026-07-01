@@ -9,4 +9,7 @@ export const reviewKeys = {
 
   ratings: () => [...reviewKeys.all, "ratings"] as const,
   ratingsList: (q: Record<string, any>) => [...reviewKeys.ratings(), q] as const,
+   detail: (reviewId: string) => [...reviewKeys.all, "detail", reviewId] as const,
 };
+
+

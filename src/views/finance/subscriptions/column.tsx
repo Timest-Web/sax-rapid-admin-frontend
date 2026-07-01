@@ -17,31 +17,36 @@ import type { SubscriptionPlan } from "@/src/features/subscriptions/api";
 
 function money(amount: number, currency: string) {
   const symbol =
-    currency === "NGN"
-      ? "₦"
-      : currency === "ZAR"
-      ? "R"
-      : currency === "USD"
-      ? "$"
-      : "";
+    currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
 
   return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
 }
 
-function isActive(plan: SubscriptionPlan) {
-  return plan.isActive ?? true;
+type ActiveState = boolean | "unknown";
+
+function activeState(plan: SubscriptionPlan): ActiveState {
+  // ✅ do NOT default to true, because backend may omit the field
+  return typeof plan.isActive === "boolean" ? plan.isActive : "unknown";
 }
 
-function StatusPill({ active }: { active: boolean }) {
+function StatusPill({ state }: { state: ActiveState }) {
+  if (state === "unknown") {
+    return (
+      <span className="inline-flex items-center rounded-sm border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest border-zinc-200 bg-zinc-50 text-zinc-500">
+        Unknown
+      </span>
+    );
+  }
+
   return (
     <span
       className={`inline-flex items-center rounded-sm border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
-        active
+        state
           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
           : "border-zinc-200 bg-zinc-100 text-zinc-600"
       }`}
     >
-      {active ? "Active" : "Inactive"}
+      {state ? "Active" : "Inactive"}
     </span>
   );
 }
@@ -72,10 +77,6 @@ export function getPlanColumns(opts: {
             <span className="line-clamp-2 text-xs leading-relaxed text-zinc-500">
               {plan.description || "No description"}
             </span>
-
-            {/* <span className="mt-1 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
-              {plan.id}
-            </span> */}
           </div>
         );
       },
@@ -125,13 +126,11 @@ export function getPlanColumns(opts: {
       ),
     },
 
-    {
-      header: "Status",
-      id: "status",
-      cell: ({ row }) => (
-        <StatusPill active={isActive(row.original)} />
-      ),
-    },
+    // {
+    //   header: "Status",
+    //   id: "status",
+    //   cell: ({ row }) => <StatusPill state={activeState(row.original)} />,
+    // },
 
     {
       id: "actions",
@@ -140,7 +139,8 @@ export function getPlanColumns(opts: {
 
       cell: ({ row }) => {
         const plan = row.original;
-        const active = isActive(plan);
+        const state = activeState(plan);
+        const assumedActive = state === "unknown" ? true : state;
 
         return (
           <div className="flex justify-end">
@@ -182,14 +182,13 @@ export function getPlanColumns(opts: {
                 <DropdownMenuItem
                   onClick={() => opts.onToggleStatus(plan)}
                   className={`cursor-pointer text-xs ${
-                    active
+                    assumedActive
                       ? "text-rose-600 focus:text-rose-700"
                       : "text-emerald-600 focus:text-emerald-700"
                   }`}
                 >
                   <Power className="mr-2 h-4 w-4" />
-
-                  {active ? "Deactivate Plan" : "Activate Plan"}
+                  {assumedActive ? "Deactivate Plan" : "Activate Plan"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -109,19 +109,23 @@ export async function flagAdminProduct(productId: string) {
   return res.data;
 }
 
-// details
 export async function getProductById(productId: string) {
   const res = await apiClient.get<ApiResponse<ProductDetails>>(`/api/Products/${productId}`);
   return res.data.data;
 }
 
-/** ---------- CRUD (Products controller) ---------- **/
+
+export type CreateProductAttributeInput = {
+  name: string;
+  value: string;
+};
+
 export type CreateProductVariationInput = {
   sku: string;
   price: number;
-  salePrice: number;
-  salePriceStartDate: string;
-  salePriceEndDate: string;
+  salePrice?: number | null;
+  salePriceStartDate?: string | null; 
+  salePriceEndDate?: string | null; 
   stockQuantity: number;
   attributes: { attributeName: string; attributeValue: string }[];
 };
@@ -132,24 +136,26 @@ export type CreateProductInput = {
   categoryId: number;
   brandId: number;
   basePrice: number;
-  salePrice: number;
-  salePriceStartDate: string;
-  salePriceEndDate: string;
+  currency: string; 
+  salePrice?: number | null;
+  salePriceStartDate?: string | null;
+  salePriceEndDate?: string | null; 
   stockQuantity: number;
   weight: number;
   dimensionLength: number;
   dimensionWidth: number;
   dimensionHeight: number;
   sku: string;
+  attributes: CreateProductAttributeInput[]
   variations: CreateProductVariationInput[];
+  imageUrls: string[]; 
 };
 
 export async function createProduct(payload: CreateProductInput) {
-  const res = await apiClient.post<ApiResponse<ProductDetails>>("/api/Products", payload);
+  const res = await apiClient.post<ApiResponse<any>>("/api/Products", payload);
   return res.data.data;
 }
 
-// Swagger shows update body DOES NOT include stock/dimensions/weight, so we mirror that.
 export type UpdateProductInput = {
   name: string;
   description: string;
@@ -221,7 +227,7 @@ export type VendorProductListItem = {
 };
 
 export type VendorProductsQuery = {
-  pageIndex: number; // backend uses pageIndex
+  pageIndex: number; 
   pageSize: number;
 };
 

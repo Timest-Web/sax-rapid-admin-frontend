@@ -85,3 +85,28 @@ export async function flagReview(reviewId: string) {
   );
   return unwrap(res.data);
 }
+
+export type ReviewDetails = {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  userAvatarUrl: string | null;
+  rating: number;
+  comment: string;
+  isVerifiedPurchase: boolean;
+  userCountry: string | null;
+  userCountryCode: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isFlagged?: boolean;
+};
+
+export type ApiResponse<T> = { success: boolean; message: string; data: T };
+
+export async function getReviewById(reviewId: string) {
+  const res = await apiClient.get<ApiResponse<ReviewDetails>>(
+    `/api/Reviews/${reviewId}`,
+  );
+  return res.data.data;
+}

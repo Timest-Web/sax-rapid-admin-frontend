@@ -48,6 +48,7 @@ export type BuyerProfile = {
   totalOrders: number | undefined;
   averageOrderValue: number | undefined;
   walletBalance: number | undefined;
+  profileImageUrl?:string
 };
 
 export type BuyerOrder = {

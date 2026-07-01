@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/src/lib/get-error";
 
 import { reviewKeys } from "./key";
-import { flagReview, getRecentReviews, getReviewStats, getVendorRatings, type Paginated, type RecentReviewItem } from "./api";
+import { flagReview, getRecentReviews, getReviewById, getReviewStats, getVendorRatings, type Paginated, type RecentReviewItem } from "./api";
 
 export function useReviewStats() {
   const { data: session, status } = useSession();
@@ -101,5 +101,19 @@ export function useFlagReview() {
       await qc.invalidateQueries({ queryKey: reviewKeys.stats() });
       await qc.invalidateQueries({ queryKey: reviewKeys.recent() });
     },
+  });
+}
+
+export function useReview(reviewId?: string) {
+  const { data: session, status } = useSession();
+  const accessToken = (session as any)?.accessToken as string | undefined;
+  const role = (session as any)?.role as string | undefined;
+
+  return useQuery({
+    queryKey: reviewId ? reviewKeys.detail(reviewId) : ["admin-reviews", "detail", "missing"],
+    enabled: !!reviewId && status === "authenticated" && !!accessToken && role === "Admin",
+    queryFn: () => getReviewById(reviewId!),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }

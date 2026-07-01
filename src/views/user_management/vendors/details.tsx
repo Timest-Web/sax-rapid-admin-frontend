@@ -61,6 +61,7 @@ import type {
   VendorReview,
 } from "@/src/features/vendors/api";
 import { DetailsPageSkeleton } from "@/components/skeletons/details";
+import { useResetUserPassword } from "@/src/features/users/hooks/useAdminActions";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -76,16 +77,23 @@ function initials(text: string) {
 
 function money(amount: number, currency: string) {
   const symbol =
-    currency === "NGN" ? "₦" :
-    currency === "ZAR" ? "R"  :
-    currency === "USD" ? "$"  : "";
+    currency === "NGN"
+      ? "₦"
+      : currency === "ZAR"
+        ? "R"
+        : currency === "USD"
+          ? "$"
+          : "";
   return `${symbol}${Number(amount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
 function dateLabel(iso?: string | null) {
   if (!iso) return "—";
-  try { return new Date(iso).toLocaleString(); }
-  catch { return String(iso); }
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return String(iso);
+  }
 }
 
 // ─── TAB TRIGGER ──────────────────────────────────────────────────────────────
@@ -165,7 +173,9 @@ const vendorProductColumns: ColumnDef<VendorProductListItem>[] = [
     accessorKey: "status",
     cell: ({ row }) => (
       <StatusBadge
-        status={row.original.status || (row.original.isActive ? "Active" : "Inactive")}
+        status={
+          row.original.status || (row.original.isActive ? "Active" : "Inactive")
+        }
       />
     ),
   },
@@ -217,20 +227,27 @@ const vendorOrdersColumns: ColumnDef<VendorOrderListItem>[] = [
     accessorKey: "amount",
     cell: ({ row }) => (
       <span className="font-mono font-bold text-zinc-900">
-        {money(Number(row.original.amount ?? 0), String(row.original.currency ?? "NGN"))}
+        {money(
+          Number(row.original.amount ?? 0),
+          String(row.original.currency ?? "NGN"),
+        )}
       </span>
     ),
   },
   {
     header: "Status",
     accessorKey: "status",
-    cell: ({ row }) => <StatusBadge status={String(row.original.status ?? "—")} />,
+    cell: ({ row }) => (
+      <StatusBadge status={String(row.original.status ?? "—")} />
+    ),
   },
   {
     header: "Date",
     accessorKey: "date",
     cell: ({ row }) => (
-      <span className="text-xs font-mono text-zinc-500">{dateLabel(row.original.date)}</span>
+      <span className="text-xs font-mono text-zinc-500">
+        {dateLabel(row.original.date)}
+      </span>
     ),
   },
 ];
@@ -240,7 +257,9 @@ const vendorPayoutColumns: ColumnDef<VendorPayout>[] = [
     header: "Payout ID",
     accessorKey: "payoutId",
     cell: ({ row }) => (
-      <span className="font-mono text-xs font-bold text-zinc-900">{row.original.payoutId}</span>
+      <span className="font-mono text-xs font-bold text-zinc-900">
+        {row.original.payoutId}
+      </span>
     ),
   },
   {
@@ -261,7 +280,9 @@ const vendorPayoutColumns: ColumnDef<VendorPayout>[] = [
     header: "Date",
     accessorKey: "date",
     cell: ({ row }) => (
-      <span className="text-xs font-mono text-zinc-500">{dateLabel(row.original.date)}</span>
+      <span className="text-xs font-mono text-zinc-500">
+        {dateLabel(row.original.date)}
+      </span>
     ),
   },
 ];
@@ -271,7 +292,9 @@ const vendorReviewColumns: ColumnDef<VendorReview>[] = [
     header: "Reviewer",
     accessorKey: "reviewerName",
     cell: ({ row }) => (
-      <span className="text-xs font-bold text-zinc-900">{row.original.reviewerName || "—"}</span>
+      <span className="text-xs font-bold text-zinc-900">
+        {row.original.reviewerName || "—"}
+      </span>
     ),
   },
   {
@@ -288,7 +311,9 @@ const vendorReviewColumns: ColumnDef<VendorReview>[] = [
     header: "Item",
     accessorKey: "itemDetails",
     cell: ({ row }) => (
-      <span className="text-xs text-zinc-600">{row.original.itemDetails || "—"}</span>
+      <span className="text-xs text-zinc-600">
+        {row.original.itemDetails || "—"}
+      </span>
     ),
   },
   {
@@ -304,7 +329,9 @@ const vendorReviewColumns: ColumnDef<VendorReview>[] = [
     header: "Date",
     accessorKey: "createdAt",
     cell: ({ row }) => (
-      <span className="text-xs font-mono text-zinc-500">{dateLabel(row.original.createdAt)}</span>
+      <span className="text-xs font-mono text-zinc-500">
+        {dateLabel(row.original.createdAt)}
+      </span>
     ),
   },
 ];
@@ -328,13 +355,19 @@ export default function VendorDetailsView() {
       ? decodeURIComponent((params as any).id)
       : decodeURIComponent(((params as any)?.id?.[0] as string) ?? "");
 
-  // ── Hooks (unconditional) ──────────────────────────────────────────────────
-
   // Fetch vendor profile by userId
   const vendorQ = useVendor(userId);
   const vendor = vendorQ.data;
 
   const updateVendorM = useUpdateVendor();
+  const resetPassM = useResetUserPassword();
+
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+
+const canResetPassword =
+  newPassword.trim().length >= 6 &&
+  newPassword.trim() === confirmPassword.trim();
 
   /**
    * Profile `id` — used by all sub-resource endpoints.
@@ -372,15 +405,15 @@ export default function VendorDetailsView() {
 
   // ── Settings form state ────────────────────────────────────────────────────
 
-  const [shopName, setShopName]           = useState("");
-  const [companyName, setCompanyName]     = useState("");
+  const [shopName, setShopName] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [businessRegNo, setBusinessRegNo] = useState("");
-  const [storeAddress, setStoreAddress]   = useState("");
-  const [storeCity, setStoreCity]         = useState("");
-  const [storeState, setStoreState]       = useState("");
-  const [logoUrl, setLogoUrl]             = useState("");
-  const [bannerUrl, setBannerUrl]         = useState("");
-  const [description, setDescription]     = useState("");
+  const [storeAddress, setStoreAddress] = useState("");
+  const [storeCity, setStoreCity] = useState("");
+  const [storeState, setStoreState] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
     if (!vendor) return;
@@ -405,53 +438,59 @@ export default function VendorDetailsView() {
     vendor?.description,
   ]);
 
+  useEffect(() => {
+  setNewPassword("");
+  setConfirmPassword("");
+}, [vendor?.id]);
 
   if (!userId) {
     return (
       <div className="min-h-screen bg-zinc-50 p-10 flex items-center justify-center">
         <div className="bg-white border border-rose-200 rounded-xl p-6 flex items-center gap-3">
           <AlertCircle size={16} className="text-rose-500 shrink-0" />
-          <p className="text-sm text-rose-600 font-semibold">Missing vendor ID in route.</p>
+          <p className="text-sm text-rose-600 font-semibold">
+            Missing vendor ID in route.
+          </p>
         </div>
       </div>
     );
   }
 
-const isInitialLoading =
-  vendorQ.isPending ||
-  (vendorQ.isFetching && vendor === undefined);
+  const isInitialLoading =
+    vendorQ.isPending || (vendorQ.isFetching && vendor === undefined);
 
-if (isInitialLoading) {
-  return <DetailsPageSkeleton />;
-}
+  if (isInitialLoading) {
+    return <DetailsPageSkeleton />;
+  }
 
-if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
-  return (
-    <div className="min-h-screen bg-zinc-50 p-10">
-      <div className="max-w-xl bg-white border border-zinc-200 rounded-xl p-6 space-y-3">
-        <div className="flex items-center gap-2">
-          <AlertCircle size={16} className="text-rose-500 shrink-0" />
-          <p className="text-sm text-rose-600 font-semibold">
-            Vendor not found or failed to load.
-          </p>
+  if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
+    return (
+      <div className="min-h-screen bg-zinc-50 p-10">
+        <div className="max-w-xl bg-white border border-zinc-200 rounded-xl p-6 space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={16} className="text-rose-500 shrink-0" />
+            <p className="text-sm text-rose-600 font-semibold">
+              Vendor not found or failed to load.
+            </p>
+          </div>
+
+          <Link
+            href="/admin/vendors"
+            className="text-xs underline text-zinc-500 inline-flex items-center gap-1 hover:text-zinc-900"
+          >
+            <ArrowLeft size={12} />
+            Back to Vendors
+          </Link>
         </div>
-
-        <Link
-          href="/admin/vendors"
-          className="text-xs underline text-zinc-500 inline-flex items-center gap-1 hover:text-zinc-900"
-        >
-          <ArrowLeft size={12} />
-          Back to Vendors
-        </Link>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // ── Derived values ─────────────────────────────────────────────────────────
 
-  const isPending   = vendor!.isVerified === false;
-  const statusLabel = vendor!.verificationStatus === "Verified" ? "Active" : "Pending";
+  const isPending = vendor!.isVerified === false;
+  const statusLabel =
+    vendor!.verificationStatus === "Verified" ? "Active" : "Pending";
 
   const locationLabel =
     [vendor!.storeAddress, vendor!.storeCity, vendor!.storeState]
@@ -461,29 +500,31 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
   const kycDocs: VendorKycDoc[] = kycQ.data ?? [];
 
   const reviewSummary = reviewSummaryQ.data;
-  const avgRating     = reviewSummary?.averageRating ?? vendor!.averageRating ?? 0;
-  const totalReviews  = reviewSummary?.totalReviews  ?? vendor!.totalReviewsCount ?? 0;
+  const avgRating = reviewSummary?.averageRating ?? vendor!.averageRating ?? 0;
+  const totalReviews =
+    reviewSummary?.totalReviews ?? vendor!.totalReviewsCount ?? 0;
 
   const walletCurrency = vendor!.currency ?? "NGN";
-  const walletBalance  = vendor!.walletBalance ?? 0;
-  const productTotal   = vendorProductsQ.data?.totalCount ?? vendor!.totalProductsCount ?? 0;
+  const walletBalance = vendor!.walletBalance ?? 0;
+  const productTotal =
+    vendorProductsQ.data?.totalCount ?? vendor!.totalProductsCount ?? 0;
 
   const isDirty =
-    shopName.trim()      !== (vendor!.shopName                    ?? "").trim() ||
-    companyName.trim()   !== (vendor!.companyName                 ?? "").trim() ||
-    businessRegNo.trim() !== (vendor!.businessRegistrationNumber  ?? "").trim() ||
-    storeAddress.trim()  !== (vendor!.storeAddress                ?? "").trim() ||
-    storeCity.trim()     !== (vendor!.storeCity                   ?? "").trim() ||
-    storeState.trim()    !== (vendor!.storeState                  ?? "").trim() ||
-    logoUrl.trim()       !== (vendor!.logoUrl                     ?? "").trim() ||
-    bannerUrl.trim()     !== (vendor!.bannerUrl                   ?? "").trim() ||
-    description.trim()   !== (vendor!.description                 ?? "").trim();
+    shopName.trim() !== (vendor!.shopName ?? "").trim() ||
+    companyName.trim() !== (vendor!.companyName ?? "").trim() ||
+    businessRegNo.trim() !==
+      (vendor!.businessRegistrationNumber ?? "").trim() ||
+    storeAddress.trim() !== (vendor!.storeAddress ?? "").trim() ||
+    storeCity.trim() !== (vendor!.storeCity ?? "").trim() ||
+    storeState.trim() !== (vendor!.storeState ?? "").trim() ||
+    logoUrl.trim() !== (vendor!.logoUrl ?? "").trim() ||
+    bannerUrl.trim() !== (vendor!.bannerUrl ?? "").trim() ||
+    description.trim() !== (vendor!.description ?? "").trim();
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans pb-10">
-
       {/* HEADER */}
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
@@ -505,8 +546,14 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
         <div className="flex gap-2">
           {isPending ? (
             <>
-              <RejectVendorModal vendorId={vendor!.id} name={vendor!.shopName} />
-              <ApproveVendorModal vendorId={vendor!.id} name={vendor!.shopName} />
+              <RejectVendorModal
+                vendorId={vendor!.id}
+                name={vendor!.shopName}
+              />
+              <ApproveVendorModal
+                vendorId={vendor!.id}
+                name={vendor!.shopName}
+              />
             </>
           ) : (
             <SuspendStoreModal vendorId={vendor!.id} name={vendor!.shopName} />
@@ -515,13 +562,11 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
       </header>
 
       <main className="p-6 max-w-7xl mx-auto space-y-8 mt-2">
-
         {/* PROFILE + METRICS */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-
           {/* Identity */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-200 via-zinc-300 to-zinc-200" />
 
             <div className="flex items-start gap-5">
               <div className="h-20 w-20 rounded-2xl bg-zinc-900 flex items-center justify-center text-2xl font-bold text-[#D4AF37] shrink-0 shadow-sm border border-zinc-800">
@@ -539,8 +584,16 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
             </div>
 
             <div className="mt-6 pt-6 border-t border-zinc-100 space-y-3">
-              <InfoRow icon={Mail}   label="Email"    value={vendor!.ownerEmail || "—"} />
-              <InfoRow icon={Phone}  label="Phone"    value={(vendor as any)?.phone ?? "—"} />
+              <InfoRow
+                icon={Mail}
+                label="Email"
+                value={vendor!.ownerEmail || "—"}
+              />
+              <InfoRow
+                icon={Phone}
+                label="Phone"
+                value={(vendor as any)?.phone ?? "—"}
+              />
               <InfoRow icon={MapPin} label="Location" value={locationLabel} />
 
               <div className="flex justify-between items-center pt-2">
@@ -574,7 +627,7 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
           {/* Wallet */}
           <div className="lg:col-span-4 bg-zinc-900 text-white border border-zinc-800 rounded-2xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
             <Wallet className="absolute -right-6 -bottom-6 w-36 h-36 text-zinc-800/50 rotate-12" />
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-800 via-[#D4AF37] to-zinc-800" />
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-800 via-[#D4AF37] to-zinc-800" />
 
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-2 text-[#D4AF37]">
@@ -630,42 +683,64 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
         </div>
 
         {/* TABS */}
-        <Tabs defaultValue={isPending ? "kyc" : "products"} className="w-full flex flex-col">
+        <Tabs
+          defaultValue={isPending ? "kyc" : "products"}
+          className="w-full flex flex-col"
+        >
           <div className="flex justify-center mb-8">
             <TabsList className="bg-zinc-200/50 p-1 h-12 rounded-full inline-flex gap-1 overflow-x-auto whitespace-nowrap">
               <TabTriggerItem value="products" label="Products" />
-              <TabTriggerItem value="orders"   label="Orders" />
-              <TabTriggerItem value="kyc"      label="KYC" hasPulse={isPending} />
-              <TabTriggerItem value="payouts"  label="Payouts" />
-              <TabTriggerItem value="reviews"  label="Reviews" />
+              <TabTriggerItem value="orders" label="Orders" />
+              <TabTriggerItem value="kyc" label="KYC" hasPulse={isPending} />
+              <TabTriggerItem value="payouts" label="Payouts" />
+              <TabTriggerItem value="reviews" label="Reviews" />
               <TabTriggerItem value="settings" label="Settings" />
             </TabsList>
           </div>
 
           {/* PRODUCTS */}
-          <TabsContent value="products" className="m-0 animate-in fade-in duration-500">
+          <TabsContent
+            value="products"
+            className="m-0 animate-in fade-in duration-500"
+          >
             {vendorProductsQ.isLoading ? (
               <div className="p-6 text-sm text-zinc-500">Loading products…</div>
             ) : vendorProductsQ.isError ? (
-              <div className="p-6 text-sm text-rose-600">Failed to load vendor products.</div>
+              <div className="p-6 text-sm text-rose-600">
+                Failed to load vendor products.
+              </div>
             ) : (
-              <DataTable columns={vendorProductColumns} data={vendorProductsQ.data?.items ?? []} />
+              <DataTable
+                columns={vendorProductColumns}
+                data={vendorProductsQ.data?.items ?? []}
+              />
             )}
           </TabsContent>
 
           {/* ORDERS */}
-          <TabsContent value="orders" className="m-0 animate-in fade-in duration-500">
+          <TabsContent
+            value="orders"
+            className="m-0 animate-in fade-in duration-500"
+          >
             {ordersQ.isLoading ? (
               <div className="p-6 text-sm text-zinc-500">Loading orders…</div>
             ) : ordersQ.isError ? (
-              <div className="p-6 text-sm text-rose-600">Failed to load orders.</div>
+              <div className="p-6 text-sm text-rose-600">
+                Failed to load orders.
+              </div>
             ) : (
-              <DataTable columns={vendorOrdersColumns} data={ordersQ.data?.items ?? []} />
+              <DataTable
+                columns={vendorOrdersColumns}
+                data={ordersQ.data?.items ?? []}
+              />
             )}
           </TabsContent>
 
           {/* KYC */}
-          <TabsContent value="kyc" className="m-0 animate-in fade-in duration-500">
+          <TabsContent
+            value="kyc"
+            className="m-0 animate-in fade-in duration-500"
+          >
             <div className="p-6">
               {kycQ.isLoading ? (
                 <div className="text-sm text-zinc-500">Loading KYC…</div>
@@ -678,18 +753,29 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
           </TabsContent>
 
           {/* PAYOUTS */}
-          <TabsContent value="payouts" className="m-0 animate-in fade-in duration-500">
+          <TabsContent
+            value="payouts"
+            className="m-0 animate-in fade-in duration-500"
+          >
             {payoutsQ.isLoading ? (
               <div className="p-6 text-sm text-zinc-500">Loading payouts…</div>
             ) : payoutsQ.isError ? (
-              <div className="p-6 text-sm text-rose-600">Failed to load payouts.</div>
+              <div className="p-6 text-sm text-rose-600">
+                Failed to load payouts.
+              </div>
             ) : (
-              <DataTable columns={vendorPayoutColumns} data={payoutsQ.data?.items ?? []} />
+              <DataTable
+                columns={vendorPayoutColumns}
+                data={payoutsQ.data?.items ?? []}
+              />
             )}
           </TabsContent>
 
           {/* REVIEWS */}
-          <TabsContent value="reviews" className="m-0 animate-in fade-in duration-500">
+          <TabsContent
+            value="reviews"
+            className="m-0 animate-in fade-in duration-500"
+          >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl shadow-sm p-6">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-600">
@@ -697,19 +783,27 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
                 </div>
 
                 {reviewSummaryQ.isLoading ? (
-                  <div className="mt-4 text-sm text-zinc-500">Loading summary…</div>
+                  <div className="mt-4 text-sm text-zinc-500">
+                    Loading summary…
+                  </div>
                 ) : reviewSummaryQ.isError ? (
-                  <div className="mt-4 text-sm text-rose-600">Failed to load summary.</div>
+                  <div className="mt-4 text-sm text-rose-600">
+                    Failed to load summary.
+                  </div>
                 ) : (
                   <div className="mt-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-500">Average rating</span>
+                      <span className="text-xs text-zinc-500">
+                        Average rating
+                      </span>
                       <span className="font-mono font-bold text-zinc-900">
                         {Number(avgRating).toFixed(1)} / 5.0
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-500">Total reviews</span>
+                      <span className="text-xs text-zinc-500">
+                        Total reviews
+                      </span>
                       <span className="font-mono font-bold text-zinc-900">
                         {Number(totalReviews).toLocaleString()}
                       </span>
@@ -720,11 +814,18 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
 
               <div className="lg:col-span-8">
                 {reviewsQ.isLoading ? (
-                  <div className="p-6 text-sm text-zinc-500">Loading reviews…</div>
+                  <div className="p-6 text-sm text-zinc-500">
+                    Loading reviews…
+                  </div>
                 ) : reviewsQ.isError ? (
-                  <div className="p-6 text-sm text-rose-600">Failed to load reviews.</div>
+                  <div className="p-6 text-sm text-rose-600">
+                    Failed to load reviews.
+                  </div>
                 ) : (
-                  <DataTable columns={vendorReviewColumns} data={reviewsQ.data?.items ?? []} />
+                  <DataTable
+                    columns={vendorReviewColumns}
+                    data={reviewsQ.data?.items ?? []}
+                  />
                 )}
               </div>
             </div>
@@ -739,7 +840,9 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
                     {initials(shopName)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-zinc-900">Vendor Settings</h3>
+                    <h3 className="text-lg font-bold text-zinc-900">
+                      Vendor Settings
+                    </h3>
                     <p className="text-sm text-zinc-500">
                       Update store information, branding, and business details.
                     </p>
@@ -883,15 +986,18 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
                          */
                         vendorId: userId,
                         payload: {
-                          shopName:                     shopName.trim()      || undefined,
-                          companyName:                  companyName.trim()   || undefined,
-                          businessRegistrationNumber:   businessRegNo.trim() || undefined,
-                          storeAddress:                 storeAddress.trim()  || undefined,
-                          storeCity:                    storeCity.trim()     || undefined,
-                          storeState:                   storeState.trim()    || undefined,
-                          logoUrl:    logoUrl.trim()    ? logoUrl.trim()    : null,
-                          bannerUrl:  bannerUrl.trim()  ? bannerUrl.trim()  : null,
-                          description: description.trim() ? description.trim() : null,
+                          shopName: shopName.trim() || undefined,
+                          companyName: companyName.trim() || undefined,
+                          businessRegistrationNumber:
+                            businessRegNo.trim() || undefined,
+                          storeAddress: storeAddress.trim() || undefined,
+                          storeCity: storeCity.trim() || undefined,
+                          storeState: storeState.trim() || undefined,
+                          logoUrl: logoUrl.trim() ? logoUrl.trim() : null,
+                          bannerUrl: bannerUrl.trim() ? bannerUrl.trim() : null,
+                          description: description.trim()
+                            ? description.trim()
+                            : null,
                         },
                       });
                     }}
@@ -901,6 +1007,81 @@ if (vendorQ.isError || (!vendorQ.isFetching && !vendor)) {
                   </Button>
                 </div>
               </div>
+            </div>
+            {/* SECURITY SETTINGS (RESET PASSWORD FORM) */}
+            <div className="mt-6 bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+              <div className="px-6 py-5 border-b border-zinc-100 bg-zinc-50/50">
+                <h3 className="text-lg font-bold text-zinc-900">Security</h3>
+                <p className="text-sm text-zinc-500">
+                  Reset this vendor owner’s password immediately.
+                </p>
+              </div>
+
+              <form
+                className="p-6 space-y-6"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!canResetPassword) return;
+
+                  resetPassM.mutate(
+                    { userId, newPassword: newPassword.trim() }, // ✅ same ID you already use for profile update
+                    {
+                      onSuccess: () => {
+                        setNewPassword("");
+                        setConfirmPassword("");
+                      },
+                    },
+                  );
+                }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                      New Password <span className="text-rose-600">*</span>
+                    </Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                      placeholder="Minimum 6 characters"
+                      disabled={resetPassM.isPending}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                      Confirm Password <span className="text-rose-600">*</span>
+                    </Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="h-11 bg-zinc-50 border-zinc-200 rounded-xl font-mono"
+                      placeholder="Re-type password"
+                      disabled={resetPassM.isPending}
+                    />
+                  </div>
+                </div>
+
+                {newPassword.trim() &&
+                confirmPassword.trim() &&
+                newPassword.trim() !== confirmPassword.trim() ? (
+                  <p className="text-xs text-rose-600 font-semibold">
+                    Passwords do not match.
+                  </p>
+                ) : null}
+
+                <div className="border-t border-zinc-100 pt-6 flex items-center justify-end">
+                  <Button
+                    type="submit"
+                    disabled={!canResetPassword || resetPassM.isPending}
+                    className="h-11 px-8 bg-rose-600 text-white hover:bg-rose-700 rounded-xl font-bold uppercase tracking-widest"
+                  >
+                    {resetPassM.isPending ? "Resetting..." : "Reset Password"}
+                  </Button>
+                </div>
+              </form>
             </div>
           </TabsContent>
         </Tabs>

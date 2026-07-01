@@ -90,3 +90,17 @@ export async function getVendors(page = 1, pageSize = 20) {
 
   return res.data.data;
 }
+
+
+
+export type ResetPasswordBody = {
+  newPassword: string;
+};
+
+export async function resetUserPassword(userId: string, body: ResetPasswordBody) {
+  const res = await apiClient.post<ApiResponse<unknown>>(
+    `/api/Admin/users/${userId}/reset-password`,
+    body,
+  );
+  return res.data; 
+}

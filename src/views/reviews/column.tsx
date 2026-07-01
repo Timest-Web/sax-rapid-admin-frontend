@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export type ReviewRow = {
   id: string;
@@ -58,7 +59,8 @@ export function makeReviewColumns(opts: {
               {row.original.userName}
             </p>
             <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-mono">
-              <Calendar size={10} /> {new Date(row.original.createdAt).toLocaleString()}
+              <Calendar size={10} />{" "}
+              {new Date(row.original.createdAt).toLocaleString()}
             </div>
           </div>
         </div>
@@ -107,28 +109,28 @@ export function makeReviewColumns(opts: {
         </div>
       ),
     },
-//     {
-//       header: () => <div className="text-center">Status</div>,
-//       accessorKey: "status",
-//          cell: ({ row }) => (
-//   <StatusBadge
-//     status={row.original.status}
-//     styles={{
-//       Pending: "bg-amber-50 text-amber-700 border-amber-200",
+    //     {
+    //       header: () => <div className="text-center">Status</div>,
+    //       accessorKey: "status",
+    //          cell: ({ row }) => (
+    //   <StatusBadge
+    //     status={row.original.status}
+    //     styles={{
+    //       Pending: "bg-amber-50 text-amber-700 border-amber-200",
 
-//       Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    //       Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
 
-//       Active: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    //       Active: "bg-emerald-50 text-emerald-700 border-emerald-200",
 
-//       Failed: "bg-rose-50 text-rose-700 border-rose-200",
+    //       Failed: "bg-rose-50 text-rose-700 border-rose-200",
 
-//       Rejected: "bg-rose-50 text-rose-700 border-rose-200",
+    //       Rejected: "bg-rose-50 text-rose-700 border-rose-200",
 
-//       "On Hold": "bg-blue-50 text-blue-700 border-blue-200",
-//     }}
-//   />
-// ),
-//     },
+    //       "On Hold": "bg-blue-50 text-blue-700 border-blue-200",
+    //     }}
+    //   />
+    // ),
+    //     },
     {
       id: "actions",
       cell: ({ row }) => (
@@ -140,15 +142,20 @@ export function makeReviewColumns(opts: {
               </button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-52 bg-white border-zinc-200">
+            <DropdownMenuContent
+              align="end"
+              className="w-52 bg-white border-zinc-200"
+            >
               <DropdownMenuLabel className="text-xs font-bold text-black uppercase tracking-wider">
                 Moderation
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zinc-100" />
-
-              <DropdownMenuItem className="text-xs text-black cursor-pointer flex items-center w-full focus:bg-zinc-50">
-                <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" /> View Full Review
-              </DropdownMenuItem>
+              <Link href={`/admin/reviews/${row.original.id}`}>
+                <DropdownMenuItem className="text-xs text-black cursor-pointer flex items-center w-full focus:bg-zinc-50">
+                  <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" />
+                  <p>View Full Review</p>
+                </DropdownMenuItem>
+              </Link>
 
               <DropdownMenuItem
                 className="text-xs text-amber-700 cursor-pointer flex items-center w-full focus:bg-amber-50"
@@ -177,7 +184,8 @@ export const vendorRatingColumns: ColumnDef<VendorRatingRow>[] = [
           {row.original.email}
         </p>
         <p className="text-[10px] text-zinc-500 font-mono">
-          {row.original.storeCity ?? "—"}{row.original.storeState ? `, ${row.original.storeState}` : ""}
+          {row.original.storeCity ?? "—"}
+          {row.original.storeState ? `, ${row.original.storeState}` : ""}
         </p>
       </div>
     ),
@@ -192,7 +200,8 @@ export const vendorRatingColumns: ColumnDef<VendorRatingRow>[] = [
           {Number(row.original.rating ?? 0).toFixed(1)} / 5.0
         </div>
         <span className="text-[10px] text-zinc-400 font-mono">
-          {row.original.totalProducts} products • {row.original.currency} {Number(row.original.totalRevenue ?? 0).toLocaleString()} revenue
+          {row.original.totalProducts} products • {row.original.currency}{" "}
+          {Number(row.original.totalRevenue ?? 0).toLocaleString()} revenue
         </span>
       </div>
     ),
