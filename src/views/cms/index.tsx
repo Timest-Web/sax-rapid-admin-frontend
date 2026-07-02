@@ -90,7 +90,6 @@ export default function CMSView() {
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-8">
-        {/* STATS from backend */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             label="Total Pages"

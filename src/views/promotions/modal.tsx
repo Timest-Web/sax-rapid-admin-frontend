@@ -35,15 +35,12 @@ export function CreateCampaignModal(props: {
   onOpenChange: (v: boolean) => void;
   isSaving?: boolean;
   onSubmit: (payload: CreateCampaignInput) => void;
-
-  /** Optional: if you open from Vendor profile, pass vendorId and hide the selector */
   defaultVendorId?: string;
 }) {
   const { open, onOpenChange, isSaving, onSubmit, defaultVendorId } = props;
 
-  // Vendors dropdown for Promotions page create
   const vendorsQ = useVendors({ page: 1, pageSize: 50 }); // adjust page size if you want
-  const vendors = Array.isArray(vendorsQ.data) ? vendorsQ.data : vendorsQ.data?.items ?? (vendorsQ.data as any)?.data ?? [];
+  const vendors = vendorsQ.data?.items ?? (vendorsQ.data as any)?.data ?? (vendorsQ.data as any) ?? [];
 
   const [vendorId, setVendorId] = useState<string>(defaultVendorId ?? "");
 
@@ -116,7 +113,6 @@ export function CreateCampaignModal(props: {
             </DialogTitle>
             <DialogDescription className="text-xs">
               Uses <span className="font-mono">POST /api/admin/promotions/campaigns</span>.
-              (Backend currently returns 500; UI will still submit and show error toast.)
             </DialogDescription>
           </DialogHeader>
         </div>

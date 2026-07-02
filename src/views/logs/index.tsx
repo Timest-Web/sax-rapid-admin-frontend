@@ -62,9 +62,9 @@ export default function AuditLogsView() {
             Platform / System Audit Logs
           </h1>
         </div>
-        <Button variant="outline" size="sm" className="gap-2 text-xs">
+        {/* <Button variant="outline" size="sm" className="gap-2 text-xs">
           <Download size={14} /> Export CSV
-        </Button>
+        </Button> */}
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-8">

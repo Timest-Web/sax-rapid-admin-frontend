@@ -25,7 +25,7 @@ function money(amount: number, currency: string) {
 type ActiveState = boolean | "unknown";
 
 function activeState(plan: SubscriptionPlan): ActiveState {
-  // ✅ do NOT default to true, because backend may omit the field
+
   return typeof plan.isActive === "boolean" ? plan.isActive : "unknown";
 }
 

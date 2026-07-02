@@ -6,7 +6,14 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { Button } from "@/components/ui/button";
-import { Plus, Truck, Percent, CalendarDays, Settings2, Star } from "lucide-react";
+import {
+  Plus,
+  Truck,
+  Percent,
+  CalendarDays,
+  Settings2,
+  Star,
+} from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
 
 import { getProviderColumns } from "./column";
@@ -73,7 +80,6 @@ export default function ShippingView() {
       </header>
 
       <main className="p-6 max-w-6xl mx-auto space-y-8">
-        {/* STATS (backend) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard
             label="Active Shipments"
@@ -133,7 +139,9 @@ export default function ShippingView() {
                 {partnersQ.isLoading ? (
                   <TableSkeleton columns={columns.length} rows={5} />
                 ) : partnersQ.isError ? (
-                  <div className="p-6 text-sm text-rose-600">Failed to load partners.</div>
+                  <div className="p-6 text-sm text-rose-600">
+                    Failed to load partners.
+                  </div>
                 ) : (
                   <DataTable columns={columns} data={partners} />
                 )}
@@ -153,7 +161,10 @@ export default function ShippingView() {
           createM.mutate(payload, { onSuccess: () => setOpenEditor(false) });
         }}
         onUpdate={(partnerId, payload) => {
-          updateM.mutate({ partnerId, payload }, { onSuccess: () => setOpenEditor(false) });
+          updateM.mutate(
+            { partnerId, payload },
+            { onSuccess: () => setOpenEditor(false) },
+          );
         }}
       />
 

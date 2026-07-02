@@ -168,7 +168,6 @@ export function PayoutModal({
   );
 }
 
-/** ---- Gateway config (UI only; no backend endpoint provided yet) ---- */
 export function GatewayConfigModal({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
 

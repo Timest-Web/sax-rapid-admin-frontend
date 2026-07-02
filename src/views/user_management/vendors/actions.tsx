@@ -13,10 +13,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, ShieldBan } from "lucide-react";
-import { useApproveVendor, useRejectVendor, useSuspendVendor } from "@/src/features/vendors/hooks";
+import {
+  useApproveVendor,
+  useRejectVendor,
+  useSuspendVendor,
+} from "@/src/features/vendors/hooks";
 
-
-export function ApproveVendorModal({ vendorId, name }: { vendorId: string; name: string }) {
+export function ApproveVendorModal({
+  vendorProfileId,
+  name,
+}: {
+  vendorProfileId: string;
+  name: string;
+}) {
   const [open, setOpen] = useState(false);
   const approve = useApproveVendor();
 
@@ -38,15 +47,17 @@ export function ApproveVendorModal({ vendorId, name }: { vendorId: string; name:
         </DialogHeader>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={approve.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={approve.isPending}
+          >
             Cancel
           </Button>
           <Button
             variant="gold"
             disabled={approve.isPending}
-            onClick={() => {
-              approve.mutate(vendorId, { onSuccess: () => setOpen(false) });
-            }}
+            onClick={() => approve.mutate(vendorProfileId, { onSuccess: () => setOpen(false) })}
           >
             Confirm Approval
           </Button>
@@ -56,7 +67,13 @@ export function ApproveVendorModal({ vendorId, name }: { vendorId: string; name:
   );
 }
 
-export function RejectVendorModal({ vendorId, name }: { vendorId: string; name: string }) {
+export function RejectVendorModal({
+  vendorProfileId,
+  name,
+}: {
+  vendorProfileId: string;
+  name: string;
+}) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const reject = useRejectVendor();
@@ -93,21 +110,26 @@ export function RejectVendorModal({ vendorId, name }: { vendorId: string; name: 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={reject.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={reject.isPending}
+          >
             Cancel
           </Button>
+
           <Button
             variant="destructive"
             disabled={!reason.trim() || reject.isPending}
             onClick={() => {
               reject.mutate(
-                { vendorId, reason: reason.trim() },
+                { vendorProfileId, reason: reason.trim() }, // ✅ fixed
                 {
                   onSuccess: () => {
                     setOpen(false);
                     setReason("");
                   },
-                }
+                },
               );
             }}
           >
@@ -119,7 +141,13 @@ export function RejectVendorModal({ vendorId, name }: { vendorId: string; name: 
   );
 }
 
-export function SuspendStoreModal({ vendorId, name }: { vendorId: string; name: string }) {
+export function SuspendStoreModal({
+  vendorProfileId,
+  name,
+}: {
+  vendorProfileId: string;
+  name: string;
+}) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const suspend = useSuspendVendor();
@@ -151,21 +179,26 @@ export function SuspendStoreModal({ vendorId, name }: { vendorId: string; name: 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={suspend.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={suspend.isPending}
+          >
             Cancel
           </Button>
+
           <Button
             variant="destructive"
             disabled={!reason.trim() || suspend.isPending}
             onClick={() => {
               suspend.mutate(
-                { vendorId, reason: reason.trim() },
+                { vendorProfileId, reason: reason.trim() }, // ✅ fixed
                 {
                   onSuccess: () => {
                     setOpen(false);
                     setReason("");
                   },
-                }
+                },
               );
             }}
           >

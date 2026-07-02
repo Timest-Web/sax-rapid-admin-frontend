@@ -79,12 +79,10 @@ export async function getVendors(page = 1, pageSize = 20): Promise<Paginated<Ven
 
   const data = unwrap(res.data);
 
-  // If backend returns a paginated object already, pass-through:
   if (data && typeof data === "object" && Array.isArray(data.items)) {
     return data as Paginated<VendorProfile>;
   }
 
-  // If backend returns an array, normalize to Paginated:
   if (Array.isArray(data)) {
     return {
       items: data as VendorProfile[],

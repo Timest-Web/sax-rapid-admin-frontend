@@ -115,14 +115,14 @@ export default function PayoutsView() {
             </SelectContent>
           </Select>
 
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             className="h-9 text-xs shadow-sm"
             disabled
           >
             <Download className="mr-2 h-3.5 w-3.5" /> Export CSV
-          </Button>
+          </Button> */}
         </div>
       </header>
 

@@ -123,13 +123,13 @@ export default function ProductsView() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
+          {/* <Button
             variant="outline"
             size="sm"
             className="h-9 text-xs font-bold uppercase tracking-wider"
           >
             Export List
-          </Button>
+          </Button> */}
 
           {/* <Button
             size="sm"

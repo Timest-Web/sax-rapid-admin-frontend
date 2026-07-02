@@ -25,12 +25,11 @@ export type FinanceTransactionRow = {
   status: string; // e.g. "Paid" | "Pending" | "Refunded" | "Completed"
 };
 
-/** Local (manual) status badge so you don't depend on shared StatusBadge */
+
 function StatusPill({ status }: { status: string }) {
   const raw = String(status ?? "");
   const s = raw.trim();
 
-  // Map various backend strings to consistent style keys
   const key = s.toLowerCase();
 
   const style =

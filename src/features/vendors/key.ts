@@ -3,22 +3,22 @@ export const vendorKeys = {
   all: ["vendors"] as const,
 
   lists: () => [...vendorKeys.all, "list"] as const,
-  list: (q: Record<string, any>) => [...vendorKeys.lists(), q] as const,
+  list: (query: { page: number; pageSize: number }) =>
+    [...vendorKeys.lists(), query] as const,
 
-  details: () => [...vendorKeys.all, "detail"] as const,
-  detail: (id: string) => [...vendorKeys.details(), id] as const,
+  detail: (userId: string) => [...vendorKeys.all, "detail", userId] as const,
 
-  orders: (vendorId: string, q: Record<string, any>) =>
-    [...vendorKeys.detail(vendorId), "orders", q] as const,
+  orders: (vendorProfileId: string, params: any) =>
+    [...vendorKeys.all, "orders", vendorProfileId, params] as const,
 
-  kyc: (vendorId: string) => [...vendorKeys.detail(vendorId), "kyc"] as const,
+  kyc: (vendorProfileId: string) => [...vendorKeys.all, "kyc", vendorProfileId] as const,
 
-  payouts: (vendorId: string, q: Record<string, any>) =>
-    [...vendorKeys.detail(vendorId), "payouts", q] as const,
+  payouts: (vendorProfileId: string, params: any) =>
+    [...vendorKeys.all, "payouts", vendorProfileId, params] as const,
 
-  reviewSummary: (vendorId: string) =>
-    [...vendorKeys.detail(vendorId), "reviews-summary"] as const,
+  reviewSummary: (vendorProfileId: string) =>
+    [...vendorKeys.all, "reviewSummary", vendorProfileId] as const,
 
-  reviews: (vendorId: string, q: Record<string, any>) =>
-    [...vendorKeys.detail(vendorId), "reviews", q] as const,
+  reviews: (vendorProfileId: string, params: any) =>
+    [...vendorKeys.all, "reviews", vendorProfileId, params] as const,
 };

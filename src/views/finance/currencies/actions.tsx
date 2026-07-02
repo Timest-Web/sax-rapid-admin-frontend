@@ -126,11 +126,11 @@ export function CurrencyFormModal({ initialData }: { initialData?: CurrencyRow }
                 readOnly={isEdit} // backend cannot patch symbol currently
                 className="h-11 bg-zinc-50/50 border-zinc-200 rounded-lg"
               />
-              {isEdit && (
+              {/* {isEdit && (
                 <p className="text-[10px] text-zinc-400">
                   Symbol cannot be edited (backend PATCH does not support it).
                 </p>
-              )}
+              )} */}
             </div>
           </div>
 
@@ -161,9 +161,9 @@ export function CurrencyFormModal({ initialData }: { initialData?: CurrencyRow }
                 className="font-mono text-lg h-11 bg-zinc-50/50 border-zinc-200 rounded-lg"
               />
             </div>
-            <p className="text-[10px] text-zinc-400">
+            {/* <p className="text-[10px] text-zinc-400">
               Backend field: <span className="font-mono">exchangeRateToUsd</span>
-            </p>
+            </p> */}
           </div>
 
           <div className="space-y-2">

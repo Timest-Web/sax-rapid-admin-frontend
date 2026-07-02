@@ -475,9 +475,9 @@ export function CreateProductModal() {
                   </div>
                 </div>
               ))}
-              <p className="text-[10px] text-zinc-400">
+              {/* <p className="text-[10px] text-zinc-400">
                 Only filled attributes are sent to the backend.
-              </p>
+              </p> */}
             </div>
           </div>
 

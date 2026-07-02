@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  MoreHorizontal,
-  Eye,
-  Store,
-  MapPin,
-  BadgeCheck,
-  BadgeX,
-} from "lucide-react";
+import { MoreHorizontal, Eye, Store, MapPin, BadgeCheck, BadgeX, Ban } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,13 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { VendorProfile } from "@/src/features/users/api";
+
+import type { VendorProfile } from "@/src/features/vendors/api";
 
 function initials(text: string) {
-  const parts = String(text || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = String(text || "").trim().split(/\s+/).filter(Boolean);
   const a = parts[0]?.[0] ?? "S";
   const b = parts[parts.length - 1]?.[0] ?? "T";
   return (a + b).toUpperCase();
@@ -53,6 +44,18 @@ function KycBadge({ value }: { value: string }) {
     >
       {verified ? <BadgeCheck size={12} /> : <BadgeX size={12} />}
       {value}
+    </span>
+  );
+}
+
+function SuspendedBadge({ reason }: { reason?: string | null }) {
+  return (
+    <span
+      title={reason ?? undefined}
+      className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-mono uppercase tracking-wider bg-rose-50 text-rose-700 border-rose-200"
+    >
+      <Ban size={12} />
+      Suspended
     </span>
   );
 }
@@ -109,16 +112,28 @@ export const vendorColumns: ColumnDef<VendorProfile>[] = [
     },
   },
   {
-    header: "KYC",
+    header: "KYC / Status",
     accessorKey: "verificationStatus",
     cell: ({ row }) => {
       const v = row.original;
+
       return (
         <div className="flex flex-col gap-1">
-          <KycBadge value={String(v.verificationStatus)} />
+          {v.isSuspended ? (
+            <SuspendedBadge reason={v.suspensionReason} />
+          ) : (
+            <KycBadge value={String(v.verificationStatus)} />
+          )}
+
           <span className="text-[10px] text-zinc-400 font-mono">
             Verified: {formatDate(v.verifiedAt)}
           </span>
+
+          {v.isSuspended && (
+            <span className="text-[10px] text-rose-600 font-mono">
+              Since: {formatDate(v.suspendedAt)}
+            </span>
+          )}
         </div>
       );
     },
@@ -164,11 +179,6 @@ export const vendorColumns: ColumnDef<VendorProfile>[] = [
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-zinc-100" />
             <DropdownMenuItem asChild>
-              {/*
-               * Navigate by userId so the detail page can call
-               * GET /api/Vendor/{userId} directly from the URL param
-               * on any load, including hard reloads.
-               */}
               <Link
                 href={`/admin/vendors/${row.original.userId}`}
                 className="text-xs text-black cursor-pointer flex items-center w-full focus:bg-zinc-50"

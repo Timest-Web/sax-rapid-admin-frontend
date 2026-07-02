@@ -1,21 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient } from "@/src/lib/axios";
 
-/** Backend wrapper: { success, message, data } */
 export type ApiResponse<T = unknown> = {
   success: boolean;
   message: string;
   data: T;
 };
 
-/** Some endpoints might return raw T; support both just in case */
 export type MaybeWrapped<T> = T | ApiResponse<T>;
 
 function unwrap<T>(payload: MaybeWrapped<T>): T {
   return (payload as any)?.data ?? (payload as T);
 }
 
-/** Generic pagination used across your admin endpoints */
 export type Paginated<T> = {
   items: T[];
   pageNumber: number;
@@ -26,7 +23,6 @@ export type Paginated<T> = {
   hasPreviousPage?: boolean;
 };
 
-/** Some endpoints accept pagination but currently return a raw array */
 type MaybePaginated<T> = Paginated<T> | T[];
 
 function toPaginated<T>(
@@ -48,13 +44,9 @@ function toPaginated<T>(
   return data;
 }
 
-/* ============================================================================
- * Core vendor profile
- * ==========================================================================*/
-
 export type VendorProfile = {
-  id: string;
-  userId: string;
+  id: string; // vendor profile id
+  userId: string; // owner user id
 
   shopName: string;
   accountType: string;
@@ -72,7 +64,7 @@ export type VendorProfile = {
   bannerUrl: string | null;
   description: string | null;
 
-  verificationStatus: "Verified" | "NotVerified" | string;
+  verificationStatus: "Verified" | "NotVerified" | "Pending" | string;
   verifiedAt: string | null;
 
   productLimit: number;
@@ -80,7 +72,6 @@ export type VendorProfile = {
   ownerName: string;
   ownerEmail: string;
 
-  // Sometimes returned by some endpoints (keep optional so UI won’t break)
   averageRating?: number;
   totalRatings?: number;
   walletBalance?: number;
@@ -88,8 +79,9 @@ export type VendorProfile = {
 
   createdAt: string;
   updatedAt: string | null;
-
-  // fields shown in swagger PATCH response (optional)
+  isSuspended?: boolean;
+  suspensionReason?: string | null;
+  suspendedAt?: string | null;
   isVerified?: boolean;
   totalReviewsCount?: number;
   totalSalesCount?: number;
@@ -99,17 +91,29 @@ export type VendorProfile = {
   vendorProfileId?: string;
 };
 
-export async function getVendorById(vendorId: string): Promise<VendorProfile> {
-  const res = await apiClient.get<ApiResponse<VendorProfile>>(
-    `/api/Vendor/${vendorId}`,
+/** GET /api/Admin/vendors (list) */
+export async function getVendors(
+  page = 1,
+  pageSize = 20,
+): Promise<Paginated<VendorProfile>> {
+  const res = await apiClient.get<ApiResponse<MaybePaginated<VendorProfile>>>(
+    "/api/Admin/vendors",
+    { params: { page, pageSize } },
   );
+
+  const data = unwrap(res.data);
+  return toPaginated(data, page, pageSize);
+}
+
+/** GET /api/Vendor/{userId} (detail by userId) */
+export async function getVendorByUserId(userId: string): Promise<VendorProfile> {
+  const res = await apiClient.get<ApiResponse<VendorProfile>>(`/api/Vendor/${userId}`);
   return unwrap(res.data);
 }
 
 /* ============================================================================
- * Admin actions: approve / reject / suspend
+ * Admin actions: approve / reject / suspend (profileId)
  * ==========================================================================*/
-
 export type VendorAdminAction = "Approve" | "Reject" | "Suspend";
 
 export type VendorAdminActionPayload = {
@@ -117,40 +121,37 @@ export type VendorAdminActionPayload = {
   reason?: string;
 };
 
-export async function approveVendor(vendorId: string): Promise<ApiResponse<null>> {
+export async function approveVendor(vendorProfileId: string): Promise<ApiResponse<null>> {
   const res = await apiClient.post<ApiResponse<null>>(
-    `/api/Admin/vendors/${vendorId}/approve`,
+    `/api/Admin/vendors/${vendorProfileId}/approve`,
     { action: "Approve" } satisfies VendorAdminActionPayload,
   );
   return res.data;
 }
 
 export async function rejectVendor(
-  vendorId: string,
+  vendorProfileId: string,
   reason: string,
 ): Promise<ApiResponse<null>> {
   const res = await apiClient.post<ApiResponse<null>>(
-    `/api/Admin/vendors/${vendorId}/reject`,
+    `/api/Admin/vendors/${vendorProfileId}/reject`,
     { action: "Reject", reason } satisfies VendorAdminActionPayload,
   );
   return res.data;
 }
 
 export async function suspendVendor(
-  vendorId: string,
+  vendorProfileId: string,
   reason: string,
 ): Promise<ApiResponse<null>> {
   const res = await apiClient.post<ApiResponse<null>>(
-    `/api/Admin/vendors/${vendorId}/suspend`,
+    `/api/Admin/vendors/${vendorProfileId}/suspend`,
     { action: "Suspend", reason } satisfies VendorAdminActionPayload,
   );
   return res.data;
 }
 
-/* ============================================================================
- * PATCH /api/Vendor/{id} - update vendor profile (partial)
- * ==========================================================================*/
-
+/** PATCH /api/Vendor/{userId} (update by userId) */
 export type UpdateVendorInput = {
   shopName?: string;
   companyName?: string;
@@ -167,24 +168,15 @@ export type UpdateVendorInput = {
   description?: string | null;
 };
 
-export async function updateVendor(
-  vendorId: string,
-  payload: UpdateVendorInput,
-): Promise<VendorProfile> {
-  const res = await apiClient.patch<ApiResponse<VendorProfile>>(
-    `/api/Vendor/${vendorId}`,
-    payload,
-  );
+export async function updateVendor(userId: string, payload: UpdateVendorInput): Promise<VendorProfile> {
+  const res = await apiClient.patch<ApiResponse<VendorProfile>>(`/api/Vendor/${userId}`, payload);
   return unwrap(res.data);
 }
 
 /* ============================================================================
- * Vendor sub-resources (Admin)
+ * Sub-resources
  * ==========================================================================*/
-
-/** GET /api/Vendor/{vendorId}/orders */
 export type VendorOrderListItem = {
-  id?: string;
   orderId?: string;
   orderNumber?: string;
   customerName?: string;
@@ -197,19 +189,16 @@ export type VendorOrderListItem = {
 };
 
 export async function getVendorOrders(
-  vendorId: string,
+  vendorProfileId: string,
   params: { currency?: string; pageNumber: number; pageSize: number },
 ): Promise<Paginated<VendorOrderListItem>> {
   const res = await apiClient.get<ApiResponse<MaybePaginated<VendorOrderListItem>>>(
-    `/api/Vendor/${vendorId}/orders`,
+    `/api/Vendor/${vendorProfileId}/orders`,
     { params: { currency: "NGN", ...params } },
   );
-
-  const data = unwrap(res.data);
-  return toPaginated(data, params.pageNumber, params.pageSize);
+  return toPaginated(unwrap(res.data), params.pageNumber, params.pageSize);
 }
 
-/** GET /api/Vendor/{vendorId}/kyc */
 export type VendorKycDoc = {
   id: string;
   documentType: string;
@@ -218,14 +207,11 @@ export type VendorKycDoc = {
   status: string;
 };
 
-export async function getVendorKyc(vendorId: string): Promise<VendorKycDoc[]> {
-  const res = await apiClient.get<ApiResponse<VendorKycDoc[]>>(
-    `/api/Vendor/${vendorId}/kyc`,
-  );
+export async function getVendorKyc(vendorProfileId: string): Promise<VendorKycDoc[]> {
+  const res = await apiClient.get<ApiResponse<VendorKycDoc[]>>(`/api/Vendor/${vendorProfileId}/kyc`);
   return unwrap(res.data);
 }
 
-/** GET /api/Vendor/{vendorId}/payouts */
 export type VendorPayout = {
   payoutId: string;
   amount: number;
@@ -235,35 +221,29 @@ export type VendorPayout = {
 };
 
 export async function getVendorPayouts(
-  vendorId: string,
+  vendorProfileId: string,
   params: { currency?: string; pageNumber: number; pageSize: number },
 ): Promise<Paginated<VendorPayout>> {
   const res = await apiClient.get<ApiResponse<MaybePaginated<VendorPayout>>>(
-    `/api/Vendor/${vendorId}/payouts`,
+    `/api/Vendor/${vendorProfileId}/payouts`,
     { params: { currency: "NGN", ...params } },
   );
-
-  const data = unwrap(res.data);
-  return toPaginated(data, params.pageNumber, params.pageSize);
+  return toPaginated(unwrap(res.data), params.pageNumber, params.pageSize);
 }
 
-/** GET /api/Vendor/{vendorId}/reviews/summary */
 export type VendorReviewSummary = {
   averageRating: number;
   totalReviews: number;
   starRatingBreakdown: Record<string, number>;
 };
 
-export async function getVendorReviewSummary(
-  vendorId: string,
-): Promise<VendorReviewSummary> {
+export async function getVendorReviewSummary(vendorProfileId: string): Promise<VendorReviewSummary> {
   const res = await apiClient.get<ApiResponse<VendorReviewSummary>>(
-    `/api/Vendor/${vendorId}/reviews/summary`,
+    `/api/Vendor/${vendorProfileId}/reviews/summary`,
   );
   return unwrap(res.data);
 }
 
-/** GET /api/Vendor/{vendorId}/reviews */
 export type VendorReview = {
   reviewerName: string;
   reviewerAvatarUrl: string | null;
@@ -274,15 +254,12 @@ export type VendorReview = {
 };
 
 export async function getVendorReviews(
-  vendorId: string,
+  vendorProfileId: string,
   params: { pageNumber: number; pageSize: number },
 ): Promise<Paginated<VendorReview>> {
   const res = await apiClient.get<ApiResponse<Paginated<VendorReview>>>(
-    `/api/Vendor/${vendorId}/reviews`,
-    // swagger uses PageNumber/PageSize (capital P)
+    `/api/Vendor/${vendorProfileId}/reviews`,
     { params: { PageNumber: params.pageNumber, PageSize: params.pageSize } },
   );
   return unwrap(res.data);
 }
-
-

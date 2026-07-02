@@ -45,7 +45,6 @@ function toIsoDayRange(date: string) {
 }
 
 function mapUiToTxnStatus(ui: string) {
-  // backend examples: Paid | Pending | Refunded
   if (ui === "completed") return "Paid";
   if (ui === "pending") return "Pending";
   if (ui === "failed") return "Refunded";
@@ -53,7 +52,6 @@ function mapUiToTxnStatus(ui: string) {
 }
 
 function mapUiToWalletStatus(ui: string) {
-  // backend examples: Active | Frozen
   if (ui === "failed") return "Frozen";
   return undefined;
 }
@@ -72,7 +70,7 @@ function isCredit(type: string) {
 }
 
 export default function FinancePage() {
-  // Currency here is what we request from backend + how we format
+
   const [currency, setCurrency] = useState("NGN");
 
   const symbol = currency === "NGN" ? "₦" : "R";
@@ -192,9 +190,9 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" className="h-9 text-xs shadow-sm">
+          {/* <Button variant="outline" size="sm" className="h-9 text-xs shadow-sm">
             <Download className="mr-2 h-3.5 w-3.5" /> Export Audit Log
-          </Button>
+          </Button> */}
         </div>
       </header>
 

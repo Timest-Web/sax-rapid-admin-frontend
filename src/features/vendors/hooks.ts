@@ -7,16 +7,12 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/src/lib/get-error";
 
 import { vendorKeys } from "./key";
-
-// Vendor list endpoint you already use (kept as-is)
-import { getVendors } from "../users/api";
-
-// All vendor endpoints come from your vendors/api.ts
 import {
   approveVendor,
   rejectVendor,
   suspendVendor,
-  getVendorById,
+  getVendors,
+  getVendorByUserId,
   updateVendor,
   getVendorOrders,
   getVendorKyc,
@@ -33,14 +29,16 @@ import {
   type VendorReview,
 } from "./api";
 
+import { activateUser } from "@/src/features/users/api"; // POST /api/Admin/users/{userId}/activate
+
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
   return status === "authenticated" && !!accessToken && role === "Admin";
 }
 
-/** Patch vendor across all cached lists (array, {items}, {data}) */
+/** Patch vendor across all cached lists (paginated or arrays). Match by profileId or userId. */
 function patchVendorInLists(
   qc: ReturnType<typeof useQueryClient>,
-  vendorId: string,
+  match: { vendorProfileId?: string; userId?: string },
   patch: Partial<VendorProfile>,
 ) {
   qc.setQueriesData(
@@ -48,109 +46,125 @@ function patchVendorInLists(
     (old: any) => {
       if (!old) return old;
 
-      // 1) list is an array
-      if (Array.isArray(old)) {
-        return old.map((v: VendorProfile) => (v?.id === vendorId ? { ...v, ...patch } : v));
-      }
+      const patchOne = (v: VendorProfile) => {
+        const okByProfileId = match.vendorProfileId && v?.id === match.vendorProfileId;
+        const okByUserId = match.userId && v?.userId === match.userId;
+        return okByProfileId || okByUserId ? { ...v, ...patch } : v;
+      };
 
-      // 2) list is paginated { items: [] }
-      if (Array.isArray(old?.items)) {
-        return {
-          ...old,
-          items: old.items.map((v: VendorProfile) => (v?.id === vendorId ? { ...v, ...patch } : v)),
-        };
-      }
-
-      // 3) list is wrapped { data: [] }
-      if (Array.isArray(old?.data)) {
-        return {
-          ...old,
-          data: old.data.map((v: VendorProfile) => (v?.id === vendorId ? { ...v, ...patch } : v)),
-        };
-      }
+      if (Array.isArray(old)) return old.map(patchOne);
+      if (Array.isArray(old?.items)) return { ...old, items: old.items.map(patchOne) };
+      if (Array.isArray(old?.data)) return { ...old, data: old.data.map(patchOne) };
 
       return old;
     },
   );
 }
 
-
+/** ---------------- List ---------------- */
 export function useVendors(query: { page: number; pageSize: number }) {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
   const role = (session as any)?.role as string | undefined;
 
   return useQuery<Paginated<VendorProfile>>({
-    queryKey: ["vendors", query],
+    queryKey: vendorKeys.list(query),
     enabled: enabledAdmin(status, accessToken, role),
     queryFn: () => getVendors(query.page, query.pageSize),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 }
 
-export function useVendor(vendorId?: string) {
+/** ---------------- Detail (by userId) ---------------- */
+export function useVendor(userId?: string) {
   const qc = useQueryClient();
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
   const role = (session as any)?.role as string | undefined;
 
-  return useQuery({
-    queryKey: vendorId ? vendorKeys.detail(vendorId) : ["vendors", "detail", "missing"],
-    enabled: !!vendorId && enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendorById(vendorId!),
+  return useQuery<VendorProfile>({
+    queryKey: userId ? vendorKeys.detail(userId) : ["vendors", "detail", "missing"],
+    enabled: !!userId && enabledAdmin(status, accessToken, role),
+    queryFn: () => getVendorByUserId(userId!),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
+    initialData: () => {
+      if (!userId) return undefined;
 
-    // seed detail from any cached list query
- initialData: () => {
-  if (!vendorId) return undefined;
-  const listQueries = qc.getQueriesData<any>({ queryKey: vendorKeys.lists() });
+      const listQueries = qc.getQueriesData<any>({ queryKey: vendorKeys.lists() });
+      for (const [, cached] of listQueries) {
+        const arr = Array.isArray(cached)
+          ? cached
+          : Array.isArray(cached?.items)
+            ? cached.items
+            : Array.isArray(cached?.data)
+              ? cached.data
+              : null;
 
-  for (const [, cached] of listQueries) {
-    if (!cached) continue;
-
-    if (Array.isArray(cached)) {
-      const found = cached.find((v: VendorProfile) => v?.userId === vendorId); // ← changed
-      if (found) return found;
-    }
-
-    const arr = cached?.items ?? cached?.data;
-    if (Array.isArray(arr)) {
-      const found = arr.find((v: VendorProfile) => v?.userId === vendorId); // ← changed
-      if (found) return found;
-    }
-  }
-
-  return undefined;
-},
+        if (!arr) continue;
+        const found = arr.find((v: VendorProfile) => v?.userId === userId);
+        if (found) return found;
+      }
+      return undefined;
+    },
   });
 }
 
-/* ============================================================================
- * Admin actions
- * ==========================================================================*/
+/** ---------------- Reactivate suspended vendor (by userId) ---------------- */
+export function useReactivateVendorOwner() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => activateUser(userId),
+
+    onMutate: async (userId) => {
+      const toastId = toast.loading("Reactivating vendor...");
+      await qc.cancelQueries({ queryKey: vendorKeys.all });
+
+      const prev = qc.getQueryData<VendorProfile>(vendorKeys.detail(userId));
+
+      qc.setQueryData<VendorProfile>(vendorKeys.detail(userId), (old) =>
+        old
+          ? { ...old, isSuspended: false, suspensionReason: null, suspendedAt: null }
+          : old,
+      );
+
+      patchVendorInLists(qc, { userId }, { isSuspended: false, suspensionReason: null, suspendedAt: null });
+
+      return { toastId, prev, userId };
+    },
+
+    onError: (err, _userId, ctx) => {
+      if (ctx?.prev) qc.setQueryData(vendorKeys.detail(ctx.userId), ctx.prev);
+      toast.error(getErrorMessage(err), { id: ctx?.toastId });
+    },
+
+    onSuccess: (_res, _userId, ctx) => {
+      toast.success("Vendor reactivated", { id: ctx?.toastId });
+    },
+
+    onSettled: async (_res, _err, userId) => {
+      await qc.invalidateQueries({ queryKey: vendorKeys.detail(userId) });
+      await qc.invalidateQueries({ queryKey: vendorKeys.lists() });
+    },
+  });
+}
+
+/** ---------------- Admin actions (profileId) ---------------- */
 export function useApproveVendor() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (vendorId: string) => approveVendor(vendorId),
+    mutationFn: (vendorProfileId: string) => approveVendor(vendorProfileId),
     onMutate: () => ({ toastId: toast.loading("Approving vendor...") }),
-    onSuccess: async (res, vendorId, ctx) => {
+    onSuccess: async (res, vendorProfileId, ctx) => {
       toast.success(res?.message ?? "Vendor approved", { id: ctx?.toastId });
-
-      // optimistic patch (best effort)
-      qc.setQueryData<VendorProfile>(vendorKeys.detail(vendorId), (old) =>
-        old ? { ...old, verificationStatus: "Verified" } : old,
-      );
-      patchVendorInLists(qc, vendorId, { verificationStatus: "Verified" });
-
+      patchVendorInLists(qc, { vendorProfileId }, { verificationStatus: "Verified", isVerified: true });
       await qc.invalidateQueries({ queryKey: vendorKeys.all });
-      await qc.invalidateQueries({ queryKey: vendorKeys.detail(vendorId) });
     },
-    onError: (err, _vendorId, ctx) => {
-      toast.error(getErrorMessage(err), { id: ctx?.toastId });
-    },
+    onError: (err, _id, ctx) => toast.error(getErrorMessage(err), { id: ctx?.toastId }),
   });
 }
 
@@ -158,24 +172,15 @@ export function useRejectVendor() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ vendorId, reason }: { vendorId: string; reason: string }) =>
-      rejectVendor(vendorId, reason),
+    mutationFn: (vars: { vendorProfileId: string; reason: string }) =>
+      rejectVendor(vars.vendorProfileId, vars.reason),
     onMutate: () => ({ toastId: toast.loading("Rejecting vendor...") }),
     onSuccess: async (res, vars, ctx) => {
       toast.success(res?.message ?? "Vendor rejected", { id: ctx?.toastId });
-
-      // best effort patch
-      qc.setQueryData<VendorProfile>(vendorKeys.detail(vars.vendorId), (old) =>
-        old ? { ...old, verificationStatus: "NotVerified" } : old,
-      );
-      patchVendorInLists(qc, vars.vendorId, { verificationStatus: "NotVerified" });
-
+      patchVendorInLists(qc, { vendorProfileId: vars.vendorProfileId }, { verificationStatus: "NotVerified", isVerified: false });
       await qc.invalidateQueries({ queryKey: vendorKeys.all });
-      await qc.invalidateQueries({ queryKey: vendorKeys.detail(vars.vendorId) });
     },
-    onError: (err, _vars, ctx) => {
-      toast.error(getErrorMessage(err), { id: ctx?.toastId });
-    },
+    onError: (err, _vars, ctx) => toast.error(getErrorMessage(err), { id: ctx?.toastId }),
   });
 }
 
@@ -183,70 +188,74 @@ export function useSuspendVendor() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ vendorId, reason }: { vendorId: string; reason: string }) =>
-      suspendVendor(vendorId, reason),
-    onMutate: () => ({ toastId: toast.loading("Suspending store...") }),
-    onSuccess: async (res, vars, ctx) => {
-      toast.success(res?.message ?? "Store suspended", { id: ctx?.toastId });
+    mutationFn: (vars: { vendorProfileId: string; reason: string }) =>
+      suspendVendor(vars.vendorProfileId, vars.reason),
 
-      await qc.invalidateQueries({ queryKey: vendorKeys.all });
-      await qc.invalidateQueries({ queryKey: vendorKeys.detail(vars.vendorId) });
+    onMutate: async (vars) => {
+      const toastId = toast.loading("Suspending store...");
+      await qc.cancelQueries({ queryKey: vendorKeys.all });
+
+      patchVendorInLists(qc, { vendorProfileId: vars.vendorProfileId }, { isSuspended: true, suspensionReason: vars.reason });
+
+      return { toastId };
     },
-    onError: (err, _vars, ctx) => {
-      toast.error(getErrorMessage(err), { id: ctx?.toastId });
+
+    onSuccess: (res, _vars, ctx) => {
+      toast.success(res?.message ?? "Store suspended", { id: ctx?.toastId });
+    },
+
+    onError: (err, _vars, ctx) => toast.error(getErrorMessage(err), { id: ctx?.toastId }),
+
+    onSettled: async () => {
+      await qc.invalidateQueries({ queryKey: vendorKeys.all });
     },
   });
 }
 
-/* ============================================================================
- * PATCH /api/Vendor/{id}
- * ==========================================================================*/
+/** ---------------- Update vendor (PATCH by userId) ---------------- */
 export function useUpdateVendor() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (vars: { vendorId: string; payload: UpdateVendorInput }) =>
-      updateVendor(vars.vendorId, vars.payload),
+    mutationFn: (vars: { userId: string; payload: UpdateVendorInput }) =>
+      updateVendor(vars.userId, vars.payload),
 
     onMutate: async (vars) => {
       const toastId = toast.loading("Saving vendor changes...");
       await qc.cancelQueries({ queryKey: vendorKeys.all });
 
-      const prevDetail = qc.getQueryData<VendorProfile>(vendorKeys.detail(vars.vendorId));
+      const prev = qc.getQueryData<VendorProfile>(vendorKeys.detail(vars.userId));
 
-      // optimistic detail patch
-      qc.setQueryData<VendorProfile>(vendorKeys.detail(vars.vendorId), (old) =>
+      qc.setQueryData<VendorProfile>(vendorKeys.detail(vars.userId), (old) =>
         old ? { ...old, ...vars.payload } : old,
       );
-      patchVendorInLists(qc, vars.vendorId, vars.payload as any);
 
-      return { toastId, prevDetail, vendorId: vars.vendorId };
+      patchVendorInLists(qc, { userId: vars.userId }, vars.payload as any);
+
+      return { toastId, prev, userId: vars.userId };
     },
 
     onError: (err, _vars, ctx) => {
-      if (ctx?.prevDetail) qc.setQueryData(vendorKeys.detail(ctx.vendorId), ctx.prevDetail);
+      if (ctx?.prev) qc.setQueryData(vendorKeys.detail(ctx.userId), ctx.prev);
       toast.error(getErrorMessage(err), { id: ctx?.toastId });
     },
 
     onSuccess: (updated, vars, ctx) => {
       toast.success("Vendor updated", { id: ctx?.toastId });
-
-      qc.setQueryData(vendorKeys.detail(vars.vendorId), updated);
-      patchVendorInLists(qc, vars.vendorId, updated);
+      qc.setQueryData(vendorKeys.detail(vars.userId), updated);
+      patchVendorInLists(qc, { userId: vars.userId }, updated);
     },
 
     onSettled: async (_res, _err, vars) => {
-      await qc.invalidateQueries({ queryKey: vendorKeys.detail(vars.vendorId) });
+      await qc.invalidateQueries({ queryKey: vendorKeys.detail(vars.userId) });
       await qc.invalidateQueries({ queryKey: vendorKeys.lists() });
     },
   });
 }
 
-/* ============================================================================
- * Sub-resources
- * ==========================================================================*/
+/** ---------------- Sub-resources ---------------- */
 export function useVendorOrders(
-  vendorId?: string,
+  vendorProfileId?: string,
   params?: { currency?: string; pageNumber: number; pageSize: number },
 ) {
   const { data: session, status } = useSession();
@@ -254,31 +263,31 @@ export function useVendorOrders(
   const role = (session as any)?.role as string | undefined;
 
   return useQuery({
-    queryKey: vendorId && params ? vendorKeys.orders(vendorId, params) : ["vendors", "orders", "missing"],
-    enabled: !!vendorId && !!params && enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendorOrders(vendorId!, params!),
+    queryKey: vendorProfileId && params ? vendorKeys.orders(vendorProfileId, params) : ["vendors", "orders", "missing"],
+    enabled: !!vendorProfileId && !!params && enabledAdmin(status, accessToken, role),
+    queryFn: () => getVendorOrders(vendorProfileId!, params!),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useVendorKyc(vendorId?: string) {
+export function useVendorKyc(vendorProfileId?: string) {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
   const role = (session as any)?.role as string | undefined;
 
   return useQuery({
-    queryKey: vendorId ? vendorKeys.kyc(vendorId) : ["vendors", "kyc", "missing"],
-    enabled: !!vendorId && enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendorKyc(vendorId!),
+    queryKey: vendorProfileId ? vendorKeys.kyc(vendorProfileId) : ["vendors", "kyc", "missing"],
+    enabled: !!vendorProfileId && enabledAdmin(status, accessToken, role),
+    queryFn: () => getVendorKyc(vendorProfileId!),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 }
 
 export function useVendorPayouts(
-  vendorId?: string,
+  vendorProfileId?: string,
   params?: { currency?: string; pageNumber: number; pageSize: number },
 ) {
   const { data: session, status } = useSession();
@@ -286,31 +295,31 @@ export function useVendorPayouts(
   const role = (session as any)?.role as string | undefined;
 
   return useQuery({
-    queryKey: vendorId && params ? vendorKeys.payouts(vendorId, params) : ["vendors", "payouts", "missing"],
-    enabled: !!vendorId && !!params && enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendorPayouts(vendorId!, params!),
+    queryKey: vendorProfileId && params ? vendorKeys.payouts(vendorProfileId, params) : ["vendors", "payouts", "missing"],
+    enabled: !!vendorProfileId && !!params && enabledAdmin(status, accessToken, role),
+    queryFn: () => getVendorPayouts(vendorProfileId!, params!),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useVendorReviewSummary(vendorId?: string) {
+export function useVendorReviewSummary(vendorProfileId?: string) {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
   const role = (session as any)?.role as string | undefined;
 
   return useQuery({
-    queryKey: vendorId ? vendorKeys.reviewSummary(vendorId) : ["vendors", "review-summary", "missing"],
-    enabled: !!vendorId && enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendorReviewSummary(vendorId!),
+    queryKey: vendorProfileId ? vendorKeys.reviewSummary(vendorProfileId) : ["vendors", "review-summary", "missing"],
+    enabled: !!vendorProfileId && enabledAdmin(status, accessToken, role),
+    queryFn: () => getVendorReviewSummary(vendorProfileId!),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 }
 
 export function useVendorReviews(
-  vendorId?: string,
+  vendorProfileId?: string,
   params?: { pageNumber: number; pageSize: number },
 ) {
   const { data: session, status } = useSession();
@@ -318,9 +327,9 @@ export function useVendorReviews(
   const role = (session as any)?.role as string | undefined;
 
   return useQuery({
-    queryKey: vendorId && params ? vendorKeys.reviews(vendorId, params) : ["vendors", "reviews", "missing"],
-    enabled: !!vendorId && !!params && enabledAdmin(status, accessToken, role),
-    queryFn: () => getVendorReviews(vendorId!, params!),
+    queryKey: vendorProfileId && params ? vendorKeys.reviews(vendorProfileId, params) : ["vendors", "reviews", "missing"],
+    enabled: !!vendorProfileId && !!params && enabledAdmin(status, accessToken, role),
+    queryFn: () => getVendorReviews(vendorProfileId!, params!),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,

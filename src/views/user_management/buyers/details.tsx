@@ -175,7 +175,6 @@ export default function BuyerDetailsView() {
   }, [buyer?.id]);
 
   const userIdForUpdate = useMemo(() => {
-    // PATCH is /api/Users/{id}. Prefer userId if backend includes it.
     return (buyer as any)?.userId ?? buyer?.id ?? buyerId;
   }, [buyer, buyerId]);
 

@@ -4,58 +4,37 @@
 import { useMemo, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { Button } from "@/components/ui/button";
 import { Store, UserCheck, FileText, UserMinus } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { vendorColumns } from "./column";
 import { StatCard } from "@/components/cards/stat-card";
 import { FilterTabs } from "@/components/tabs/filter-tab";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
 import { useVendors } from "@/src/features/vendors/hooks";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 export default function VendorsView() {
-  const [isAddVendorModalOpen, setIsAddVendorModalOpen] = useState(false);
-
   const [page] = useState(1);
   const pageSize = 20;
 
   const vendorsQ = useVendors({ page, pageSize });
 
-  // ✅ Paginated shape
   const vendors = vendorsQ.data?.items ?? [];
   const totalCount = vendorsQ.data?.totalCount ?? vendors.length;
 
-  // Until backend provides vendor "status", we segment by verificationStatus
+  const suspendedVendors = useMemo(
+    () => vendors.filter((v) => v.isSuspended === true),
+    [vendors],
+  );
+
   const verifiedVendors = useMemo(
-    () => vendors.filter((v) => v.verificationStatus === "Verified"),
+    () => vendors.filter((v) => v.verificationStatus === "Verified" && v.isSuspended !== true),
     [vendors],
   );
 
   const pendingVendors = useMemo(
-    () => vendors.filter((v) => v.verificationStatus === "NotVerified"),
+    () => vendors.filter((v) => v.verificationStatus !== "Verified" && v.isSuspended !== true),
     [vendors],
   );
-
-  // API doesn't currently provide inactive/suspended vendor status
-  const inactiveVendors = useMemo(() => [], []);
-
-  const handleSaveVendor = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("New Vendor Saved!");
-    setIsAddVendorModalOpen(false);
-  };
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
@@ -90,134 +69,71 @@ export default function VendorsView() {
             variant="amber"
           />
           <StatCard
-            label="Inactive Vendors"
-            value={String(inactiveVendors.length)}
+            label="Suspended Vendors"
+            value={vendorsQ.isLoading ? "—" : String(suspendedVendors.length)}
             icon={UserMinus}
             variant="rose"
           />
         </div>
 
-        <div className="space-y-4">
-          <Tabs defaultValue="all" className="w-full flex flex-col">
-            <div className="flex items-center justify-between">
-              <FilterTabs
-                tabs={[
-                  {
-                    value: "all",
-                    label: "All Stores",
-                    count: totalCount, // ✅ show total
-                    variant: "default",
-                  },
-                  {
-                    value: "active",
-                    label: "Verified",
-                    count: verifiedVendors.length,
-                    variant: "emerald",
-                  },
-                  {
-                    value: "applications",
-                    label: "Pending KYC",
-                    count: pendingVendors.length,
-                    variant: "amber",
-                  },
-                ]}
-              />
-            </div>
-
-            <div>
-              {vendorsQ.isLoading ? (
-                <TableSkeleton columns={vendorColumns.length} rows={12} withToolbar={false} />
-              ) : vendorsQ.isError ? (
-                <div className="p-6 text-sm">
-                  <p className="text-red-600">
-                    Failed to load vendors:{" "}
-                    {(vendorsQ.error as any)?.response?.data?.message ??
-                      (vendorsQ.error as any)?.message ??
-                      "Unknown error"}
-                  </p>
-                  <button
-                    onClick={() => vendorsQ.refetch()}
-                    className="mt-3 text-xs font-semibold underline text-zinc-700"
-                  >
-                    Try again
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {vendorsQ.isFetching && (
-                    <div className="px-6 py-2 text-[11px] text-zinc-500 border-b border-zinc-100">
-                      Refreshing…
-                    </div>
-                  )}
-
-                  <TabsContent value="all" className="m-0">
-                    <DataTable columns={vendorColumns} data={vendors} />
-                  </TabsContent>
-
-                  <TabsContent value="active" className="m-0">
-                    <DataTable columns={vendorColumns} data={verifiedVendors} />
-                  </TabsContent>
-
-                  <TabsContent value="applications" className="m-0">
-                    <DataTable columns={vendorColumns} data={pendingVendors} />
-                  </TabsContent>
-                </>
-              )}
-            </div>
-          </Tabs>
-        </div>
-      </main>
-
-      {/* Modal stays the same */}
-      <Dialog open={isAddVendorModalOpen} onOpenChange={setIsAddVendorModalOpen}>
-        <DialogContent className="sm:max-w-125 bg-white border-zinc-200 p-0 overflow-hidden rounded-2xl shadow-2xl">
-          <div className="relative p-6 pb-5 border-b border-zinc-100 bg-zinc-50/50">
-            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-zinc-900 via-[#D4AF37] to-zinc-900" />
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-3 text-lg font-bold text-zinc-900 uppercase tracking-widest font-display">
-                <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-[#D4AF37] shadow-sm">
-                  <Store size={16} />
-                </div>
-                Create New Vendor
-              </DialogTitle>
-              <DialogDescription className="text-xs text-zinc-500 mt-2 leading-relaxed pl-11">
-                Enter the primary details for the new store...
-              </DialogDescription>
-            </DialogHeader>
+        <Tabs defaultValue="all" className="w-full flex flex-col">
+          <div className="flex items-center justify-between">
+            <FilterTabs
+              tabs={[
+                { value: "all", label: "All Stores", count: totalCount, variant: "default" },
+                { value: "verified", label: "Verified", count: verifiedVendors.length, variant: "emerald" },
+                { value: "pending", label: "Pending KYC", count: pendingVendors.length, variant: "amber" },
+                { value: "suspended", label: "Suspended", count: suspendedVendors.length, variant: "rose" },
+              ]}
+            />
           </div>
 
-          <form onSubmit={handleSaveVendor} className="p-6 space-y-5">
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="storeName"
-                className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
-              >
-                Store Name <span className="text-[#D4AF37]">*</span>
-              </Label>
-              <Input
-                id="storeName"
-                placeholder="e.g. TechHub Gadgets"
-                required
-                className="h-11 bg-zinc-50/50 border-zinc-200"
-              />
-            </div>
+          <div>
+            {vendorsQ.isLoading ? (
+              <TableSkeleton columns={vendorColumns.length} rows={12} withToolbar={false} />
+            ) : vendorsQ.isError ? (
+              <div className="p-6 text-sm">
+                <p className="text-red-600">
+                  Failed to load vendors:{" "}
+                  {(vendorsQ.error as any)?.response?.data?.message ??
+                    (vendorsQ.error as any)?.message ??
+                    "Unknown error"}
+                </p>
+                <button
+                  onClick={() => vendorsQ.refetch()}
+                  className="mt-3 text-xs font-semibold underline text-zinc-700"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : (
+              <>
+                {vendorsQ.isFetching && (
+                  <div className="px-6 py-2 text-[11px] text-zinc-500 border-b border-zinc-100">
+                    Refreshing…
+                  </div>
+                )}
 
-            <DialogFooter className="pt-6 mt-2 border-t border-zinc-100 sm:justify-between flex-row-reverse">
-              <Button type="submit" className="bg-zinc-900 text-[#D4AF37] px-8 h-11">
-                Create Vendor
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddVendorModalOpen(false)}
-                className="px-6 h-11"
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                <TabsContent value="all" className="m-0">
+                  <DataTable columns={vendorColumns} data={vendors} />
+                </TabsContent>
+
+                <TabsContent value="verified" className="m-0">
+                  <DataTable columns={vendorColumns} data={verifiedVendors} />
+                </TabsContent>
+
+                <TabsContent value="pending" className="m-0">
+                  <DataTable columns={vendorColumns} data={pendingVendors} />
+                </TabsContent>
+
+                <TabsContent value="suspended" className="m-0">
+                  <DataTable columns={vendorColumns} data={suspendedVendors} />
+                </TabsContent>
+              </>
+            )}
+          </div>
+        </Tabs>
+      </main>
     </div>
   );
 }

@@ -9,11 +9,31 @@ import type { DateRange } from "react-day-picker";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, Activity, ShoppingBag, CreditCard, ShoppingCart, Tags, Package, Store, Users } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Activity,
+  ShoppingBag,
+  CreditCard,
+  ShoppingCart,
+  Tags,
+  Package,
+  Store,
+  Users,
+} from "lucide-react";
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 import { StatCard } from "@/components/cards/stat-card";
@@ -30,13 +50,7 @@ import {
   useRecentAdminOrders,
 } from "@/src/features/analytics/hooks";
 
-function TabTrigger({
-  value,
-  label,
-}: {
-  value: string;
-  label: string;
-}) {
+function TabTrigger({ value, label }: { value: string; label: string }) {
   return (
     <TabsTrigger
       value={value}
@@ -49,12 +63,33 @@ function TabTrigger({
 
 function money(amount: number, currency: string) {
   const symbol =
-    currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
+    currency === "NGN"
+      ? "₦"
+      : currency === "ZAR"
+        ? "R"
+        : currency === "USD"
+          ? "$"
+          : "";
   return `${symbol}${Number(amount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
 function monthName(m: number) {
-  return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m - 1] ?? `M${m}`;
+  return (
+    [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ][m - 1] ?? `M${m}`
+  );
 }
 
 function computePresetRange(preset: "7d" | "30d" | "ytd"): DateRange {
@@ -76,13 +111,13 @@ function computePresetRange(preset: "7d" | "30d" | "ytd"): DateRange {
 
 export default function AnalyticsView() {
   const [currency, setCurrency] = useState("NGN");
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "ytd" | "custom">(
+    "30d",
+  );
 
-  // time controls (only what backend supports: dateFrom/dateTo)
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "ytd" | "custom">("30d");
-
-  const [date, setDate] = useState<DateRange | undefined>(computePresetRange("30d"));
-
-  // keep date in sync with presets
+  const [date, setDate] = useState<DateRange | undefined>(
+    computePresetRange("30d"),
+  );
   useEffect(() => {
     if (timeRange === "custom") return;
     setDate(computePresetRange(timeRange));
@@ -160,7 +195,10 @@ export default function AnalyticsView() {
             </span>
 
             <div className="flex gap-2 items-center">
-              <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
+              <Select
+                value={timeRange}
+                onValueChange={(v) => setTimeRange(v as any)}
+              >
                 <SelectTrigger className="w-50 h-10 bg-zinc-50 border-zinc-200 rounded-xl font-mono text-xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -191,7 +229,10 @@ export default function AnalyticsView() {
                     </Button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-auto p-0 rounded-2xl overflow-hidden border-zinc-200 shadow-xl" align="start">
+                  <PopoverContent
+                    className="w-auto p-0 rounded-2xl overflow-hidden border-zinc-200 shadow-xl"
+                    align="start"
+                  >
                     <Calendar
                       initialFocus
                       mode="range"
@@ -206,20 +247,61 @@ export default function AnalyticsView() {
             </div>
           </div>
         </div>
-
-        {/* Stat cards (backend-provided only) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Overview (Visits)" value={statsQ.isLoading ? "—" : String(stats?.visits ?? 0)} icon={Activity} variant="default" />
-          <StatCard label="Products" value={statsQ.isLoading ? "—" : String(stats?.products ?? 0)} icon={ShoppingBag} variant="indigo" />
-          <StatCard label="Revenue" value={statsQ.isLoading ? "—" : money(stats?.revenue ?? 0, stats?.currency ?? currency)} icon={CreditCard} variant="emerald" />
-          <StatCard label="Orders" value={statsQ.isLoading ? "—" : String(stats?.orders ?? 0)} icon={ShoppingCart} variant="cyan" />
-          <StatCard label="Categories" value={statsQ.isLoading ? "—" : String(stats?.categories ?? 0)} icon={Tags} variant="gold" />
-          <StatCard label="Stock Lvl" value={statsQ.isLoading ? "—" : String(stats?.stockLevel ?? 0)} icon={Package} variant="violet" />
-          <StatCard label="Vendors" value={statsQ.isLoading ? "—" : String(stats?.vendors ?? 0)} icon={Store} variant="rose" />
-          <StatCard label="Customers" value={statsQ.isLoading ? "—" : String(stats?.customers ?? 0)} icon={Users} variant="amber" />
+          <StatCard
+            label="Overview (Visits)"
+            value={statsQ.isLoading ? "—" : String(stats?.visits ?? 0)}
+            icon={Activity}
+            variant="default"
+          />
+          <StatCard
+            label="Products"
+            value={statsQ.isLoading ? "—" : String(stats?.products ?? 0)}
+            icon={ShoppingBag}
+            variant="indigo"
+          />
+          <StatCard
+            label="Revenue"
+            value={
+              statsQ.isLoading
+                ? "—"
+                : money(stats?.revenue ?? 0, stats?.currency ?? currency)
+            }
+            icon={CreditCard}
+            variant="emerald"
+          />
+          <StatCard
+            label="Orders"
+            value={statsQ.isLoading ? "—" : String(stats?.orders ?? 0)}
+            icon={ShoppingCart}
+            variant="cyan"
+          />
+          <StatCard
+            label="Categories"
+            value={statsQ.isLoading ? "—" : String(stats?.categories ?? 0)}
+            icon={Tags}
+            variant="gold"
+          />
+          <StatCard
+            label="Stock Lvl"
+            value={statsQ.isLoading ? "—" : String(stats?.stockLevel ?? 0)}
+            icon={Package}
+            variant="violet"
+          />
+          <StatCard
+            label="Vendors"
+            value={statsQ.isLoading ? "—" : String(stats?.vendors ?? 0)}
+            icon={Store}
+            variant="rose"
+          />
+          <StatCard
+            label="Customers"
+            value={statsQ.isLoading ? "—" : String(stats?.customers ?? 0)}
+            icon={Users}
+            variant="amber"
+          />
         </div>
 
-        {/* Tabs (backend-provided only) */}
         <Tabs defaultValue="overview" className="w-full flex flex-col mt-4">
           <div className="flex justify-center mb-8">
             <TabsList className="bg-zinc-200/50 p-1 h-12 rounded-full inline-flex gap-1 overflow-x-auto whitespace-nowrap">
@@ -231,7 +313,10 @@ export default function AnalyticsView() {
           </div>
 
           {/* Overview */}
-          <TabsContent value="overview" className="m-0 space-y-6 animate-in fade-in">
+          <TabsContent
+            value="overview"
+            className="m-0 space-y-6 animate-in fade-in"
+          >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
@@ -240,9 +325,13 @@ export default function AnalyticsView() {
 
                 <div className="mt-4">
                   {monthlyRevenueQ.isLoading ? (
-                    <div className="text-sm text-zinc-500">Loading revenue…</div>
+                    <div className="text-sm text-zinc-500">
+                      Loading revenue…
+                    </div>
                   ) : monthlyRevenueQ.isError ? (
-                    <div className="text-sm text-rose-600">Failed to load revenue chart.</div>
+                    <div className="text-sm text-rose-600">
+                      Failed to load revenue chart.
+                    </div>
                   ) : (
                     <RevenueTrendChart
                       symbol={currency === "NGN" ? "₦" : "R"}
@@ -261,7 +350,9 @@ export default function AnalyticsView() {
                   {topProductsQ.isLoading ? (
                     <div className="text-sm text-zinc-500">Loading…</div>
                   ) : topProductsQ.isError ? (
-                    <div className="text-sm text-rose-600">Failed to load top products.</div>
+                    <div className="text-sm text-rose-600">
+                      Failed to load top products.
+                    </div>
                   ) : (
                     (topProductsQ.data ?? []).slice(0, 6).map((p) => (
                       <div
@@ -298,7 +389,9 @@ export default function AnalyticsView() {
                 {monthlyRevenueQ.isLoading ? (
                   <div className="text-sm text-zinc-500">Loading…</div>
                 ) : monthlyRevenueQ.isError ? (
-                  <div className="text-sm text-rose-600">Failed to load revenue.</div>
+                  <div className="text-sm text-rose-600">
+                    Failed to load revenue.
+                  </div>
                 ) : (
                   <RevenueTrendChart
                     symbol={currency === "NGN" ? "₦" : "R"}
@@ -310,7 +403,10 @@ export default function AnalyticsView() {
           </TabsContent>
 
           {/* Orders */}
-          <TabsContent value="orders" className="m-0 space-y-6 animate-in fade-in">
+          <TabsContent
+            value="orders"
+            className="m-0 space-y-6 animate-in fade-in"
+          >
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1 bg-white p-8 rounded-3xl shadow-sm border border-zinc-200">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
@@ -321,7 +417,9 @@ export default function AnalyticsView() {
                   {monthlyOrdersQ.isLoading ? (
                     <div className="text-sm text-zinc-500">Loading…</div>
                   ) : monthlyOrdersQ.isError ? (
-                    <div className="text-sm text-rose-600">Failed to load order chart.</div>
+                    <div className="text-sm text-rose-600">
+                      Failed to load order chart.
+                    </div>
                   ) : (
                     <OrdersBarChart data={ordersChartData} />
                   )}
@@ -336,9 +434,13 @@ export default function AnalyticsView() {
                 </div>
 
                 {recentOrdersQ.isLoading ? (
-                  <div className="px-8 pb-8 text-sm text-zinc-500">Loading…</div>
+                  <div className="px-8 pb-8 text-sm text-zinc-500">
+                    Loading…
+                  </div>
                 ) : recentOrdersQ.isError ? (
-                  <div className="px-8 pb-8 text-sm text-rose-600">Failed to load recent orders.</div>
+                  <div className="px-8 pb-8 text-sm text-rose-600">
+                    Failed to load recent orders.
+                  </div>
                 ) : (
                   <div className="overflow-x-auto px-8 pb-8">
                     <table className="w-full text-left border-collapse">
@@ -353,11 +455,16 @@ export default function AnalyticsView() {
                       </thead>
                       <tbody className="text-sm font-medium text-zinc-600">
                         {(recentOrdersQ.data ?? []).map((o) => (
-                          <tr key={o.orderId} className="border-b border-zinc-50 last:border-0">
+                          <tr
+                            key={o.orderId}
+                            className="border-b border-zinc-50 last:border-0"
+                          >
                             <td className="py-4 pl-0 font-mono font-bold text-zinc-900">
                               {o.orderNumber}
                             </td>
-                            <td className="py-4">{o.customerName?.trim() || "—"}</td>
+                            <td className="py-4">
+                              {o.customerName?.trim() || "—"}
+                            </td>
                             <td className="py-4">{o.productName}</td>
                             <td className="py-4 font-mono font-bold text-zinc-900">
                               {money(o.amount, o.currency)}
@@ -385,7 +492,9 @@ export default function AnalyticsView() {
               {topProductsQ.isLoading ? (
                 <div className="text-sm text-zinc-500">Loading…</div>
               ) : topProductsQ.isError ? (
-                <div className="text-sm text-rose-600">Failed to load top products.</div>
+                <div className="text-sm text-rose-600">
+                  Failed to load top products.
+                </div>
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -397,10 +506,19 @@ export default function AnalyticsView() {
                   </thead>
                   <tbody className="text-sm font-medium text-zinc-600">
                     {(topProductsQ.data ?? []).map((p) => (
-                      <tr key={p.productId} className="border-b border-zinc-50 last:border-0">
-                        <td className="py-4 pl-0 font-bold text-zinc-900">{p.productName}</td>
-                        <td className="py-4 font-mono text-zinc-500">{p.sku}</td>
-                        <td className="py-4 pr-0 text-right font-mono font-bold text-zinc-900">{p.unitsSold}</td>
+                      <tr
+                        key={p.productId}
+                        className="border-b border-zinc-50 last:border-0"
+                      >
+                        <td className="py-4 pl-0 font-bold text-zinc-900">
+                          {p.productName}
+                        </td>
+                        <td className="py-4 font-mono text-zinc-500">
+                          {p.sku}
+                        </td>
+                        <td className="py-4 pr-0 text-right font-mono font-bold text-zinc-900">
+                          {p.unitsSold}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
