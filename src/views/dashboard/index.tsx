@@ -49,6 +49,8 @@ import {
   type RecentOrderRow,
   type RecentTransactionRow,
 } from "./column";
+import Link from "next/link";
+import { useNotificationCount } from "@/src/features/notifications/hooks";
 
 function dateLabel(iso?: string) {
   if (!iso) return "—";
@@ -167,6 +169,9 @@ export default function DashboardView() {
     }));
   }, [recentTxQ.data, currency]);
 
+  const countQ = useNotificationCount();
+  const unread = countQ.data?.unread ?? 0;
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       {/* HEADER */}
@@ -219,9 +224,17 @@ export default function DashboardView() {
             />
           </div> */}
 
-          <button className="h-9 w-9 flex items-center justify-center border border-zinc-200 bg-white rounded-md hover:bg-zinc-50 transition shadow-sm">
+          <Link
+            href={"admin/notifications"}
+            className="h-9 w-9 relative flex items-center justify-center border border-zinc-200 bg-white rounded-md hover:bg-zinc-50 transition shadow-sm"
+          >
             <Bell size={16} className="text-zinc-500" />
-          </button>
+            {unread > 0 && (
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[0.5rem] rounded-full h-4 w-4 flex items-center justify-center">
+                {unread}
+              </span>
+            )}
+          </Link>
 
           <div className="h-9 w-9 bg-zinc-900 text-white flex items-center justify-center font-bold text-xs rounded-md shadow-sm">
             SA
