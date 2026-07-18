@@ -288,7 +288,7 @@ export default function VendorDetailsView() {
 
   const vendorProfileId = vendor?.id;
 
-  const ordersQ = useVendorOrders(vendorProfileId, { currency: "NGN", pageNumber: 1, pageSize: 20 });
+  const ordersQ = useVendorOrders(userId, { currency: "NGN", pageNumber: 1, pageSize: 20 });
   const kycQ = useVendorKyc(vendorProfileId);
   const payoutsQ = useVendorPayouts(vendorProfileId, { currency: "NGN", pageNumber: 1, pageSize: 20 });
   const reviewSummaryQ = useVendorReviewSummary(vendorProfileId);

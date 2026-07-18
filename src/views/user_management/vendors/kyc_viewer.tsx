@@ -148,9 +148,9 @@ export function KycViewer({
                         <p className="text-xs font-bold uppercase tracking-widest text-zinc-900">
                           {doc.documentType}
                         </p>
-                        <p className="text-[11px] text-zinc-500 font-mono truncate">
+                        {/* <p className="text-[11px] text-zinc-500 font-mono truncate">
                           {doc.fileUrl}
-                        </p>
+                        </p> */}
                       </div>
 
                       <Button

@@ -244,7 +244,7 @@ export const columns: ColumnDef<BuyerListItem>[] = [
           <p className="text-xs text-zinc-800 font-medium">{b.email}</p>
 
           <p className="text-[11px] text-zinc-500 font-mono">
-            {b.countryCode} {b.phoneNumber}
+          {b.phoneNumber}
           </p>
         </div>
       );
@@ -253,10 +253,10 @@ export const columns: ColumnDef<BuyerListItem>[] = [
 
   {
     header: "Country",
-    accessorKey: "countryCode",
+    accessorKey: "country",
     cell: ({ row }) => (
       <span className="text-xs font-medium text-zinc-700">
-        {getCountryFromCode(row.original.countryCode)}
+        {row.original.country}
       </span>
     ),
   },

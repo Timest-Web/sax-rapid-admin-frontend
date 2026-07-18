@@ -22,8 +22,7 @@ export type ReviewRow = {
   createdAt: string;
   productId: string;
   isVerifiedPurchase: boolean;
-
-  // local-only
+  userAvatarUrl: string;
   status: "active" | "flagged";
   avatar: string;
 };
@@ -40,6 +39,8 @@ export type VendorRatingRow = {
   storeCity?: string | null;
   storeState?: string | null;
   email: string;
+  
+
 };
 
 export function makeReviewColumns(opts: {
@@ -47,13 +48,15 @@ export function makeReviewColumns(opts: {
 }): ColumnDef<ReviewRow>[] {
   return [
     {
-      header: "Customer Identity",
+      header: "Customer",
       accessorKey: "userName",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-200">
-            {row.original.avatar}
-          </div>
+          <img
+            src={row.original.userAvatarUrl}
+            alt={row.original.userName}
+            className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-200"
+          />
           <div>
             <p className="font-bold text-zinc-900 font-display">
               {row.original.userName}
