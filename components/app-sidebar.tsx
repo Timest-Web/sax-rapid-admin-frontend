@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   BarChart3,
@@ -23,6 +24,8 @@ import {
   Bell,
   Plug2,
   ScrollText,
+  LogOut,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +39,13 @@ import {
   SidebarMenuButton,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Image from "next/image";
 import logo from "@/public/images/sax_logo.png";
 
@@ -97,6 +107,10 @@ const NAV = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" }); // adjust to your actual sign-in route
+  };
 
   return (
     <Sidebar
@@ -168,15 +182,44 @@ export function AppSidebar() {
 
       {/* FOOTER */}
       <SidebarFooter className="border-t border-white/10 p-4 bg-sax-black">
-        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
-          <div className="h-8 w-8 bg-zinc-800 flex items-center justify-center text-xs font-bold text-sax-gold">
-            SA
-          </div>
-          <div className="text-left group-data-[collapsible=icon]:hidden">
-            <p className="text-xs text-white font-medium">Super Admin</p>
-            <p className="text-[10px] text-zinc-500 font-mono">ID: 8829-X</p>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="flex items-center gap-3 w-full rounded-sm px-1 py-1 hover:bg-white/5 transition-colors group-data-[collapsible=icon]:justify-center"
+              title="Account"
+            >
+              <div className="h-8 w-8 shrink-0 bg-zinc-800 flex items-center justify-center text-xs font-bold text-sax-gold">
+                SA
+              </div>
+              <div className="text-left flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
+                <p className="text-xs text-white font-medium truncate">
+                  Super Admin
+                </p>
+                <p className="text-[10px] text-zinc-500 font-mono">
+                  ID: 8829-X
+                </p>
+              </div>
+              <ChevronsUpDown
+                size={14}
+                className="text-zinc-600 group-data-[collapsible=icon]:hidden"
+              />
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            side="top"
+            align="start"
+            className="w-56 bg-sax-black border-white/10 text-zinc-300"
+          >
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-400 focus:text-red-400 focus:bg-white/5 cursor-pointer"
+            >
+              <LogOut size={14} className="mr-2" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   );

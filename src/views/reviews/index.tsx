@@ -36,6 +36,7 @@ export default function ReviewsView() {
       createdAt: r.createdAt,
       productId: r.productId,
       isVerifiedPurchase: r.isVerifiedPurchase,
+      userAvatarUrl: r.userAvatarUrl ?? "",
       status: r.isFlagged ? "flagged" : "active",
       avatar: initials(r.userName),
     }));
@@ -121,36 +122,31 @@ export default function ReviewsView() {
           </div>
 
           <TabsContent value="reviews">
-            
-              <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-                <h3 className="font-bold text-sm text-zinc-700">
-                  Moderation Queue
-                </h3>
-                <div className="text-xs text-zinc-500 flex gap-2 items-center">
-                  <ShieldCheck size={14} className="text-emerald-600" />
-                  <span>Auto-moderation is active</span>
-                </div>
+            <div className="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+              <h3 className="font-bold text-sm text-zinc-700">Moderation Queue</h3>
+              <div className="text-xs text-zinc-500 flex gap-2 items-center">
+                <ShieldCheck size={14} className="text-emerald-600" />
+                <span>Auto-moderation is active</span>
               </div>
+            </div>
 
-              {recentQ.isLoading ? (
-               <TableSkeleton columns={6} rows={10} withToolbar />
-              ) : recentQ.isError ? (
-                <div className="p-6 text-sm text-rose-600">Failed to load reviews.</div>
-              ) : (
-                <DataTable columns={reviewColumns} data={reviews} />
-              )}
-
+            {recentQ.isLoading ? (
+              <TableSkeleton columns={6} rows={10} withToolbar />
+            ) : recentQ.isError ? (
+              <div className="p-6 text-sm text-rose-600">Failed to load reviews.</div>
+            ) : (
+              <DataTable columns={reviewColumns} data={reviews} />
+            )}
           </TabsContent>
 
           <TabsContent value="vendors">
-           
-              {vendorsQ.isLoading ? (
-                <div className="p-6 text-sm text-zinc-500">Loading vendor ratings…</div>
-              ) : vendorsQ.isError ? (
-                <div className="p-6 text-sm text-rose-600">Failed to load vendor ratings.</div>
-              ) : (
-                <DataTable columns={vendorRatingColumns} data={vendorRows} />
-              )}
+            {vendorsQ.isLoading ? (
+              <div className="p-6 text-sm text-zinc-500">Loading vendor ratings…</div>
+            ) : vendorsQ.isError ? (
+              <div className="p-6 text-sm text-rose-600">Failed to load vendor ratings.</div>
+            ) : (
+              <DataTable columns={vendorRatingColumns} data={vendorRows} />
+            )}
           </TabsContent>
         </Tabs>
       </main>

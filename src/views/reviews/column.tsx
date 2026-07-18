@@ -39,8 +39,6 @@ export type VendorRatingRow = {
   storeCity?: string | null;
   storeState?: string | null;
   email: string;
-  
-
 };
 
 export function makeReviewColumns(opts: {
@@ -52,11 +50,17 @@ export function makeReviewColumns(opts: {
       accessorKey: "userName",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <img
-            src={row.original.userAvatarUrl}
-            alt={row.original.userName}
-            className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-200"
-          />
+          {row.original.userAvatarUrl ? (
+            <img
+              src={row.original.userAvatarUrl}
+              alt={row.original.userName}
+              className="h-10 w-10 rounded-full object-cover bg-zinc-100 border border-zinc-200"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-200">
+              {row.original.avatar}
+            </div>
+          )}
           <div>
             <p className="font-bold text-zinc-900 font-display">
               {row.original.userName}
@@ -112,28 +116,6 @@ export function makeReviewColumns(opts: {
         </div>
       ),
     },
-    //     {
-    //       header: () => <div className="text-center">Status</div>,
-    //       accessorKey: "status",
-    //          cell: ({ row }) => (
-    //   <StatusBadge
-    //     status={row.original.status}
-    //     styles={{
-    //       Pending: "bg-amber-50 text-amber-700 border-amber-200",
-
-    //       Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-
-    //       Active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-
-    //       Failed: "bg-rose-50 text-rose-700 border-rose-200",
-
-    //       Rejected: "bg-rose-50 text-rose-700 border-rose-200",
-
-    //       "On Hold": "bg-blue-50 text-blue-700 border-blue-200",
-    //     }}
-    //   />
-    // ),
-    //     },
     {
       id: "actions",
       cell: ({ row }) => (
@@ -145,10 +127,7 @@ export function makeReviewColumns(opts: {
               </button>
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent
-              align="end"
-              className="w-52 bg-white border-zinc-200"
-            >
+            <DropdownMenuContent align="end" className="w-52 bg-white border-zinc-200">
               <DropdownMenuLabel className="text-xs font-bold text-black uppercase tracking-wider">
                 Moderation
               </DropdownMenuLabel>
