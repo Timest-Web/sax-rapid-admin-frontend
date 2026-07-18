@@ -101,7 +101,7 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/login" }); // adjust to your actual sign-in route
+    signOut({ callbackUrl: "/sign-in" }); // adjust to your actual sign-in route
   };
 
   return (
