@@ -25,6 +25,7 @@ import {
   Plug2,
   ScrollText,
   LogOut,
+  Shield,
 } from "lucide-react";
 import {
   Sidebar,
@@ -59,7 +60,7 @@ const NAV = [
       //   icon: ClipboardList,
       //   href: "/admin/vendor-applications",
       // },
-      // { title: "Roles & Perms", icon: Shield, href: "/admin/roles" },
+      { title: "Roles & Perms", icon: Shield, href: "/admin/roles" },
     ],
   },
   {
@@ -101,7 +102,7 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   const handleLogout = () => {
-    signOut({ callbackUrl: "/sign-in" }); // adjust to your actual sign-in route
+    signOut({ callbackUrl: "/sign-in" }); 
   };
 
   return (

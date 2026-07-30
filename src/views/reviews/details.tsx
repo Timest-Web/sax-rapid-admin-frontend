@@ -3,14 +3,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/cards/status-badge";
 
-import { Star, ArrowLeft, Flag, User, Package } from "lucide-react";
+import { Star, ArrowLeft, Flag, User, Package, Store } from "lucide-react";
 
 import { useReview, useFlagReview } from "@/src/features/reviews/hooks";
 import { DetailsPageSkeleton } from "@/components/skeletons/details";
@@ -48,7 +48,7 @@ export default function ReviewDetailsView() {
   const reviewQ = useReview(reviewId);
   const flagM = useFlagReview();
 
-  // local UI status if backend detail doesn't provide isFlagged
+  // local UI status if backend doesn't provide isFlagged
   const [flaggedLocal, setFlaggedLocal] = useState(false);
 
   const review = reviewQ.data;
@@ -85,6 +85,14 @@ export default function ReviewDetailsView() {
     );
   }
 
+  const productTitle =
+    (review.productName && review.productName.trim()) ||
+    (review.productSlug && review.productSlug.trim()) ||
+    "—";
+
+  // keep your existing product route by ID
+  const productHref = `/admin/products/${review.productId}`;
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans pb-10">
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
@@ -93,7 +101,10 @@ export default function ReviewDetailsView() {
           <div className="h-6 w-px bg-zinc-200" />
 
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-400">
-            <Link href="/admin/reviews" className="hover:text-zinc-900 transition-colors flex items-center gap-1">
+            <Link
+              href="/admin/reviews"
+              className="hover:text-zinc-900 transition-colors flex items-center gap-1"
+            >
               <ArrowLeft size={14} /> REVIEWS
             </Link>
             <span>/</span>
@@ -121,34 +132,41 @@ export default function ReviewDetailsView() {
       </header>
 
       <main className="p-6 max-w-5xl mx-auto space-y-6 mt-4">
-        {/* Top cards */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* User */}
+          {/* User card */}
           <div className="lg:col-span-4 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center gap-4">
               <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200 flex items-center justify-center">
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt={review.userName} fill className="object-cover" />
+                  <img src={avatarUrl} alt={review.userName}/>
                 ) : (
                   <User className="text-zinc-400" size={22} />
                 )}
               </div>
-              <div>
-                <div className="font-bold text-zinc-900">{review.userName}</div>
-                <div className="text-[10px] font-mono text-zinc-500">{review.userId}</div>
+
+              <div className="min-w-0">
+                <div className="font-bold text-zinc-900 truncate">{review.userName}</div>
+                <div className="text-[10px] font-mono text-zinc-500 truncate">
+                  {review.userId}
+                </div>
               </div>
             </div>
 
             <div className="mt-5 pt-5 border-t border-zinc-100 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Country</span>
-                <span className="text-xs font-mono text-zinc-900">
-                  {(review.userCountry || "—")}{review.userCountryCode ? ` (${review.userCountryCode})` : ""}
+              <div className="flex justify-between gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  Country
+                </span>
+                <span className="text-xs font-mono text-zinc-900 text-right">
+                  {(review.userCountry || "—")}
+                  {review.userCountryCode ? ` (${review.userCountryCode})` : ""}
                 </span>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Verified purchase</span>
+              <div className="flex justify-between gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  Verified purchase
+                </span>
                 <span className="text-xs font-mono text-zinc-900">
                   {review.isVerifiedPurchase ? "Yes" : "No"}
                 </span>
@@ -156,7 +174,7 @@ export default function ReviewDetailsView() {
             </div>
           </div>
 
-          {/* Review */}
+          {/* Review card */}
           <div className="lg:col-span-8 bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-start justify-between gap-6">
               <div className="space-y-2">
@@ -181,15 +199,42 @@ export default function ReviewDetailsView() {
               </p>
             </div>
 
-            <div className="mt-5 pt-5 border-t border-zinc-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-zinc-600">
-                <Package size={14} className="text-zinc-400" />
-                Product ID:
-                <span className="font-mono font-bold text-zinc-900">{review.productId}</span>
+            {/* Product/Vendor */}
+            <div className="mt-5 pt-5 border-t border-zinc-100 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                {review.vendorImageUrl ? (
+                  <div className="relative h-10 w-10 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                    <Image
+                      src={review.vendorImageUrl}
+                      alt={review.vendorName ?? "Vendor"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-10 w-10 rounded-lg bg-zinc-100 border border-zinc-200 flex items-center justify-center shrink-0">
+                    <Store size={14} className="text-zinc-400" />
+                  </div>
+                )}
+
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-zinc-900 truncate">
+                    {productTitle}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono truncate">
+                    Vendor: {review.vendorName ?? "—"}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 font-mono truncate">
+                    Product ID: {review.productId}
+                  </div>
+                </div>
               </div>
 
-              {/* If you have a product details route */}
-              <Link href={`/admin/products/${review.productId}`} className="text-xs font-bold uppercase tracking-widest text-blue-600 hover:underline">
+              <Link
+                href={productHref}
+                className="shrink-0 text-xs font-bold uppercase tracking-widest text-blue-600 hover:underline inline-flex items-center gap-2"
+              >
+                <Package size={14} />
                 View Product
               </Link>
             </div>

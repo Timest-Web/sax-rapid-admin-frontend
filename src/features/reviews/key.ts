@@ -1,15 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const reviewKeys = {
-  all: ["reviews"] as const,
+  all: ["admin-reviews"] as const,
 
   stats: () => [...reviewKeys.all, "stats"] as const,
 
-  recent: () => [...reviewKeys.all, "recent"] as const,
-  recentList: (q: Record<string, any>) => [...reviewKeys.recent(), q] as const,
+  recentBase: () => [...reviewKeys.all, "recent"] as const,
+  recentList: (params: { page: number; pageSize: number }) =>
+    [...reviewKeys.recentBase(), params] as const,
 
-  ratings: () => [...reviewKeys.all, "ratings"] as const,
-  ratingsList: (q: Record<string, any>) => [...reviewKeys.ratings(), q] as const,
-   detail: (reviewId: string) => [...reviewKeys.all, "detail", reviewId] as const,
+  ratingsBase: () => [...reviewKeys.all, "ratings"] as const,
+  ratingsList: (params: { page: number; pageSize: number }) =>
+    [...reviewKeys.ratingsBase(), params] as const,
+
+  detail: (reviewId: string) => [...reviewKeys.all, "detail", reviewId] as const,
 };
-
-

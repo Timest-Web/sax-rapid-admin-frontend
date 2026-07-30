@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { StatusBadge } from "@/components/cards/status-badge";
-import { MoreHorizontal, Eye, Star, Flag, Store, Calendar } from "lucide-react";
+import { MoreHorizontal, Eye, Star, Flag, Store, Calendar, Package } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,15 +16,25 @@ import Link from "next/link";
 
 export type ReviewRow = {
   id: string;
+
   userName: string;
+  userAvatarUrl: string;
+  avatar: string;
+
   rating: number;
   comment: string;
   createdAt: string;
+
   productId: string;
+  productName: string;
+  productSlug: string;
+
+  vendorName: string | null;
+  vendorImageUrl: string | null;
+
   isVerifiedPurchase: boolean;
-  userAvatarUrl: string;
+
   status: "active" | "flagged";
-  avatar: string;
 };
 
 export type VendorRatingRow = {
@@ -61,23 +71,25 @@ export function makeReviewColumns(opts: {
               {row.original.avatar}
             </div>
           )}
+
           <div>
             <p className="font-bold text-zinc-900 font-display">
               {row.original.userName}
             </p>
             <div className="flex items-center gap-1 text-[10px] text-zinc-500 font-mono">
-              <Calendar size={10} />{" "}
+              <Calendar size={10} />
               {new Date(row.original.createdAt).toLocaleString()}
             </div>
           </div>
         </div>
       ),
     },
+
     {
-      header: "Review Content",
+      header: "Review",
       accessorKey: "rating",
       cell: ({ row }) => (
-        <div className="flex flex-col gap-1 max-w-[320px]">
+        <div className="flex flex-col gap-1 max-w-[340px]">
           <div className="flex items-center gap-1 text-xs font-bold text-zinc-900">
             <Star
               size={12}
@@ -88,34 +100,76 @@ export function makeReviewColumns(opts: {
                   : "text-zinc-400",
               )}
             />
-            <span>{row.original.rating.toFixed(1)} Rating</span>
+            <span>{Number(row.original.rating ?? 0).toFixed(1)} Rating</span>
+
             {row.original.isVerifiedPurchase && (
               <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
                 Verified
               </span>
             )}
           </div>
+
           <p className="text-[10px] text-zinc-500 truncate font-sans">
-            &quot;{row.original.comment}&quot;
+            &quot;{row.original.comment || "—"}&quot;
           </p>
         </div>
       ),
     },
+
     {
-      header: "Product",
+      header: "Product / Vendor",
       accessorKey: "productId",
-      cell: ({ row }) => (
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1 font-bold text-zinc-900 text-xs">
-            <Store size={12} className="text-zinc-400" />
-            <span className="text-zinc-500">Vendor:</span> —
+      cell: ({ row }) => {
+        const r = row.original;
+
+        // keep your existing route (ID) so you don't break navigation
+        const productHref = `/admin/products/${r.productId}`;
+
+        const productTitle =
+          (r.productName && r.productName.trim()) ||
+          (r.productSlug && r.productSlug.trim()) ||
+          "—";
+
+        return (
+          <div className="flex items-center gap-3">
+            {r.vendorImageUrl ? (
+              <img
+                src={r.vendorImageUrl}
+                alt={r.vendorName ?? "Vendor"}
+                className="h-10 w-10 rounded-lg object-cover bg-zinc-100 border border-zinc-200"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-zinc-100 border border-zinc-200 flex items-center justify-center">
+                <Store size={14} className="text-zinc-400" />
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-zinc-900 truncate">
+                {productTitle}
+              </div>
+
+              <div className="text-[10px] text-zinc-500 font-mono truncate">
+                Vendor: {r.vendorName ?? "—"}
+              </div>
+
+              <div className="text-[10px] text-zinc-400 font-mono truncate">
+                Product ID: {r.productId}
+              </div>
+
+              <Link
+                href={productHref}
+                className="inline-flex items-center gap-1 mt-1 text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:underline"
+              >
+                <Package size={10} />
+                View Product
+              </Link>
+            </div>
           </div>
-          <p className="text-[10px] text-zinc-400 font-mono pl-4">
-            Product ID: {row.original.productId}
-          </p>
-        </div>
-      ),
+        );
+      },
     },
+
     {
       id: "actions",
       cell: ({ row }) => (
@@ -132,6 +186,7 @@ export function makeReviewColumns(opts: {
                 Moderation
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zinc-100" />
+
               <Link href={`/admin/reviews/${row.original.id}`}>
                 <DropdownMenuItem className="text-xs text-black cursor-pointer flex items-center w-full focus:bg-zinc-50">
                   <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" />

@@ -7,7 +7,16 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/src/lib/get-error";
 
 import { reviewKeys } from "./key";
-import { flagReview, getRecentReviews, getReviewById, getReviewStats, getVendorRatings, type Paginated, type RecentReviewItem } from "./api";
+import {
+  flagReview,
+  getRecentReviews,
+  getReviewById,
+  getReviewStats,
+  getVendorRatings,
+  type Paginated,
+  type RecentReviewItem,
+  type ReviewDetails,
+} from "./api";
 
 export function useReviewStats() {
   const { data: session, status } = useSession();
@@ -51,10 +60,6 @@ export function useVendorRatings(page = 1, pageSize = 20) {
   });
 }
 
-/**
- * Backend does not return "flagged" on review rows,
- * so we store a local `isFlagged` field in cache and derive status from it.
- */
 type RecentReviewWithLocalFlag = RecentReviewItem & { isFlagged?: boolean };
 
 export function useFlagReview() {
@@ -66,13 +71,16 @@ export function useFlagReview() {
     onMutate: async (reviewId) => {
       const toastId = toast.loading("Flagging review...");
 
-      await qc.cancelQueries({ queryKey: reviewKeys.recent() });
+      // cancel any recent lists (all pages)
+      await qc.cancelQueries({ queryKey: reviewKeys.recentBase() });
 
-      const prev = qc.getQueriesData({ queryKey: reviewKeys.recent() });
+      const prevRecent = qc.getQueriesData({
+        queryKey: reviewKeys.recentBase(),
+      });
 
-      // optimistic: set isFlagged=true across all cached recent lists
+      // optimistic: set isFlagged=true across cached recent lists
       qc.setQueriesData(
-        { queryKey: reviewKeys.recent() },
+        { queryKey: reviewKeys.recentBase() },
         (old: Paginated<RecentReviewWithLocalFlag> | undefined) => {
           if (!old) return old;
           return {
@@ -84,11 +92,17 @@ export function useFlagReview() {
         },
       );
 
-      return { toastId, prev };
+      // optimistic: update detail cache if present
+      qc.setQueryData(reviewKeys.detail(reviewId), (old: ReviewDetails | undefined) => {
+        if (!old) return old;
+        return { ...old, isFlagged: true };
+      });
+
+      return { toastId, prevRecent };
     },
 
     onError: (err, _reviewId, ctx) => {
-      ctx?.prev?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+      ctx?.prevRecent?.forEach(([key, data]: any) => qc.setQueryData(key, data));
       toast.error(getErrorMessage(err), { id: ctx?.toastId });
     },
 
@@ -97,9 +111,8 @@ export function useFlagReview() {
     },
 
     onSettled: async () => {
-      // refresh stats (flagged count) and list from server
       await qc.invalidateQueries({ queryKey: reviewKeys.stats() });
-      await qc.invalidateQueries({ queryKey: reviewKeys.recent() });
+      await qc.invalidateQueries({ queryKey: reviewKeys.recentBase() });
     },
   });
 }
@@ -110,7 +123,9 @@ export function useReview(reviewId?: string) {
   const role = (session as any)?.role as string | undefined;
 
   return useQuery({
-    queryKey: reviewId ? reviewKeys.detail(reviewId) : ["admin-reviews", "detail", "missing"],
+    queryKey: reviewId
+      ? reviewKeys.detail(reviewId)
+      : ["admin-reviews", "detail", "missing"],
     enabled: !!reviewId && status === "authenticated" && !!accessToken && role === "Admin",
     queryFn: () => getReviewById(reviewId!),
     staleTime: 60_000,

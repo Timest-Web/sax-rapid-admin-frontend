@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
@@ -9,12 +8,28 @@ import { Star, AlertTriangle, MessageSquare, ShieldCheck } from "lucide-react";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { StatCard } from "@/components/cards/stat-card";
 
-import { makeReviewColumns, vendorRatingColumns, type ReviewRow, type VendorRatingRow } from "./column";
-import { useFlagReview, useRecentReviews, useReviewStats, useVendorRatings } from "@/src/features/reviews/hooks";
+import {
+  makeReviewColumns,
+  vendorRatingColumns,
+  type ReviewRow,
+  type VendorRatingRow,
+} from "./column";
+
+import {
+  useFlagReview,
+  useRecentReviews,
+  useReviewStats,
+  useVendorRatings,
+} from "@/src/features/reviews/hooks";
+
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+import type { RecentReviewItem } from "@/src/features/reviews/api";
 
 function initials(name: string) {
-  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   const a = parts[0]?.[0] ?? "U";
   const b = parts[parts.length - 1]?.[0] ?? "R";
   return (a + b).toUpperCase();
@@ -27,18 +42,29 @@ export default function ReviewsView() {
   const flagM = useFlagReview();
 
   const reviews: ReviewRow[] = useMemo(() => {
-    const items: any[] = recentQ.data?.items ?? [];
+    const items: RecentReviewItem[] = recentQ.data?.items ?? [];
+
     return items.map((r) => ({
       id: r.id,
+
       userName: r.userName,
+      userAvatarUrl: r.userAvatarUrl ?? "",
+      avatar: initials(r.userName),
+
       rating: r.rating,
       comment: r.comment,
       createdAt: r.createdAt,
+
       productId: r.productId,
+      productName: r.productName,
+      productSlug: r.productSlug,
+
+      vendorName: r.vendorName,
+      vendorImageUrl: r.vendorImageUrl,
+
       isVerifiedPurchase: r.isVerifiedPurchase,
-      userAvatarUrl: r.userAvatarUrl ?? "",
+
       status: r.isFlagged ? "flagged" : "active",
-      avatar: initials(r.userName),
     }));
   }, [recentQ.data]);
 

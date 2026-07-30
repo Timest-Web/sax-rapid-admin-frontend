@@ -104,7 +104,7 @@ export default function AdminLoginView({
                   Password
                 </label>
                 <Link
-                  href="#"
+                  href="/forgot-password"
                   className="text-[10px] text-sax-gold hover:text-sax-gold-dim transition-colors font-medium"
                 >
                   Forgot Password?

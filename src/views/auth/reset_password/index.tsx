@@ -1,234 +1,303 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Loader2, LockKeyhole, CheckCircle2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  LockKeyhole,
+  CheckCircle2,
+  Mail,
+  KeyRound,
+  ArrowRight,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import logo from "@/public/images/sax_logo.png";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function ResetPasswordView() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const emailFromQuery = searchParams.get("email") ?? "";
 
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(emailFromQuery);
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError(null);
 
-    if (!token) {
-      setError("Invalid or missing reset token.");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
+    if (!email) return setError("Email is required.");
+    if (!otp) return setError("OTP is required.");
+    if (newPassword.length < 8)
+      return setError("Password must be at least 8 characters.");
+    if (newPassword !== confirmPassword)
+      return setError("Passwords do not match.");
 
     setIsLoading(true);
 
-    // Replace with real API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch(`${API_BASE}/api/Auth/reset-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "*/*",
+        },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
 
-    setIsLoading(false);
-    setIsSuccess(true);
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.success) {
+        setError(
+          data?.message ?? "Reset failed. Please check your OTP and try again."
+        );
+        return;
+      }
+
+      setIsSuccess(true);
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-zinc-50">
-      {/* Background */}
-      <div className="absolute inset-0">
-        <div className="absolute left-1/2 top-0 h-105 w-175 -translate-x-1/2 rounded-full bg-sax-gold/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-75 w-75 rounded-full bg-amber-100/40 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-65 w-65 rounded-full bg-zinc-200/40 blur-3xl" />
-      </div>
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-black overflow-hidden selection:bg-sax-gold selection:text-sax-black font-sans">
+      <div className="relative z-10 w-full max-w-105 p-6">
+        {/* Header (match sign-in) */}
+        <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <Image src={logo} alt="Logo" width={150} height={50} />
+          <h1 className="font-display mt-4 text-3xl font-bold text-white tracking-tight text-center">
+            Reset Password
+          </h1>
+          <p className="mt-2 text-sm text-zinc-400 text-center">
+            Enter the OTP sent to your email and choose a new password.
+          </p>
+        </div>
 
-      <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          {/* Header */}
-          <div className="mb-8 text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-lg shadow-black/5 backdrop-blur-xl">
-                <Image
-                  src={logo}
-                  alt="Sax Logo"
-                  className="h-10 w-auto"
-                  priority
-                />
+        {/* Card (match sign-in) */}
+        <div className="backdrop-blur-xl bg-sax-zinc/30 border border-white/10 rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 delay-150">
+          {isSuccess ? (
+            <div className="space-y-5 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 border border-green-500/20">
+                <CheckCircle2 className="h-6 w-6 text-green-400" />
               </div>
-            </div>
 
-            {/* <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Secure Password Reset
-            </div> */}
+              <div>
+                <h2 className="text-xl font-display font-bold text-white">
+                  Password updated
+                </h2>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Your password has been reset successfully. You can now sign
+                  in.
+                </p>
+              </div>
 
-            <h1 className="mt-5 text-3xl font-semibold tracking-tight text-zinc-900">
-              Reset password
-            </h1>
-            <p className="mt-2 text-sm text-zinc-500">
-              Enter and confirm your new password below.
-            </p>
-          </div>
+              <Link
+                href="/sign-in"
+                className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-sax-gold text-sax-black font-display font-bold transition-all hover:bg-sax-gold-dim"
+              >
+                Go to admin login
+              </Link>
 
-          {/* Card */}
-          <div className="rounded-2xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-7">
-            {isSuccess ? (
-              <div className="space-y-4 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle2 className="h-6 w-6 text-green-600" />
-                </div>
-
-                <div>
-                  <h2 className="text-lg font-semibold text-zinc-900">
-                    Password updated
-                  </h2>
-                  <p className="mt-2 text-sm text-zinc-500">
-                    Your password has been reset successfully. You can now sign
-                    in with your new password.
-                  </p>
-                </div>
-
+              <div className="pt-2">
                 <Link
-                  href="/sign-in"
-                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white shadow-lg shadow-zinc-900/10 transition-all hover:bg-zinc-800"
+                  href="/forgot-password"
+                  className="text-sm text-zinc-300 hover:text-white transition-colors"
                 >
-                  Go to sign in
+                  Need a new OTP?
                 </Link>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* New password */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-zinc-700"
-                  >
-                    New password
-                  </label>
-
-                  <div className="relative">
-                    <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                    <input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter new password"
-                      required
-                      autoComplete="new-password"
-                      className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-11 text-sm text-zinc-900 placeholder:text-zinc-400 shadow-sm outline-none transition-all focus:border-sax-gold focus:ring-4 focus:ring-sax-gold/15"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 transition-colors hover:text-zinc-600"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm password */}
-                <div className="space-y-1.5">
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-sm font-medium text-zinc-700"
-                  >
-                    Confirm new password
-                  </label>
-
-                  <div className="relative">
-                    <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                    <input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm new password"
-                      required
-                      autoComplete="new-password"
-                      className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-11 text-sm text-zinc-900 placeholder:text-zinc-400 shadow-sm outline-none transition-all focus:border-sax-gold focus:ring-4 focus:ring-sax-gold/15"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 transition-colors hover:text-zinc-600"
-                      aria-label={
-                        showConfirmPassword
-                          ? "Hide confirm password"
-                          : "Show confirm password"
-                      }
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {error && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                    {error}
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-zinc-900 text-sm font-semibold text-white shadow-lg shadow-zinc-900/10 transition-all hover:-translate-y-0.5 hover:bg-zinc-800 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 font-mono ml-1"
                 >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Updating password...
-                    </span>
-                  ) : (
-                    "Reset password"
-                  )}
-                </button>
-
-                {/* {!token && (
-                  <p className="text-sm text-amber-600">
-                    No reset token found in the URL.
-                  </p>
-                )} */}
-
-                <div className="border-t border-zinc-100 pt-4">
-                  <Link
-                    href="/sign-in"
-                    className="text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900"
-                  >
-                    Back to sign in
-                  </Link>
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-4 w-4 text-zinc-500 group-focus-within:text-sax-gold transition-colors duration-300" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@platform.com"
+                    required
+                    className="w-full pl-10 pr-4 h-12 bg-sax-black/50 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-sax-gold/50 focus:border-sax-gold/50 transition-all font-sans text-sm"
+                  />
                 </div>
-              </form>
-            )}
-          </div>
+              </div>
+
+              {/* OTP */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="otp"
+                  className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 font-mono ml-1"
+                >
+                  OTP Code
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <KeyRound className="h-4 w-4 text-zinc-500 group-focus-within:text-sax-gold transition-colors duration-300" />
+                  </div>
+                  <input
+                    id="otp"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter the 6-digit code"
+                    required
+                    className="w-full pl-10 pr-4 h-12 bg-sax-black/50 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-sax-gold/50 focus:border-sax-gold/50 transition-all font-sans text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="newPassword"
+                  className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 font-mono ml-1"
+                >
+                  New Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LockKeyhole className="h-4 w-4 text-zinc-500 group-focus-within:text-sax-gold transition-colors duration-300" />
+                  </div>
+
+                  <input
+                    id="newPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    required
+                    autoComplete="new-password"
+                    className="w-full pl-10 pr-10 h-12 bg-sax-black/50 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-sax-gold/50 focus:border-sax-gold/50 transition-all font-sans text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="confirmPassword"
+                  className="text-[10px] uppercase font-bold tracking-widest text-zinc-400 font-mono ml-1"
+                >
+                  Confirm Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-zinc-500 group-focus-within:text-sax-gold transition-colors duration-300" />
+                  </div>
+
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    required
+                    autoComplete="new-password"
+                    className="w-full pl-10 pr-10 h-12 bg-sax-black/50 border border-white/10 rounded-lg text-white placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-sax-gold/50 focus:border-sax-gold/50 transition-all font-sans text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                    aria-label={
+                      showConfirmPassword
+                        ? "Hide confirm password"
+                        : "Show confirm password"
+                    }
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full h-12 bg-sax-gold text-sax-black font-display font-bold rounded-lg overflow-hidden transition-all hover:bg-sax-gold-dim disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Updating...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 transition-transform group-hover:translate-x-1">
+                    <span>Reset Password</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                )}
+              </button>
+
+              <div className="border-t border-white/10 pt-4 flex items-center justify-between">
+                <Link
+                  href="/sign-in"
+                  className="text-xs text-zinc-300 hover:text-white transition-colors"
+                >
+                  Back to login
+                </Link>
+
+                <Link
+                  href={`/forgot-password${
+                    email ? `?email=${encodeURIComponent(email)}` : ""
+                  }`}
+                  className="text-xs text-sax-gold hover:text-sax-gold-dim transition-colors"
+                >
+                  Resend OTP
+                </Link>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>

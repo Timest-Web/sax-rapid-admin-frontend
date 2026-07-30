@@ -25,15 +25,31 @@ export type Paginated<T> = {
 
 export type RecentReviewItem = {
   id: string;
+
   productId: string;
+  productName: string;
+  productSlug: string;
+
   userId: string;
   userName: string;
   userAvatarUrl: string | null;
+
   rating: number;
   comment: string;
+
+  vendorName: string | null;
+  vendorImageUrl: string | null;
+
   isVerifiedPurchase: boolean;
+
+  userCountry: string | null;
+  userCountryCode: string | null;
+
   createdAt: string;
   updatedAt: string | null;
+
+  // local-only (optimistic flagging)
+  isFlagged?: boolean;
 };
 
 export type VendorRatingItem = {
@@ -58,6 +74,36 @@ export type VendorRatingItem = {
   createdAt: string;
 };
 
+export type ReviewDetails = {
+  id: string;
+
+  productId: string;
+  productName: string;
+  productSlug: string;
+
+  userId: string;
+  userName: string;
+  userAvatarUrl: string | null;
+
+  rating: number;
+  comment: string;
+
+  vendorName: string | null;
+  vendorImageUrl: string | null;
+
+  isVerifiedPurchase: boolean;
+
+  userCountry: string | null;
+  userCountryCode: string | null;
+
+  createdAt: string;
+  updatedAt: string | null;
+
+  isFlagged?: boolean;
+};
+
+export type ApiResponse<T> = { success: boolean; message: string; data: T };
+
 export async function getReviewStats() {
   const res = await apiClient.get<MaybeWrapped<ReviewStats>>("/api/Reviews/stats");
   return unwrap(res.data);
@@ -80,33 +126,11 @@ export async function getVendorRatings(page = 1, pageSize = 20) {
 }
 
 export async function flagReview(reviewId: string) {
-  const res = await apiClient.patch<MaybeWrapped<unknown>>(
-    `/api/Reviews/${reviewId}/flag`,
-  );
+  const res = await apiClient.patch<MaybeWrapped<unknown>>(`/api/Reviews/${reviewId}/flag`);
   return unwrap(res.data);
 }
 
-export type ReviewDetails = {
-  id: string;
-  productId: string;
-  userId: string;
-  userName: string;
-  userAvatarUrl: string | null;
-  rating: number;
-  comment: string;
-  isVerifiedPurchase: boolean;
-  userCountry: string | null;
-  userCountryCode: string | null;
-  createdAt: string;
-  updatedAt: string;
-  isFlagged?: boolean;
-};
-
-export type ApiResponse<T> = { success: boolean; message: string; data: T };
-
 export async function getReviewById(reviewId: string) {
-  const res = await apiClient.get<ApiResponse<ReviewDetails>>(
-    `/api/Reviews/${reviewId}`,
-  );
+  const res = await apiClient.get<ApiResponse<ReviewDetails>>(`/api/Reviews/${reviewId}`);
   return res.data.data;
 }
