@@ -38,7 +38,7 @@ export function useSubscriptionPlans(query: SubscriptionPlansQuery) {
 
   return useQuery({
     queryKey: subscriptionKeys.list(query),
-    enabled: status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: () => getSubscriptionPlans(query),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -133,7 +133,7 @@ export function useSubscriptionPlan(planId?: string) {
 
   return useQuery({
     queryKey: planId ? subscriptionKeys.detail(planId) : ["subscriptions", "detail", "missing"],
-    enabled: !!planId && status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: !!planId && status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: () => getSubscriptionPlanById(planId!),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -148,7 +148,7 @@ export function useActiveSubscriptionPlans() {
 
   return useQuery({
     queryKey: subscriptionKeys.list({ activeOnly: true }),
-    enabled: status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: () => getSubscriptionPlans({ activeOnly: true }),
     staleTime: 30_000,
     refetchOnWindowFocus: false,

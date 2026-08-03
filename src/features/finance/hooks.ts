@@ -23,7 +23,7 @@ import {
 } from "./api";
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && role === "Admin";
+  return status === "authenticated" && !!accessToken && role === "SuperAdmin";
 }
 
 /** ------------------ Queries ------------------ */

@@ -151,6 +151,13 @@ export async function suspendVendor(
   return res.data;
 }
 
+
+export async function activateVendor(vendorProfileId: string) {
+  const res = await apiClient.post<ApiResponse<null>>(
+    `/api/Admin/vendors/${vendorProfileId}/reactivate`,
+  );
+  return res.data;
+}
 /** PATCH /api/Vendor/{userId} (update by userId) */
 export type UpdateVendorInput = {
   shopName?: string;

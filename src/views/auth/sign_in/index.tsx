@@ -42,7 +42,7 @@ export default function AdminLoginView({
       const session = await getSession();
       const role = (session as any)?.role;
 
-      if (role !== "Admin") {
+      if (role !== "SuperAdmin") {
         await signOut({ redirect: false });
         setError("You are not authorized to access the admin portal.");
         router.replace("/not-authorized");

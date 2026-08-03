@@ -412,7 +412,7 @@ export default function VendorDetailsView() {
         <div className="flex gap-2">
           {vendor.isSuspended ? (
             <Button
-              onClick={() => reactivateVendorM.mutate(userId)}
+              onClick={() => reactivateVendorM.mutate(vendorProfileId)}
               disabled={reactivateVendorM.isPending}
               className="h-9 text-xs font-bold uppercase tracking-wider bg-emerald-600 text-white hover:bg-emerald-700"
             >

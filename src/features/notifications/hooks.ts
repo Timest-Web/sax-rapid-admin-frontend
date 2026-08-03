@@ -26,7 +26,7 @@ function enabledAuth(status: string, accessToken?: string) {
 }
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && role === "Admin";
+  return status === "authenticated" && !!accessToken && role === "SuperAdmin";
 }
 
 /** Patch list caches */

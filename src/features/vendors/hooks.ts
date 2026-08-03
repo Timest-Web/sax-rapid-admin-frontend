@@ -27,12 +27,13 @@ import {
   type VendorPayout,
   type VendorReviewSummary,
   type VendorReview,
+  activateVendor,
 } from "./api";
 
 import { activateUser } from "@/src/features/users/api"; // POST /api/Admin/users/{userId}/activate
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && role === "Admin";
+  return status === "authenticated" && !!accessToken && role === "SuperAdmin";
 }
 
 /** Patch vendor across all cached lists (paginated or arrays). Match by profileId or userId. */
@@ -117,36 +118,36 @@ export function useReactivateVendorOwner() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (userId: string) => activateUser(userId),
+    mutationFn: (vendorProfileId: string) => activateVendor(vendorProfileId),
 
-    onMutate: async (userId) => {
+    onMutate: async (vendorProfileId: string) => {
       const toastId = toast.loading("Reactivating vendor...");
       await qc.cancelQueries({ queryKey: vendorKeys.all });
 
-      const prev = qc.getQueryData<VendorProfile>(vendorKeys.detail(userId));
+      const prev = qc.getQueryData<VendorProfile>(vendorKeys.detail(vendorProfileId));
 
-      qc.setQueryData<VendorProfile>(vendorKeys.detail(userId), (old) =>
+      qc.setQueryData<VendorProfile>(vendorKeys.detail(vendorProfileId), (old) =>
         old
           ? { ...old, isSuspended: false, suspensionReason: null, suspendedAt: null }
           : old,
       );
 
-      patchVendorInLists(qc, { userId }, { isSuspended: false, suspensionReason: null, suspendedAt: null });
+      patchVendorInLists(qc, { vendorProfileId }, { isSuspended: false, suspensionReason: null, suspendedAt: null });
 
-      return { toastId, prev, userId };
+      return { toastId, prev, vendorProfileId };
     },
 
-    onError: (err, _userId, ctx) => {
-      if (ctx?.prev) qc.setQueryData(vendorKeys.detail(ctx.userId), ctx.prev);
+    onError: (err, _vendorProfileId, ctx) => {
+      if (ctx?.prev) qc.setQueryData(vendorKeys.detail(ctx.vendorProfileId), ctx.prev);
       toast.error(getErrorMessage(err), { id: ctx?.toastId });
     },
 
-    onSuccess: (_res, _userId, ctx) => {
+    onSuccess: (_res, _vendorProfileId, ctx) => {
       toast.success("Vendor reactivated", { id: ctx?.toastId });
     },
 
-    onSettled: async (_res, _err, userId) => {
-      await qc.invalidateQueries({ queryKey: vendorKeys.detail(userId) });
+    onSettled: async (_res, _err, vendorProfileId) => {
+      await qc.invalidateQueries({ queryKey: vendorKeys.detail(vendorProfileId) });
       await qc.invalidateQueries({ queryKey: vendorKeys.lists() });
     },
   });

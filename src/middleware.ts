@@ -23,7 +23,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Logged in but not Admin -> block
-  if ((token as any).role !== "Admin") {
+  if ((token as any).role !== "SuperAdmin") {
     const url = req.nextUrl.clone();
     url.pathname = "/not-authorized"; // create this page
     return NextResponse.redirect(url);

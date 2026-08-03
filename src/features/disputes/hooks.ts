@@ -23,7 +23,7 @@ export function useDisputes(params: GetDisputesParams) {
 
   return useQuery({
     queryKey: disputeKeys.list(params as any),
-    enabled: status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: () => getDisputes(params),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -38,7 +38,7 @@ export function useDispute(id?: string) {
   return useQuery({
     queryKey: disputeKeys.detail(id ?? ""),
     enabled:
-      status === "authenticated" && !!accessToken && role === "Admin" && !!id,
+      status === "authenticated" && !!accessToken && role === "SuperAdmin" && !!id,
     queryFn: () => getDisputeById(id as string),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -52,7 +52,7 @@ export function useDisputeStats() {
 
   return useQuery({
     queryKey: disputeKeys.stats(),
-    enabled: status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: () => getDisputeStats(),
     staleTime: 30_000,
     refetchOnWindowFocus: false,

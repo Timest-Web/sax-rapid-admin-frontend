@@ -35,7 +35,7 @@ export function useAdminProducts(query: AdminProductsQuery) {
 
   return useQuery({
     queryKey: productKeys.list(query),
-    enabled: status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: () => getAdminProducts(query),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -220,7 +220,7 @@ export function useAdminProductCount(statusFilter?: "Pending" | "Rejected" | "Ac
 
   return useQuery({
     queryKey: productKeys.count(statusFilter),
-    enabled: status === "authenticated" && !!accessToken && role === "Admin",
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
     queryFn: async () => {
       const res = await getAdminProducts({
         pageNumber: 1,
@@ -244,7 +244,7 @@ export function useVendorProducts(userId?: string, query?: VendorProductsQuery) 
       userId && query
         ? productKeys.vendorProducts(userId, query)
         : ["admin-products", "vendor-products", "missing"],
-    enabled: status === "authenticated" && !!accessToken && role === "Admin" && !!userId && !!query,
+    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin" && !!userId && !!query,
     queryFn: () => getProductsByVendor(userId!, query!),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
