@@ -19,18 +19,29 @@ import {
   type BulkSettleInput,
 } from "./api";
 
-function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && role === "SuperAdmin";
+function hasRole(roleValue: unknown, allowed: string[]) {
+  if (!roleValue) return false;
+  if (Array.isArray(roleValue)) return roleValue.some((r) => allowed.includes(String(r)));
+  return allowed.includes(String(roleValue));
+}
+
+// choose who can access withdrawals pages
+function enabledFinance(status: string, accessToken?: string, role?: unknown) {
+  return (
+    status === "authenticated" &&
+    !!accessToken &&
+    hasRole(role, ["SuperAdmin", "Admin", "Account"])
+  );
 }
 
 export function useWithdrawalStats(currency = "NGN") {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
-  const role = (session as any)?.role as string | undefined;
+  const role = (session as any)?.role;
 
   return useQuery({
     queryKey: withdrawalKeys.stats(currency),
-    enabled: enabledAdmin(status, accessToken, role),
+    enabled: enabledFinance(status, accessToken, role),
     queryFn: () => getWithdrawalStats(currency),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -40,11 +51,11 @@ export function useWithdrawalStats(currency = "NGN") {
 export function useWithdrawals(query: WithdrawalsQuery) {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
-  const role = (session as any)?.role as string | undefined;
+  const role = (session as any)?.role;
 
   return useQuery({
     queryKey: withdrawalKeys.list(query),
-    enabled: enabledAdmin(status, accessToken, role),
+    enabled: enabledFinance(status, accessToken, role),
     queryFn: () => getWithdrawals(query),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -54,32 +65,15 @@ export function useWithdrawals(query: WithdrawalsQuery) {
 export function useProcessingBatch(currency: string) {
   const { data: session, status } = useSession();
   const accessToken = (session as any)?.accessToken as string | undefined;
-  const role = (session as any)?.role as string | undefined;
+  const role = (session as any)?.role;
 
   return useQuery({
     queryKey: withdrawalKeys.processing(currency),
-    enabled: enabledAdmin(status, accessToken, role) && !!currency,
+    enabled: enabledFinance(status, accessToken, role) && !!currency,
     queryFn: () => getProcessingBatch(currency),
     staleTime: 10_000,
     refetchOnWindowFocus: false,
   });
-}
-
-function patchWithdrawalInLists(
-  qc: ReturnType<typeof useQueryClient>,
-  withdrawalId: string,
-  patch: Partial<WithdrawalRequest>,
-) {
-  qc.setQueriesData<WithdrawalRequest[]>(
-    { queryKey: withdrawalKeys.lists() },
-    (old) => old?.map((w) => (w.id === withdrawalId ? { ...w, ...patch } : w)),
-  );
-
-  // also patch processing batch caches
-  qc.setQueriesData<WithdrawalRequest[]>(
-    { queryKey: withdrawalKeys.all },
-    (old: any) => old,
-  );
 }
 
 function statusFromAction(action: string) {
@@ -88,6 +82,22 @@ function statusFromAction(action: string) {
   if (a.includes("reject")) return "Rejected";
   if (a.includes("hold")) return "On Hold";
   return "Reviewed";
+}
+
+function patchWithdrawalEverywhere(
+  qc: ReturnType<typeof useQueryClient>,
+  withdrawalId: string,
+  patch: Partial<WithdrawalRequest>,
+) {
+  qc.setQueriesData<WithdrawalRequest[]>(
+    { queryKey: withdrawalKeys.lists() },
+    (old) => (old ? old.map((w) => (w.id === withdrawalId ? { ...w, ...patch } : w)) : old),
+  );
+
+  qc.setQueriesData<WithdrawalRequest[]>(
+    { queryKey: withdrawalKeys.processingBase() },
+    (old) => (old ? old.map((w) => (w.id === withdrawalId ? { ...w, ...patch } : w)) : old),
+  );
 }
 
 export function useReviewWithdrawal() {
@@ -99,12 +109,12 @@ export function useReviewWithdrawal() {
 
     onMutate: async (vars) => {
       const toastId = toast.loading("Reviewing withdrawal...");
+
       await qc.cancelQueries({ queryKey: withdrawalKeys.all });
 
-      const prev = qc.getQueriesData({ queryKey: withdrawalKeys.lists() });
+      const prev = qc.getQueriesData({ queryKey: withdrawalKeys.all });
 
-      // optimistic
-      patchWithdrawalInLists(qc, vars.withdrawalId, {
+      patchWithdrawalEverywhere(qc, vars.withdrawalId, {
         status: statusFromAction(vars.payload.action),
         processedAt: new Date().toISOString(),
       });
@@ -121,7 +131,7 @@ export function useReviewWithdrawal() {
       toast.success("Withdrawal reviewed", { id: ctx?.toastId });
     },
 
-    onSettled: async (_res, _err, vars) => {
+    onSettled: async () => {
       await qc.invalidateQueries({ queryKey: withdrawalKeys.all });
     },
   });

@@ -6,13 +6,18 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Store, UserCheck, FileText, UserMinus } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { vendorColumns } from "./column";
+import { makeVendorColumns } from "./column";
 import { StatCard } from "@/components/cards/stat-card";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { useVendors } from "@/src/features/vendors/hooks";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+import { canWrite, getUserRoles } from "@/src/lib/rbac";
+import { useSession } from "next-auth/react";
+
 
 export default function VendorsView() {
+   const { data: session } = useSession();
+  const roles = getUserRoles(session);
   const [page] = useState(1);
   const pageSize = 20;
 
@@ -21,6 +26,12 @@ export default function VendorsView() {
   const vendors = vendorsQ.data?.items ?? [];
   const totalCount = vendorsQ.data?.totalCount ?? vendors.length;
 
+    const canViewDetails = canWrite(roles, "vendors"); 
+
+  const vendorColumns = useMemo(
+    () => makeVendorColumns({ canViewDetails }),
+    [canViewDetails],
+  );
   const suspendedVendors = useMemo(
     () => vendors.filter((v) => v.isSuspended === true),
     [vendors],

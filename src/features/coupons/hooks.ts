@@ -25,7 +25,7 @@ export function useCouponStats() {
 
   return useQuery({
     queryKey: couponKeys.stats(),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getCouponStats(),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -39,7 +39,7 @@ export function useCoupons(query: CouponsQuery) {
 
   return useQuery({
     queryKey: couponKeys.list(query),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getCoupons(query),
     staleTime: 30_000,
     refetchOnWindowFocus: false,

@@ -8,12 +8,9 @@ import Image from "next/image";
 import logo from "@/public/images/sax_logo.png";
 import { signIn, getSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { normalizeRoles } from "@/src/lib/rbac";
 
-export default function AdminLoginView({
-  callbackUrl = "/admin",
-}: {
-  callbackUrl?: string;
-}) {
+export default function AdminLoginView({ callbackUrl = "/admin" }: { callbackUrl?: string }) {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -40,9 +37,10 @@ export default function AdminLoginView({
       }
 
       const session = await getSession();
-      const role = (session as any)?.role;
+      const roles = normalizeRoles((session as any)?.role);
 
-      if (role !== "SuperAdmin") {
+      // allow SuperAdmin/Admin/Sales only
+      if (roles.length === 0) {
         await signOut({ redirect: false });
         setError("You are not authorized to access the admin portal.");
         router.replace("/not-authorized");
@@ -59,7 +57,6 @@ export default function AdminLoginView({
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-black overflow-hidden selection:bg-sax-gold selection:text-sax-black font-sans">
-      {/* ...the rest of your JSX stays the same... */}
       <div className="relative z-10 w-full max-w-105 p-6">
         <div className="flex flex-col items-center mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <Image src={logo} alt="Logo" width={150} height={50} />
@@ -70,7 +67,6 @@ export default function AdminLoginView({
 
         <div className="backdrop-blur-xl bg-sax-zinc/30 border border-white/10 rounded-2xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500 delay-150">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
             <div className="space-y-2">
               <label
                 htmlFor="email"
@@ -94,7 +90,6 @@ export default function AdminLoginView({
               </div>
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <div className="flex items-center justify-between ml-1">
                 <label
@@ -104,7 +99,7 @@ export default function AdminLoginView({
                   Password
                 </label>
                 <Link
-                  href="/forgot-password"
+                  href="/admin/forgot-password"
                   className="text-[10px] text-sax-gold hover:text-sax-gold-dim transition-colors font-medium"
                 >
                   Forgot Password?
@@ -132,11 +127,7 @@ export default function AdminLoginView({
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
                   tabIndex={-1}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>

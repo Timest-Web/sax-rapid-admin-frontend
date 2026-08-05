@@ -6,7 +6,8 @@ import type { WithdrawalRequest } from "@/src/features/withdrawals/api";
 import { PayoutReviewModal } from "./modal";
 
 function money(amount: number, currency: string) {
-  const symbol = currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
+  const symbol =
+    currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
   return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
 }
 
@@ -34,12 +35,11 @@ export const payoutColumns: ColumnDef<WithdrawalRequest>[] = [
     accessorKey: "vendorName",
     cell: ({ row }) => (
       <div className="flex flex-col">
-        <span className="font-bold text-zinc-900 text-sm">
-          {row.original.vendorName}
-        </span>
+        <span className="font-bold text-zinc-900 text-sm">{row.original.vendorName}</span>
         <span className="text-[10px] text-zinc-500 font-mono">
           {row.original.bankName} • {row.original.accountNumber}
         </span>
+        <span className="text-[10px] text-zinc-500 font-mono">{row.original.accountName}</span>
       </div>
     ),
   },
@@ -62,34 +62,43 @@ export const payoutColumns: ColumnDef<WithdrawalRequest>[] = [
     ),
   },
   {
+    header: "Processed",
+    accessorKey: "processedAt",
+    cell: ({ row }) => (
+      <span className="font-mono text-xs text-zinc-500">
+        {dateLabel(row.original.processedAt)}
+      </span>
+    ),
+  },
+  {
     header: "Status",
     accessorKey: "status",
-   cell: ({ row }) => (
-  <StatusBadge
-    status={row.original.status}
-    styles={{
-      Pending: "bg-amber-50 text-amber-700 border-amber-200",
-
-      Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
-
-      Completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
-
-      Failed: "bg-rose-50 text-rose-700 border-rose-200",
-
-      Rejected: "bg-rose-50 text-rose-700 border-rose-200",
-
-      "On Hold": "bg-blue-50 text-blue-700 border-blue-200",
-    }}
-  />
-),
+    cell: ({ row }) => (
+      <StatusBadge
+        status={row.original.status}
+        styles={{
+          Pending: "bg-amber-50 text-amber-700 border-amber-200",
+          Approved: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          Completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          Failed: "bg-rose-50 text-rose-700 border-rose-200",
+          Rejected: "bg-rose-50 text-rose-700 border-rose-200",
+          "On Hold": "bg-blue-50 text-blue-700 border-blue-200",
+        }}
+      />
+    ),
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
-      if (String(row.original.status).toLowerCase() === "pending") {
-        return <PayoutReviewModal request={row.original} />;
-      }
-      return null;
+      const isPending = String(row.original.status).toLowerCase() === "pending";
+
+      return (
+        <PayoutReviewModal
+          request={row.original}
+          mode={isPending ? "review" : "view"}
+        />
+      );
     },
   },
 ];

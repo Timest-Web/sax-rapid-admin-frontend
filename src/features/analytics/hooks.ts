@@ -16,9 +16,11 @@ import {
   type RecentOrdersQuery,
   type TopProductsQuery,
 } from "./api";
+import { getUserRoles } from "@/src/lib/rbac";
+
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && role === "SuperAdmin";
+  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role));
 }
 
 export function useDashboardStats(q: DashboardStatsQuery) {

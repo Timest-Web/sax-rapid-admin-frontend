@@ -1,7 +1,7 @@
 export const locationKeys = {
   all: ["locations"] as const,
 
-  admin: () => [...locationKeys.all, "SuperAdmin"] as const,
+  admin: () => [...locationKeys.all, "admin"] as const,
   adminList: () => [...locationKeys.admin(), "list"] as const,
   adminStats: () => [...locationKeys.admin(), "stats"] as const,
 

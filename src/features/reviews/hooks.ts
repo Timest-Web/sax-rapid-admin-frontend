@@ -25,7 +25,7 @@ export function useReviewStats() {
 
   return useQuery({
     queryKey: reviewKeys.stats(),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getReviewStats(),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -39,7 +39,7 @@ export function useRecentReviews(page = 1, pageSize = 20) {
 
   return useQuery({
     queryKey: reviewKeys.recentList({ page, pageSize }),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getRecentReviews(page, pageSize),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -53,7 +53,7 @@ export function useVendorRatings(page = 1, pageSize = 20) {
 
   return useQuery({
     queryKey: reviewKeys.ratingsList({ page, pageSize }),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getVendorRatings(page, pageSize),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -126,7 +126,7 @@ export function useReview(reviewId?: string) {
     queryKey: reviewId
       ? reviewKeys.detail(reviewId)
       : ["admin-reviews", "detail", "missing"],
-    enabled: !!reviewId && status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: !!reviewId && status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getReviewById(reviewId!),
     staleTime: 60_000,
     refetchOnWindowFocus: false,

@@ -24,7 +24,7 @@ export type WithdrawalRequest = {
   vendorName: string;
   amount: number;
   currency: string;
-  status: string;
+  status: string; // Pending | Approved | Rejected | On Hold | Completed | Failed
   bankName: string;
   accountNumber: string;
   accountName: string;
@@ -54,7 +54,7 @@ export type BulkSettleInput = {
 };
 
 export async function getWithdrawalStats(currency = "NGN") {
-  const res = await apiClient.get<ApiResponse<WithdrawalStats>>(
+  const res = await apiClient.get<ApiResponse<WithdrawalStats> | WithdrawalStats>(
     "/api/withdrawals/stats",
     { params: { currency } },
   );
@@ -62,14 +62,25 @@ export async function getWithdrawalStats(currency = "NGN") {
 }
 
 export async function getWithdrawals(query: WithdrawalsQuery) {
-  const res = await apiClient.get<ApiResponse<WithdrawalRequest[]>>("/api/withdrawals", {
-    params: { currency: "NGN", ...query },
-  });
+  const res = await apiClient.get<ApiResponse<WithdrawalRequest[]> | WithdrawalRequest[]>(
+    "/api/withdrawals",
+    {
+      params: {
+        currency: query.currency ?? "NGN",
+        status: query.status,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+        pageNumber: query.pageNumber,
+        pageSize: query.pageSize,
+      },
+    },
+  );
+
   return unwrap(res.data);
 }
 
 export async function reviewWithdrawal(withdrawalId: string, payload: ReviewWithdrawalInput) {
-  const res = await apiClient.patch<ApiResponse<boolean>>(
+  const res = await apiClient.patch<ApiResponse<boolean> | boolean>(
     `/api/withdrawals/${withdrawalId}/review`,
     payload,
   );
@@ -77,7 +88,7 @@ export async function reviewWithdrawal(withdrawalId: string, payload: ReviewWith
 }
 
 export async function getProcessingBatch(currency: string) {
-  const res = await apiClient.get<ApiResponse<WithdrawalRequest[]>>(
+  const res = await apiClient.get<ApiResponse<WithdrawalRequest[]> | WithdrawalRequest[]>(
     "/api/withdrawals/batches/processing",
     { params: { currency } },
   );
@@ -85,7 +96,7 @@ export async function getProcessingBatch(currency: string) {
 }
 
 export async function bulkSettleBatch(payload: BulkSettleInput) {
-  const res = await apiClient.post<ApiResponse<boolean>>(
+  const res = await apiClient.post<ApiResponse<boolean> | boolean>(
     "/api/withdrawals/batches/settle",
     payload,
   );

@@ -63,6 +63,7 @@ import type {
 } from "@/src/features/vendors/api";
 import { DetailsPageSkeleton } from "@/components/skeletons/details";
 import { useResetUserPassword } from "@/src/features/users/hooks/useAdminActions";
+import { StartChatFromVendorDetails } from "../../chats/start-chat-vendor";
 
 // ─── HELPERS ────────────────────────────────────────────────────────────────
 
@@ -410,6 +411,12 @@ export default function VendorDetailsView() {
 
         {/* ACTIONS */}
         <div className="flex gap-2">
+            <StartChatFromVendorDetails
+    vendorProfileId={vendor.id}               // ✅ vendor profile id
+    vendorName={vendor.shopName}
+    orders={ordersQ.data?.items ?? []}        // ✅ vendor orders list
+  />
+
           {vendor.isSuspended ? (
             <Button
               onClick={() => reactivateVendorM.mutate(vendorProfileId)}

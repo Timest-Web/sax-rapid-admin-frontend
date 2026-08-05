@@ -15,7 +15,7 @@ export function useBuyers(query: BuyersQuery) {
 
   return useQuery({
     queryKey: buyerKeys.list(query),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getBuyers(query),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -29,7 +29,7 @@ export function useBuyerStats() {
 
   return useQuery({
     queryKey: buyerKeys.stats(),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getBuyerStats(),
     staleTime: 30_000,
     refetchOnWindowFocus: false,

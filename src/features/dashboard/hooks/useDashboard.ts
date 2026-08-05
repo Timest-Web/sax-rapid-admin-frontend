@@ -11,7 +11,7 @@ export function useDashboard() {
 
   return useQuery({
     queryKey: dashboardKeys.summary(),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: getAdminDashboard,
     staleTime: 30_000, 
     refetchOnWindowFocus: true,
@@ -25,7 +25,7 @@ export function useDashboardGraph(currency: DashboardCurrency, year: number) {
 
   return useQuery({
     queryKey: dashboardKeys.graph(currency, year),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getDashboardGraph({ currency, year }),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -45,7 +45,7 @@ export function useRecentOrders(params: {
 
   return useQuery({
     queryKey: dashboardKeys.recentOrders(params),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getRecentOrders(params),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -65,7 +65,7 @@ export function useRecentTransactions(params: {
 
   return useQuery({
     queryKey: dashboardKeys.recentTransactions(params),
-    enabled: status === "authenticated" && !!accessToken && role === "SuperAdmin",
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
     queryFn: () => getRecentTransactions(params),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
