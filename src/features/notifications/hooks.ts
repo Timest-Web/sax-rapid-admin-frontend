@@ -26,7 +26,7 @@ function enabledAuth(status: string, accessToken?: string) {
 }
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role));
+  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role));
 }
 
 /** Patch list caches */

@@ -22,7 +22,7 @@ export function useCommissionStats(query: CommissionStatsQuery) {
 
   return useQuery({
     queryKey: commissionKeys.stats(query),
-    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role)),
     queryFn: () => getCommissionStats(query),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -36,7 +36,7 @@ export function useCategoryCommissions() {
 
   return useQuery({
     queryKey: commissionKeys.categories(),
-    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role)),
     queryFn: () => getCategoryCommissions(),
     staleTime: 60_000,
     refetchOnWindowFocus: false,

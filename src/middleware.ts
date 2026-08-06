@@ -6,7 +6,7 @@ import { canRead, normalizeRoles, type ModuleKey } from "@/src/lib/rbac";
 
 const PUBLIC_ADMIN_PATHS = new Set([
   "/admin/sign-in",
-  "/admin/forgot-password",
+  "/forgot-password",
   "/admin/reset-password",
 ]);
 

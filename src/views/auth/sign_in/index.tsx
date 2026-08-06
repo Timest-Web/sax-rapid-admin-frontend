@@ -99,7 +99,7 @@ export default function AdminLoginView({ callbackUrl = "/admin" }: { callbackUrl
                   Password
                 </label>
                 <Link
-                  href="/admin/forgot-password"
+                  href="/forgot-password"
                   className="text-[10px] text-sax-gold hover:text-sax-gold-dim transition-colors font-medium"
                 >
                   Forgot Password?

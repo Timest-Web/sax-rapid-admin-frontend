@@ -15,7 +15,7 @@ export function useAdminOrders(params: AdminOrdersQuery) {
 
   return useQuery({
     queryKey: orderKeys.list(params),
-    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role)),
     queryFn: () => getAdminOrders(params),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -29,7 +29,7 @@ export function useAdminOrderStats() {
 
   return useQuery({
     queryKey: orderKeys.stats(),
-    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role)),
     queryFn: () => getAdminOrderStats(),
     staleTime: 60_000,
     refetchOnWindowFocus: false,

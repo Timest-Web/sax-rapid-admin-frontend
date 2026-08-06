@@ -24,7 +24,7 @@ export function useCategoryTree() {
 
   return useQuery({
     queryKey: categoryKeys.tree(),
-    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role)),
     queryFn: () => getCategoryTree(),
     staleTime: 60_000,
     refetchOnWindowFocus: false,

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type Role = "SuperAdmin" | "Admin" | "Sales";
+export type Role = "SuperAdmin" | "Admin" | "Sales" | "Account";
 
 export type ModuleKey =
   | "dashboard"
@@ -61,6 +61,28 @@ export const ROLE_PERMISSIONS: Record<Role, Partial<Record<ModuleKey, Action[]>>
   },
 
   Admin: {
+    dashboard: [R],
+    analytics: [R],
+    buyers: [R, W],
+    vendors: [R, W],
+    products: [R, W],
+    orders: [R, W],
+    categories: [R, W],
+    reviews: [R, W],
+    disputes: [R, W],
+    coupons: [R, "create"],
+    promotions: [R, W],
+    shipping: [R],
+    cms: [R, W],
+    notifications: [R, "send"],
+    wallets: [R],
+    subscriptions: [R],
+    commissions: [R],
+    auditLogs: [R],
+    withdrawals: [R, "approve"],
+    chat: [R, W],
+  },
+    Account: {
     dashboard: [R],
     analytics: [R],
     buyers: [R, W],

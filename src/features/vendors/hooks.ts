@@ -33,7 +33,7 @@ import {
 import { activateUser } from "@/src/features/users/api"; // POST /api/Admin/users/{userId}/activate
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role));
+  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role));
 }
 
 /** Patch vendor across all cached lists (paginated or arrays). Match by profileId or userId. */

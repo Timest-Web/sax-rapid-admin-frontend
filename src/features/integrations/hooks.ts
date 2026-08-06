@@ -15,7 +15,7 @@ import {
 } from "./api";
 
 function enabledAdmin(status: string, accessToken?: string, role?: string) {
-  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role));
+  return status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role));
 }
 
 export function useIntegrations() {

@@ -15,7 +15,7 @@ export function useBuyers(params?: { page?: number; pageSize?: number }) {
 
   return useQuery({
     queryKey: usersKeys.list({ role: "Buyer", page, pageSize }),
-    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales"].includes(String(role)),
+    enabled: status === "authenticated" && !!accessToken && ["SuperAdmin", "Admin", "Sales", "Account"].includes(String(role)),
     queryFn: () => getBuyers(page, pageSize),
 
     // Optimization knobs:
