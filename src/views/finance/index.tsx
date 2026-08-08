@@ -5,6 +5,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
@@ -17,17 +19,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
   Wallet,
   TrendingUp,
   CreditCard,
-  Download,
   Activity,
-  Calendar,
+  Calendar as CalendarIcon,
 } from "lucide-react";
 
 import { StatCard } from "@/components/cards/stat-card";
-import { walletColumns, transactionColumns, VendorWalletRow, FinanceTransactionRow } from "./column";
+
+import {
+  makeWalletColumns,
+  transactionColumns,
+  type VendorWalletRow,
+  type FinanceTransactionRow,
+} from "./column";
+
 import { GatewayConfigModal } from "./actions";
 
 import {
@@ -36,7 +45,8 @@ import {
   useVendorWallets,
   usePaymentGateways,
 } from "@/src/features/finance/hooks";
-import { VendorWalletDto } from "@/src/features/finance/api";
+
+import { can, getUserRoles } from "@/src/lib/rbac";
 
 function toIsoDayRange(date: string) {
   const from = new Date(`${date}T00:00:00.000Z`).toISOString();
@@ -56,23 +66,17 @@ function mapUiToWalletStatus(ui: string) {
   return undefined;
 }
 
-function humanizeType(s: string) {
-  return String(s || "").replace(/([a-z])([A-Z])/g, "$1 $2"); // OrderPayment -> Order Payment
-}
-
-function isCredit(type: string) {
-  const t = String(type || "").toLowerCase();
-  if (t.includes("orderpayment")) return true;
-  if (t.includes("commission")) return true;
-  if (t.includes("payout")) return false;
-  if (t.includes("refund")) return false;
-  return true;
-}
-
 export default function FinancePage() {
+  const { data: session } = useSession();
+  const roles = getUserRoles(session);
+
+  // ✅ Wallet actions (freeze/payout) only if wallets: write
+  const canManageWallets = can(roles, "wallets", "write");
+
+  // ✅ Gateway config is a platform setting -> use integrations write
+  const canConfigureGateways = can(roles, "integrations", "write");
 
   const [currency, setCurrency] = useState("NGN");
-
   const symbol = currency === "NGN" ? "₦" : "R";
 
   const formatCurrency = (val: number) => {
@@ -108,8 +112,7 @@ export default function FinancePage() {
     currency,
     pageNumber: 1,
     pageSize: 50,
-    status:
-      filterStatus === "all" ? undefined : mapUiToWalletStatus(filterStatus),
+    status: filterStatus === "all" ? undefined : mapUiToWalletStatus(filterStatus),
     startDate: dayRange?.from,
     endDate: dayRange?.to,
   });
@@ -121,50 +124,56 @@ export default function FinancePage() {
   });
 
   // ---- Map backend -> table rows ----
-const displayWallets = useMemo<VendorWalletRow[]>(() => {
-  const data = walletsQuery.data ?? [];
-  return data.map((w) => ({
-    vendorId: w.vendorId,
-    vendorName: w.vendorName,
-    rawBalance: w.walletBalance,
-    balance: formatCurrency(w.walletBalance),
-    pending: formatCurrency(w.pendingBalance),
-    lastPayout: w.lastPayoutDate ? w.lastPayoutDate.substring(0, 10) : "—",
-    status: String(w.status ?? "").toLowerCase(),
-    currency: w.currency,
-  }));
-}, [walletsQuery.data, currency]);
+  const displayWallets = useMemo<VendorWalletRow[]>(() => {
+    const data = walletsQuery.data ?? [];
+    return data.map((w) => ({
+      vendorId: w.vendorId,
+      vendorName: w.vendorName,
+      rawBalance: w.walletBalance,
+      balance: formatCurrency(w.walletBalance),
+      pending: formatCurrency(w.pendingBalance),
+      lastPayout: w.lastPayoutDate ? w.lastPayoutDate.substring(0, 10) : "—",
+      status: String(w.status ?? "").toLowerCase(),
+      currency: w.currency,
+    }));
+  }, [walletsQuery.data, currency]);
 
-const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
-  const data = transactionsQuery.data ?? [];
+  const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
+    const data = transactionsQuery.data ?? [];
 
-  return data.map((t) => {
-    const credit = String(t.type).toLowerCase().includes("orderpayment");
-    const signedAmount = `${credit ? "+" : "-"}${formatCurrency(t.amount)}`;
+    return data.map((t) => {
+      const credit = String(t.type).toLowerCase().includes("orderpayment");
+      const signedAmount = `${credit ? "+" : "-"}${formatCurrency(t.amount)}`;
 
-    return {
-      id: t.transactionId,
-      type: String(t.type ?? ""),
-      amount: signedAmount,
-      from: credit ? (t.userName || "Customer") : "Platform",
-      to: credit ? "Platform" : (t.userName || "Customer"),
-      date: t.date ? t.date.substring(0, 10) : "—", // ✅ always string
-      status: t.status === "Paid" ? "Completed" : String(t.status ?? ""),
-    };
-  });
-}, [transactionsQuery.data, currency]);
+      return {
+        id: t.transactionId,
+        type: String(t.type ?? ""),
+        amount: signedAmount,
+        from: credit ? (t.userName || "Customer") : "Platform",
+        to: credit ? "Platform" : (t.userName || "Customer"),
+        date: t.date ? t.date.substring(0, 10) : "—",
+        status: t.status === "Paid" ? "Completed" : String(t.status ?? ""),
+      };
+    });
+  }, [transactionsQuery.data, currency]);
 
   const gatewayCards = useMemo(() => {
     const data = gatewaysQuery.data ?? [];
-    return data.map((g: { gatewayName: any; status: any; transactionCount: { toLocaleString: () => any; }; monthlyVolume: number; }) => ({
+    return data.map((g: any) => ({
       name: g.gatewayName,
       status: g.status,
-      transactions: g.transactionCount.toLocaleString(),
-      volume: formatCurrency(g.monthlyVolume),
+      transactions: g.transactionCount?.toLocaleString?.() ?? "0",
+      volume: formatCurrency(g.monthlyVolume ?? 0),
     }));
   }, [gatewaysQuery.data, currency]);
 
   const stats = statsQuery.data;
+
+  // ✅ dynamic wallet columns (hide actions for Admin)
+  const walletColumns = useMemo(
+    () => makeWalletColumns({ canManageWallets }),
+    [canManageWallets],
+  );
 
   return (
     <div className="min-h-screen bg-sax-body text-zinc-900 font-sans pb-10">
@@ -176,10 +185,15 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
           <h1 className="text-sm font-bold uppercase tracking-widest text-zinc-900 font-display">
             Finance & Payments
           </h1>
+
+          {!canManageWallets && (
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border border-zinc-200 bg-zinc-50 text-zinc-600">
+              View only
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
-          {/* CURRENCY SWITCHER */}
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger className="h-9 w-24 bg-zinc-50 border-zinc-200 text-xs font-bold text-zinc-700 shadow-sm focus:ring-sax-gold">
               <SelectValue />
@@ -189,10 +203,6 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
               <SelectItem value="ZAR">ZAR (R)</SelectItem>
             </SelectContent>
           </Select>
-
-          {/* <Button variant="outline" size="sm" className="h-9 text-xs shadow-sm">
-            <Download className="mr-2 h-3.5 w-3.5" /> Export Audit Log
-          </Button> */}
         </div>
       </header>
 
@@ -234,9 +244,7 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
           </div>
 
           {statsQuery.isError && (
-            <p className="text-xs text-red-600">
-              Failed to load finance stats.
-            </p>
+            <p className="text-xs text-red-600">Failed to load finance stats.</p>
           )}
         </section>
 
@@ -265,7 +273,7 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
                 </Select>
 
                 <div className="relative">
-                  <Calendar className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+                  <CalendarIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
                   <Input
                     type="date"
                     value={filterDate}
@@ -293,21 +301,13 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
             {/* TAB 1: TRANSACTIONS */}
             <TabsContent value="transactions" className="mt-6">
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
-                {(transactionsQuery.isLoading ||
-                  transactionsQuery.isFetching) && (
-                  <div className="p-4 text-xs text-zinc-500">
-                    Loading transactions…
-                  </div>
+                {(transactionsQuery.isLoading || transactionsQuery.isFetching) && (
+                  <div className="p-4 text-xs text-zinc-500">Loading transactions…</div>
                 )}
                 {transactionsQuery.isError && (
-                  <div className="p-4 text-xs text-red-600">
-                    Failed to load transactions.
-                  </div>
+                  <div className="p-4 text-xs text-red-600">Failed to load transactions.</div>
                 )}
-                <DataTable
-                  columns={transactionColumns}
-                  data={displayTransactions}
-                />
+                <DataTable columns={transactionColumns} data={displayTransactions} />
               </div>
             </TabsContent>
 
@@ -315,14 +315,10 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
             <TabsContent value="wallets" className="mt-6">
               <div className="bg-white border border-zinc-200 rounded-lg shadow-sm overflow-hidden">
                 {(walletsQuery.isLoading || walletsQuery.isFetching) && (
-                  <div className="p-4 text-xs text-zinc-500">
-                    Loading vendor wallets…
-                  </div>
+                  <div className="p-4 text-xs text-zinc-500">Loading vendor wallets…</div>
                 )}
                 {walletsQuery.isError && (
-                  <div className="p-4 text-xs text-red-600">
-                    Failed to load vendor wallets.
-                  </div>
+                  <div className="p-4 text-xs text-red-600">Failed to load vendor wallets.</div>
                 )}
                 <DataTable columns={walletColumns} data={displayWallets} />
               </div>
@@ -331,34 +327,28 @@ const displayTransactions = useMemo<FinanceTransactionRow[]>(() => {
             {/* TAB 3: GATEWAYS */}
             <TabsContent value="gateways" className="mt-6">
               {(gatewaysQuery.isLoading || gatewaysQuery.isFetching) && (
-                <div className="p-4 text-xs text-zinc-500">
-                  Loading gateways…
-                </div>
+                <div className="p-4 text-xs text-zinc-500">Loading gateways…</div>
               )}
               {gatewaysQuery.isError && (
-                <div className="p-4 text-xs text-red-600">
-                  Failed to load gateways.
-                </div>
+                <div className="p-4 text-xs text-red-600">Failed to load gateways.</div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {gatewayCards.map((g: { name: any; status: any; transactions: any; volume: any; }) => (
+                {gatewayCards.map((g: any) => (
                   <GatewayCard
                     key={g.name}
                     name={g.name}
                     status={g.status}
                     transactions={g.transactions}
                     volume={g.volume}
+                    canConfigure={canConfigureGateways}
                   />
                 ))}
 
-                {/* Stripe placeholder */}
                 <div className="bg-zinc-50 border border-dashed border-zinc-300 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-70 min-h-56">
                   <CreditCard className="h-10 w-10 text-zinc-300 mb-3" />
                   <h3 className="font-bold text-zinc-900">Stripe</h3>
-                  <p className="text-xs text-zinc-500 mb-4">
-                    International payments (USD)
-                  </p>
+                  <p className="text-xs text-zinc-500 mb-4">International payments (USD)</p>
                   <Button variant="outline" size="sm" disabled>
                     Coming Soon
                   </Button>
@@ -389,14 +379,18 @@ function TabTrigger({
       className="rounded-full px-6 py-2 text-xs font-bold uppercase tracking-widest text-zinc-500 data-[state=active]:bg-zinc-900 data-[state=active]:text-[#D4AF37] transition-all hover:text-zinc-900 data-[state=active]:hover:text-[#D4AF37] flex items-center gap-2"
     >
       {label}
-      {hasPulse && (
-        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-      )}
+      {hasPulse && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
     </TabsTrigger>
   );
 }
 
-function GatewayCard({ name, status, transactions, volume }: any) {
+function GatewayCard({
+  name,
+  status,
+  transactions,
+  volume,
+  canConfigure,
+}: any) {
   return (
     <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-56">
       <div className="flex justify-between items-start">
@@ -411,7 +405,9 @@ function GatewayCard({ name, status, transactions, volume }: any) {
             </span>
           </div>
         </div>
-        <GatewayConfigModal name={name} />
+
+        {/* ✅ Hide configure for Admin */}
+        {canConfigure ? <GatewayConfigModal name={name} /> : null}
       </div>
 
       <div className="space-y-3 mt-6">
@@ -419,10 +415,9 @@ function GatewayCard({ name, status, transactions, volume }: any) {
           <span className="text-zinc-500 font-bold uppercase tracking-wider">
             Monthly Volume
           </span>
-          <span className="font-mono font-bold text-zinc-900 text-sm">
-            {volume}
-          </span>
+          <span className="font-mono font-bold text-zinc-900 text-sm">{volume}</span>
         </div>
+
         <div className="flex justify-between text-xs items-center">
           <span className="text-zinc-500 font-bold uppercase tracking-wider">
             Transactions
@@ -431,6 +426,7 @@ function GatewayCard({ name, status, transactions, volume }: any) {
             {transactions}
           </span>
         </div>
+
         <div className="w-full bg-zinc-100 h-1.5 rounded-full mt-3 overflow-hidden">
           <div className="bg-sax-gold h-full w-[70%]" />
         </div>

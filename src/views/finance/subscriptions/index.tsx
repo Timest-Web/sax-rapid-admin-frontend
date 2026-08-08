@@ -1,6 +1,9 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
@@ -14,8 +17,9 @@ import {
 
 import { Plus, Crown, Database, Activity } from "lucide-react";
 import { StatCard } from "@/components/cards/stat-card";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
-import { getPlanColumns, type SubscriptionPlanRow } from "./column";
+import { makePlanColumns, type SubscriptionPlanRow } from "./column";
 import { SubscriptionModal } from "./modal";
 
 import type { SubscriptionPlan } from "@/src/features/subscriptions/api";
@@ -27,7 +31,7 @@ import {
   useUpdateSubscriptionPlan,
 } from "@/src/features/subscriptions/hooks";
 
-import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+import { can, getUserRoles } from "@/src/lib/rbac";
 
 function convertFromNGN(amount: number, to: string) {
   if (to === "ZAR") return amount * 0.0117;
@@ -36,7 +40,15 @@ function convertFromNGN(amount: number, to: string) {
 }
 
 export default function SubscriptionsView() {
+  const { data: session } = useSession();
+  const roles = getUserRoles(session);
+
+  // ✅ Admin = read-only => false; SuperAdmin (with write/create) => true
+  const canManageSubscriptions =
+    can(roles, "subscriptions", "write") || can(roles, "subscriptions", "create");
+
   const [activeOnly, setActiveOnly] = useState<boolean>(false);
+
   const plansQ = useSubscriptionPlans({ activeOnly });
   const allPlansQ = useSubscriptionPlans({ activeOnly: false });
 
@@ -65,25 +77,26 @@ export default function SubscriptionsView() {
     }));
   }, [plans, globalCurrency]);
 
-  const columns = useMemo(
-    () =>
-      getPlanColumns({
-        onEdit: (row) => {
-          const original = allPlans.find((p) => p.id === row.id) ?? row;
-          setEditingPlan(original);
-          setIsModalOpen(true);
-        },
-        onToggleStatus: (row) => {
-          // Use isActive when present, otherwise assume "active" for toggle direction
-          const assumedActive =
-            typeof row.isActive === "boolean" ? row.isActive : true;
+  const columns = useMemo(() => {
+    return makePlanColumns({
+      canManage: canManageSubscriptions,
+      onEdit: (row) => {
+        if (!canManageSubscriptions) return;
+        const original = allPlans.find((p) => p.id === row.id) ?? row;
+        setEditingPlan(original);
+        setIsModalOpen(true);
+      },
+      onToggleStatus: (row) => {
+        if (!canManageSubscriptions) return;
 
-          if (assumedActive) deactivate.mutate(row.id);
-          else activate.mutate(row.id);
-        },
-      }),
-    [allPlans, activate, deactivate],
-  );
+        const assumedActive =
+          typeof row.isActive === "boolean" ? row.isActive : true;
+
+        if (assumedActive) deactivate.mutate(row.id);
+        else activate.mutate(row.id);
+      },
+    });
+  }, [allPlans, activate, deactivate, canManageSubscriptions]);
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans pb-10">
@@ -109,15 +122,18 @@ export default function SubscriptionsView() {
             </SelectContent>
           </Select>
 
-          <Button
-            onClick={() => {
-              setEditingPlan(null);
-              setIsModalOpen(true);
-            }}
-            className="h-9 text-xs font-bold uppercase tracking-wider bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-lg"
-          >
-            <Plus size={14} className="mr-2" /> Create Plan
-          </Button>
+          {/* ✅ Hide Create Plan for Admin (view-only) */}
+          {canManageSubscriptions ? (
+            <Button
+              onClick={() => {
+                setEditingPlan(null);
+                setIsModalOpen(true);
+              }}
+              className="h-9 text-xs font-bold uppercase tracking-wider bg-zinc-900 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black rounded-lg"
+            >
+              <Plus size={14} className="mr-2" /> Create Plan
+            </Button>
+          ) : null}
         </div>
       </header>
 
@@ -172,24 +188,27 @@ export default function SubscriptionsView() {
         )}
       </main>
 
-      <SubscriptionModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        initialData={editingPlan}
-        isSubmitting={createPlan.isPending || updatePlan.isPending}
-        onSubmit={(payload) => {
-          if (editingPlan) {
-            updatePlan.mutate(
-              { planId: editingPlan.id, payload },
-              { onSuccess: () => setIsModalOpen(false) },
-            );
-          } else {
-            createPlan.mutate(payload, {
-              onSuccess: () => setIsModalOpen(false),
-            });
-          }
-        }}
-      />
+      {/* ✅ Only mount modal if user can manage */}
+      {canManageSubscriptions ? (
+        <SubscriptionModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          initialData={editingPlan}
+          isSubmitting={createPlan.isPending || updatePlan.isPending}
+          onSubmit={(payload) => {
+            if (editingPlan) {
+              updatePlan.mutate(
+                { planId: editingPlan.id, payload },
+                { onSuccess: () => setIsModalOpen(false) },
+              );
+            } else {
+              createPlan.mutate(payload, {
+                onSuccess: () => setIsModalOpen(false),
+              });
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }

@@ -131,8 +131,8 @@ export function AppSidebar() {
     "Admin";
 
   const handleLogout = () => {
-    // use whichever route you actually have
-    signOut({ callbackUrl: "/admin/login" });
+
+    signOut({ callbackUrl: "/sign-in" });
   };
 
   return (

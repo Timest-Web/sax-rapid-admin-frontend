@@ -1,7 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { StatusBadge } from "@/components/cards/status-badge";
+import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Eye } from "lucide-react";
 import Link from "next/link";
 import {
@@ -11,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { AdminProductListItem } from "@/src/features/products/api";
+
 import { useQueryClient } from "@tanstack/react-query";
 import { productKeys } from "@/src/features/products/key";
 import { getProductById } from "@/src/features/products/api";
@@ -40,7 +40,8 @@ function ActionsCell({ id }: { id: string }) {
               }}
               className="flex items-center w-full"
             >
-              <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" /> Inspect / Edit
+              <Eye className="mr-2 h-3.5 w-3.5 text-zinc-500" />
+              Inspect / Edit
             </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -51,7 +52,6 @@ function ActionsCell({ id }: { id: string }) {
 
 function ProductStatusPill({ status }: { status: string }) {
   const s = String(status || "").toLowerCase();
-
   const cls =
     s === "active"
       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -62,63 +62,70 @@ function ProductStatusPill({ status }: { status: string }) {
           : "bg-zinc-50 text-zinc-700 border-zinc-200";
 
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest border ${cls}`}
-    >
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-sm text-[10px] font-bold uppercase tracking-widest border ${cls}`}>
       {status}
     </span>
   );
 }
 
-export const productColumns: ColumnDef<AdminProductListItem>[] = [
-  {
-    header: "Product",
-    accessorKey: "name",
-    cell: ({ row }) => (
-      <div className="py-1">
-        <p className="font-bold text-zinc-900 font-display line-clamp-1 w-64">
-          {row.original.name}
-        </p>
-        <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider">
-          {row.original.categoryName}
-        </p>
-      </div>
-    ),
-  },
-  {
-    header: "Vendor",
-    accessorKey: "vendorName",
-    cell: ({ row }) => (
-      <span className="text-xs font-medium text-zinc-600">
-        {row.original.vendorName}
-      </span>
-    ),
-  },
-  {
-    header: "Price",
-    accessorKey: "basePrice",
-    cell: ({ row }) => (
-      <span className="font-mono font-bold text-zinc-900">
-        ₦{row.original.basePrice.toLocaleString()}
-      </span>
-    ),
-  },
-  {
-    header: "Stock",
-    accessorKey: "stockQuantity",
-    cell: ({ row }) => (
-      <span className="font-mono text-zinc-500 text-xs">
-        {row.original.stockQuantity} Units
-      </span>
-    ),
-  },
-  {
-    header: "Status",
-    accessorKey: "status",
-    cell: ({ row }) => <ProductStatusPill status={row.original.status} />,
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <ActionsCell id={row.original.id} />,
-  },
-];
+export function makeProductColumns(opts: { canManage: boolean }): ColumnDef<AdminProductListItem>[] {
+  const base: ColumnDef<AdminProductListItem>[] = [
+    {
+      header: "Product",
+      accessorKey: "name",
+      cell: ({ row }) => (
+        <div className="py-1">
+          <p className="font-bold text-zinc-900 font-display line-clamp-1 w-64">
+            {row.original.name}
+          </p>
+          <p className="text-[10px] text-zinc-400 font-mono uppercase tracking-wider">
+            {row.original.categoryName}
+          </p>
+        </div>
+      ),
+    },
+    {
+      header: "Vendor",
+      accessorKey: "vendorName",
+      cell: ({ row }) => (
+        <span className="text-xs font-medium text-zinc-600">
+          {row.original.vendorName}
+        </span>
+      ),
+    },
+    {
+      header: "Price",
+      accessorKey: "basePrice",
+      cell: ({ row }) => (
+        <span className="font-mono font-bold text-zinc-900">
+          ₦{row.original.basePrice.toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      header: "Stock",
+      accessorKey: "stockQuantity",
+      cell: ({ row }) => (
+        <span className="font-mono text-zinc-500 text-xs">
+          {row.original.stockQuantity} Units
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: ({ row }) => <ProductStatusPill status={row.original.status} />,
+    },
+  ];
+
+  // ✅ Sales should not see action buttons => omit the column
+  if (!opts.canManage) return base;
+
+  return [
+    ...base,
+    {
+      id: "actions",
+      cell: ({ row }) => <ActionsCell id={row.original.id} />,
+    },
+  ];
+}

@@ -4,66 +4,50 @@
 
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { DateRange } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
+import { useSession } from "next-auth/react";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-
-import { productColumns } from "./column";
-
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { StatCard } from "@/components/cards/stat-card";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+import { FilterTabs } from "@/components/tabs/filter-tab";
+
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 import {
   Package,
   AlertTriangle,
   CheckCircle2,
-  Plus,
   Filter,
   CalendarIcon,
-  Tag,
-  User2,
 } from "lucide-react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useAdminProductCount, useAdminProducts } from "@/src/features/products/hooks";
+import { getUserRoles, can } from "@/src/lib/rbac";
 
-import { Calendar } from "@/components/ui/calendar";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import { cn } from "@/lib/utils";
-
-import {
-  useAdminProductCount,
-  useAdminProducts,
-} from "@/src/features/products/hooks";
-
-import { TableSkeleton } from "@/components/skeletons/table-skeleton";
-import { FilterTabs } from "@/components/tabs/filter-tab";
+import { makeProductColumns } from "./column";
 import { CreateProductModal } from "./add_product";
 
 export default function ProductsView() {
-  const [activeTab, setActiveTab] = useState<"all" | "pending" | "rejected">(
-    "all",
+  const { data: session } = useSession();
+  const roles = getUserRoles(session);
+
+  // ✅ Sales: false (read-only), Admin/SuperAdmin: true
+  const canManageProducts =
+    can(roles, "products", "write") || can(roles, "products", "create");
+
+  const productColumns = useMemo(
+    () => makeProductColumns({ canManage: canManageProducts }),
+    [canManageProducts],
   );
 
-  const [categoryFilter, setCategoryFilter] = useState("all");
-
-  const [vendorFilter, setVendorFilter] = useState("all");
-
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "rejected">("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-
   const [pageNumber, setPageNumber] = useState(1);
 
   const pageSize = 20;
@@ -83,11 +67,10 @@ export default function ProductsView() {
     dateTo: dateRange?.to?.toISOString(),
   };
 
-  const { data, isLoading, isError, error, refetch, isFetching } =
-    useAdminProducts(query);
+  const productsQ = useAdminProducts(query);
 
-  const items = data?.items ?? [];
-  const totalCount = data?.totalCount ?? 0;
+  const items = productsQ.data?.items ?? [];
+  const totalCount = productsQ.data?.totalCount ?? 0;
 
   const liveOnPage = useMemo(
     () => items.filter((p) => p.status === "Active").length,
@@ -100,9 +83,7 @@ export default function ProductsView() {
   );
 
   const allCountQ = useAdminProductCount(undefined);
-
   const pendingCountQ = useAdminProductCount("Pending");
-
   const rejectedCountQ = useAdminProductCount("Rejected");
 
   const allCount = allCountQ.data ?? 0;
@@ -114,31 +95,15 @@ export default function ProductsView() {
       <header className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-zinc-500 hover:text-zinc-900" />
-
           <div className="h-6 w-px bg-zinc-200" />
-
           <h1 className="text-sm font-bold uppercase tracking-widest text-zinc-900 font-display">
             Marketplace / Products
           </h1>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* <Button
-            variant="outline"
-            size="sm"
-            className="h-9 text-xs font-bold uppercase tracking-wider"
-          >
-            Export List
-          </Button> */}
-
-          {/* <Button
-            size="sm"
-            className="h-9 text-xs font-bold uppercase tracking-wider bg-zinc-900 text-white hover:bg-[#D4AF37] hover:text-black transition-colors"
-          >
-            <Plus className="mr-2 h-3.5 w-3.5" />
-            Add New Product
-          </Button> */}
-          <CreateProductModal />
+          {/* ✅ Hide Add Product from Sales */}
+          {canManageProducts ? <CreateProductModal /> : null}
         </div>
       </header>
 
@@ -146,21 +111,21 @@ export default function ProductsView() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <StatCard
             label="Total Inventory"
-            value={isLoading ? "—" : String(totalCount)}
+            value={productsQ.isLoading ? "—" : String(totalCount)}
             icon={Package}
             variant="gold"
           />
 
           <StatCard
             label="Moderation Queue"
-            value={isLoading ? "—" : String(pendingOnPage)}
+            value={productsQ.isLoading ? "—" : String(pendingOnPage)}
             icon={AlertTriangle}
             variant="rose"
           />
 
           <StatCard
             label="Live Products"
-            value={isLoading ? "—" : String(liveOnPage)}
+            value={productsQ.isLoading ? "—" : String(liveOnPage)}
             icon={CheckCircle2}
             variant="emerald"
           />
@@ -174,32 +139,17 @@ export default function ProductsView() {
           }}
           className="w-full flex flex-col"
         >
-          {" "}
           <div className="flex items-center justify-between">
-            {" "}
             <FilterTabs
               tabs={[
-                {
-                  value: "all",
-                  label: "All Inventory",
-                  count: allCount,
-                  variant: "emerald",
-                },
-                {
-                  value: "pending",
-                  label: "Pending",
-                  count: pendingCount,
-                  variant: "amber",
-                },
-                {
-                  value: "rejected",
-                  label: "Rejected",
-                  count: rejectedCount,
-                  variant: "rose",
-                },
+                { value: "all", label: "All Inventory", count: allCount, variant: "emerald" },
+                { value: "pending", label: "Pending", count: pendingCount, variant: "amber" },
+                { value: "rejected", label: "Rejected", count: rejectedCount, variant: "rose" },
               ]}
-            />{" "}
+            />
           </div>
+
+          {/* Filters bar */}
           <div className="mt-2 bg-white p-4 rounded-3xl shadow-sm border border-zinc-200 flex flex-wrap gap-3 items-center">
             <div className="flex items-center text-[10px] font-bold text-zinc-500 uppercase tracking-widest mr-2">
               <Filter className="mr-2 h-3.5 w-3.5" />
@@ -216,7 +166,6 @@ export default function ProductsView() {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-3.5 w-3.5 text-zinc-400" />
-
                   {dateRange?.from ? (
                     dateRange.to ? (
                       `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`
@@ -245,53 +194,23 @@ export default function ProductsView() {
                 />
               </PopoverContent>
             </Popover>
-
-            {/* <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-44 h-10 text-xs font-bold uppercase tracking-wider bg-zinc-50/50 border-zinc-200 rounded-xl text-zinc-600">
-                <Tag className="mr-2 h-3 w-3 text-zinc-400 inline" />
-
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-
-                <SelectItem value="Fashion">Fashion</SelectItem>
-
-                <SelectItem value="Electronics">Electronics</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={vendorFilter} onValueChange={setVendorFilter}>
-              <SelectTrigger className="w-44 h-10 text-xs font-bold uppercase tracking-wider bg-zinc-50/50 border-zinc-200 rounded-xl text-zinc-600">
-                <User2 className="mr-2 h-3 w-3 text-zinc-400 inline" />
-
-                <SelectValue placeholder="Vendor" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="all">All Vendors</SelectItem>
-
-                <SelectItem value="vendor-1">Vendor One</SelectItem>
-
-                <SelectItem value="vendor-2">Vendor Two</SelectItem>
-              </SelectContent>
-            </Select> */}
           </div>
-          <div >
-            {isLoading ? (
-              <TableSkeleton columns={6} rows={10} withToolbar />
-            ) : isError ? (
+
+          {/* Table */}
+          <div>
+            {productsQ.isLoading ? (
+              <TableSkeleton columns={productColumns.length} rows={10} withToolbar />
+            ) : productsQ.isError ? (
               <div className="p-6 text-sm">
                 <p className="text-rose-600 font-semibold">
                   Failed to load products:{" "}
-                  {(error as any)?.response?.data?.message ??
-                    (error as any)?.message ??
+                  {(productsQ.error as any)?.response?.data?.message ??
+                    (productsQ.error as any)?.message ??
                     "Unknown error"}
                 </p>
 
                 <button
-                  onClick={() => refetch()}
+                  onClick={() => productsQ.refetch()}
                   className="mt-3 text-xs font-semibold underline text-zinc-700"
                 >
                   Try again
@@ -299,7 +218,7 @@ export default function ProductsView() {
               </div>
             ) : (
               <>
-                {isFetching && (
+                {productsQ.isFetching && (
                   <div className="px-6 py-2 text-[11px] text-zinc-500 border-b border-zinc-100">
                     Refreshing…
                   </div>

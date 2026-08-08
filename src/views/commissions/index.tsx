@@ -1,6 +1,9 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -8,8 +11,9 @@ import { DollarSign, PieChart, Smartphone, Settings } from "lucide-react";
 import { FilterTabs } from "@/components/tabs/filter-tab";
 import { StatCard } from "@/components/cards/stat-card";
 import { Button } from "@/components/ui/button";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
-import { getCommissionColumns, type CategoryCommissionRow } from "./column";
+import { makeCommissionColumns, type CategoryCommissionRow } from "./column";
 import {
   useCategoryCommissions,
   useCommissionStats,
@@ -26,43 +30,40 @@ import {
   Baby,
   Package,
 } from "lucide-react";
-import { TableSkeleton } from "@/components/skeletons/table-skeleton";
+
+import { can, getUserRoles } from "@/src/lib/rbac";
 
 function iconForCategory(name: string) {
   const s = name.toLowerCase();
-  if (s.includes("phone") || s.includes("tablet") || s.includes("electronics"))
-    return Smartphone;
+  if (s.includes("phone") || s.includes("tablet") || s.includes("electronics")) return Smartphone;
   if (s.includes("clothing") || s.includes("fashion")) return Shirt;
-  if (s.includes("furniture") || s.includes("home") || s.includes("kitchen"))
-    return Sofa;
+  if (s.includes("furniture") || s.includes("home") || s.includes("kitchen")) return Sofa;
   if (s.includes("gaming")) return Gamepad2;
   if (s.includes("office")) return Briefcase;
-  if (s.includes("beauty") || s.includes("health") || s.includes("skincare"))
-    return Heart;
+  if (s.includes("beauty") || s.includes("health") || s.includes("skincare")) return Heart;
   if (s.includes("book") || s.includes("music")) return BookOpen;
-  if (s.includes("baby") || s.includes("kids") || s.includes("toys"))
-    return Baby;
+  if (s.includes("baby") || s.includes("kids") || s.includes("toys")) return Baby;
   return Package;
 }
 
 function money(amount: number, currency: string) {
   const symbol =
-    currency === "NGN"
-      ? "₦"
-      : currency === "ZAR"
-        ? "R"
-        : currency === "USD"
-          ? "$"
-          : "";
+    currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
   return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
 }
 
 export default function CommissionView() {
+  const { data: session } = useSession();
+  const roles = getUserRoles(session);
+
+  // ✅ only roles with "write" on commissions can edit rates
+  const canManage = can(roles, "commissions", "write");
+
   const [currency, setCurrency] = useState("NGN");
 
   const statsQ = useCommissionStats({ currency });
   const categoriesQ = useCategoryCommissions();
-  const updateRate = useUpdateCategoryCommissionRate();
+  const updateRate = useUpdateCategoryCommissionRate(); // hook is fine to call; UI will hide actions when not allowed
 
   const rows: CategoryCommissionRow[] = useMemo(() => {
     return (categoriesQ.data ?? []).map((c) => ({
@@ -73,12 +74,15 @@ export default function CommissionView() {
 
   const columns = useMemo(
     () =>
-      getCommissionColumns({
-        onUpdate: (categoryId, newRate) =>
-          updateRate.mutate({ categoryId, commissionRate: newRate }),
+      makeCommissionColumns({
+        canManage,
         isUpdating: updateRate.isPending,
+        onUpdate: (categoryId, newRate) => {
+          if (!canManage) return;
+          updateRate.mutate({ categoryId, commissionRate: newRate });
+        },
       }),
-    [updateRate],
+    [canManage, updateRate.isPending, updateRate],
   );
 
   return (
@@ -90,9 +94,14 @@ export default function CommissionView() {
           <h1 className="text-sm font-bold uppercase tracking-widest text-zinc-900 font-display">
             Platform / Commission Rates
           </h1>
+
+          {!canManage && (
+            <span className="ml-2 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border border-zinc-200 bg-zinc-50 text-zinc-600">
+              View only
+            </span>
+          )}
         </div>
 
-        {/* Optional currency switch; stats supports currency */}
         <div className="flex items-center gap-3">
           <Button
             variant={currency === "NGN" ? "default" : "outline"}
@@ -120,31 +129,20 @@ export default function CommissionView() {
             value={
               statsQ.isLoading
                 ? "—"
-                : money(
-                    statsQ.data?.totalCommissionRevenue ?? 0,
-                    statsQ.data?.currency ?? currency,
-                  )
+                : money(statsQ.data?.totalCommissionRevenue ?? 0, statsQ.data?.currency ?? currency)
             }
             icon={DollarSign}
             variant="default"
           />
           <StatCard
             label="Avg. Platform Rate"
-            value={
-              statsQ.isLoading
-                ? "—"
-                : `${statsQ.data?.averagePlatformRate ?? 0}%`
-            }
+            value={statsQ.isLoading ? "—" : `${statsQ.data?.averagePlatformRate ?? 0}%`}
             icon={PieChart}
             variant="indigo"
           />
           <StatCard
             label="Highest Earner"
-            value={
-              statsQ.isLoading
-                ? "—"
-                : (statsQ.data?.highestEarningCategory ?? "—")
-            }
+            value={statsQ.isLoading ? "—" : (statsQ.data?.highestEarningCategory ?? "—")}
             icon={Smartphone}
             variant="gold"
           />
@@ -159,8 +157,7 @@ export default function CommissionView() {
               Pricing Strategy Note
             </h3>
             <p className="text-xs text-indigo-700 mt-1.5 leading-relaxed max-w-3xl">
-              Adjusting a category commission rate affects only new transactions
-              after the update.
+              Adjusting a category commission rate affects only new transactions after the update.
             </p>
           </div>
         </div>
@@ -169,27 +166,16 @@ export default function CommissionView() {
           <div className="flex items-center justify-between border-b border-zinc-200">
             <FilterTabs
               tabs={[
-                {
-                  value: "active",
-                  label: "Categories",
-                  count: rows.length,
-                  variant: "emerald",
-                },
+                { value: "active", label: "Categories", count: rows.length, variant: "emerald" },
               ]}
             />
           </div>
 
           <TabsContent value="active">
             {categoriesQ.isLoading ? (
-              <TableSkeleton
-                columns={columns.length}
-                rows={10}
-                withToolbar={false}
-              />
+              <TableSkeleton columns={columns.length} rows={10} withToolbar={false} />
             ) : categoriesQ.isError ? (
-              <div className="p-6 text-sm text-rose-600">
-                Failed to load categories.
-              </div>
+              <div className="p-6 text-sm text-rose-600">Failed to load categories.</div>
             ) : (
               <DataTable columns={columns} data={rows} />
             )}

@@ -4,13 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  MoreHorizontal,
-  Percent,
-  Edit3,
-  Save,
-  AlertCircle,
-} from "lucide-react";
+import { MoreHorizontal, Percent, Edit3, Save, AlertCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -42,8 +36,6 @@ function CommissionActionsCell({
   isUpdating?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Store as string so users can freely edit the input
   const [rate, setRate] = useState(row.original.commissionRate.toString());
 
   useEffect(() => {
@@ -54,7 +46,6 @@ function CommissionActionsCell({
 
   const handleSave = () => {
     const numericRate = Number(rate);
-
     if (
       rate.trim() === "" ||
       Number.isNaN(numericRate) ||
@@ -82,10 +73,7 @@ function CommissionActionsCell({
             Manage
           </DropdownMenuLabel>
 
-          <DropdownMenuItem
-            className="text-xs cursor-pointer"
-            onSelect={() => setIsOpen(true)}
-          >
+          <DropdownMenuItem className="text-xs cursor-pointer" onSelect={() => setIsOpen(true)}>
             <Edit3 className="mr-2 h-3.5 w-3.5 text-zinc-500" />
             Edit Rate
           </DropdownMenuItem>
@@ -154,16 +142,12 @@ function CommissionActionsCell({
                 placeholder="Enter commission rate"
               />
 
-              <Percent
-                size={14}
-                className="absolute right-3 top-3 text-zinc-400"
-              />
+              <Percent size={14} className="absolute right-3 top-3 text-zinc-400" />
             </div>
           </div>
 
           <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg text-[10px] uppercase tracking-wider font-bold text-amber-800 flex gap-2 items-start">
             <AlertCircle size={14} className="mt-0.5 shrink-0" />
-
             <p className="leading-relaxed">
               Changing this rate will apply only to new orders after the update.
             </p>
@@ -173,64 +157,73 @@ function CommissionActionsCell({
     </>
   );
 }
-export const getCommissionColumns = (opts: {
+
+export function makeCommissionColumns(opts: {
+  canManage: boolean;
   onUpdate: (categoryId: number, newRate: number) => void;
   isUpdating?: boolean;
-}): ColumnDef<CategoryCommissionRow>[] => [
-  {
-    header: "Category",
-    accessorKey: "categoryName",
-    cell: ({ row }) => {
-      const Icon = row.original.icon;
-      return (
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-500">
-            <Icon size={18} />
+}): ColumnDef<CategoryCommissionRow>[] {
+  const base: ColumnDef<CategoryCommissionRow>[] = [
+    {
+      header: "Category",
+      accessorKey: "categoryName",
+      cell: ({ row }) => {
+        const Icon = row.original.icon;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-500">
+              <Icon size={18} />
+            </div>
+            <div>
+              <p className="font-bold text-zinc-900 font-display">
+                {row.original.categoryName}
+              </p>
+              <p className="text-[10px] text-zinc-400 font-mono">
+                ID: {row.original.categoryId}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-zinc-900 font-display">
-              {row.original.categoryName}
-            </p>
-            <p className="text-[10px] text-zinc-400 font-mono">
-              ID: {row.original.categoryId}
-            </p>
-          </div>
-        </div>
-      );
+        );
+      },
     },
-  },
-  {
-    header: "Commission Rate",
-    accessorKey: "commissionRate",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "text-lg font-bold font-mono",
-            row.original.commissionRate >= 8
-              ? "text-emerald-600"
-              : "text-zinc-900",
-          )}
-        >
-          {row.original.commissionRate}%
-        </span>
-
-        {row.original.commissionRate >= 8 && (
-          <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-            High
+    {
+      header: "Commission Rate",
+      accessorKey: "commissionRate",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "text-lg font-bold font-mono",
+              row.original.commissionRate >= 8 ? "text-emerald-600" : "text-zinc-900",
+            )}
+          >
+            {row.original.commissionRate}%
           </span>
-        )}
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <CommissionActionsCell
-        row={row}
-        onUpdate={opts.onUpdate}
-        isUpdating={opts.isUpdating}
-      />
-    ),
-  },
-];
+
+          {row.original.commissionRate >= 8 && (
+            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+              High
+            </span>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  // ✅ Hide actions for Admin (view-only)
+  if (!opts.canManage) return base;
+
+  return [
+    ...base,
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <CommissionActionsCell
+          row={row}
+          onUpdate={opts.onUpdate}
+          isUpdating={opts.isUpdating}
+        />
+      ),
+    },
+  ];
+}

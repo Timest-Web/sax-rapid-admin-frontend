@@ -18,37 +18,13 @@ import type { SubscriptionPlan } from "@/src/features/subscriptions/api";
 function money(amount: number, currency: string) {
   const symbol =
     currency === "NGN" ? "₦" : currency === "ZAR" ? "R" : currency === "USD" ? "$" : "";
-
   return `${symbol}${Number(amount ?? 0).toLocaleString()}`;
 }
 
 type ActiveState = boolean | "unknown";
 
 function activeState(plan: SubscriptionPlan): ActiveState {
-
   return typeof plan.isActive === "boolean" ? plan.isActive : "unknown";
-}
-
-function StatusPill({ state }: { state: ActiveState }) {
-  if (state === "unknown") {
-    return (
-      <span className="inline-flex items-center rounded-sm border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest border-zinc-200 bg-zinc-50 text-zinc-500">
-        Unknown
-      </span>
-    );
-  }
-
-  return (
-    <span
-      className={`inline-flex items-center rounded-sm border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${
-        state
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-zinc-200 bg-zinc-100 text-zinc-600"
-      }`}
-    >
-      {state ? "Active" : "Inactive"}
-    </span>
-  );
 }
 
 export type SubscriptionPlanRow = SubscriptionPlan & {
@@ -57,7 +33,8 @@ export type SubscriptionPlanRow = SubscriptionPlan & {
   yearlyDisplay: number;
 };
 
-export function getPlanColumns(opts: {
+export function makePlanColumns(opts: {
+  canManage: boolean;
   onEdit: (plan: SubscriptionPlan) => void;
   onToggleStatus: (plan: SubscriptionPlan) => void;
 }): ColumnDef<SubscriptionPlanRow>[] {
@@ -67,13 +44,11 @@ export function getPlanColumns(opts: {
       accessorKey: "name",
       cell: ({ row }) => {
         const plan = row.original;
-
         return (
           <div className="flex max-w-[320px] flex-col">
             <span className="truncate text-sm font-semibold text-zinc-900">
               {plan.name}
             </span>
-
             <span className="line-clamp-2 text-xs leading-relaxed text-zinc-500">
               {plan.description || "No description"}
             </span>
@@ -87,16 +62,12 @@ export function getPlanColumns(opts: {
       id: "pricing",
       cell: ({ row }) => {
         const plan = row.original;
-
         return (
           <div className="flex flex-col">
             <span className="font-mono text-sm font-bold text-zinc-900">
               {money(plan.monthlyDisplay, plan.currency)}
-              <span className="ml-1 text-xs font-medium text-zinc-500">
-                / month
-              </span>
+              <span className="ml-1 text-xs font-medium text-zinc-500">/ month</span>
             </span>
-
             <span className="font-mono text-xs text-zinc-500">
               {money(plan.yearlyDisplay, plan.currency)}
               <span className="ml-1">/ year</span>
@@ -126,17 +97,11 @@ export function getPlanColumns(opts: {
       ),
     },
 
-    // {
-    //   header: "Status",
-    //   id: "status",
-    //   cell: ({ row }) => <StatusPill state={activeState(row.original)} />,
-    // },
-
+    // ✅ Actions: View always; Edit/Toggle only if canManage
     {
       id: "actions",
       enableSorting: false,
       enableHiding: false,
-
       cell: ({ row }) => {
         const plan = row.original;
         const state = activeState(plan);
@@ -159,14 +124,7 @@ export function getPlanColumns(opts: {
                 align="end"
                 className="w-44 border border-zinc-200 bg-white"
               >
-                <DropdownMenuItem
-                  onClick={() => opts.onEdit(plan)}
-                  className="cursor-pointer text-xs"
-                >
-                  <Edit2 className="mr-2 h-4 w-4 text-zinc-500" />
-                  Edit Plan
-                </DropdownMenuItem>
-
+                {/* View allowed for Admin */}
                 <DropdownMenuItem asChild>
                   <Link
                     href={`/admin/subscriptions/${plan.id}`}
@@ -177,19 +135,33 @@ export function getPlanColumns(opts: {
                   </Link>
                 </DropdownMenuItem>
 
-                <DropdownMenuSeparator />
+                {opts.canManage ? (
+                  <>
+                    <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                  onClick={() => opts.onToggleStatus(plan)}
-                  className={`cursor-pointer text-xs ${
-                    assumedActive
-                      ? "text-rose-600 focus:text-rose-700"
-                      : "text-emerald-600 focus:text-emerald-700"
-                  }`}
-                >
-                  <Power className="mr-2 h-4 w-4" />
-                  {assumedActive ? "Deactivate Plan" : "Activate Plan"}
-                </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => opts.onEdit(plan)}
+                      className="cursor-pointer text-xs"
+                    >
+                      <Edit2 className="mr-2 h-4 w-4 text-zinc-500" />
+                      Edit Plan
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuItem
+                      onClick={() => opts.onToggleStatus(plan)}
+                      className={`cursor-pointer text-xs ${
+                        assumedActive
+                          ? "text-rose-600 focus:text-rose-700"
+                          : "text-emerald-600 focus:text-emerald-700"
+                      }`}
+                    >
+                      <Power className="mr-2 h-4 w-4" />
+                      {assumedActive ? "Deactivate Plan" : "Activate Plan"}
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
